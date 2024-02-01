@@ -1,0 +1,3 @@
+jupyter lab
+$ read -rsp $'Press enter to continue...\n'
+Press enter to continue...

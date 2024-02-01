@@ -1,0 +1,125 @@
+# https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-23-07.html 
+FROM nvcr.io/nvidia/pytorch:23.07-py3
+
+#################################################################
+# Install 
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -y \
+    && apt upgrade -y \
+    && apt-get install -yq --no-install-recommends \
+        dbus-x11 \
+        net-tools \
+        less \
+        xfce4 \
+        xfce4-panel \
+        xfce4-session \
+        xfce4-settings \
+        xorg \
+        xubuntu-icon-theme \
+        gnome-terminal \
+        fonts-dejavu \
+        git-gui \
+        gitk \
+        emacs \
+        sudo \
+        ncdu \
+        p7zip-full \
+    && apt-get autoremove --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && find /var/log -type f -exec cp /dev/null \{\} \;
+
+#################################################################
+# Create BIOP user
+RUN echo "biop ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/biop
+RUN useradd -m biop -G root
+
+#################################################################
+# Install the jupyter extensions
+RUN pip install jupyter-server-proxy jupyterlab-drawio --no-cache-dir jupyter-archive
+RUN apt update \
+    && apt install nodejs npm websockify -y \
+    && apt-get autoremove --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && find /var/log -type f -exec cp /dev/null \{\} \;
+COPY --chown=biop:biop jupyter_notebook_config.py /home/biop/.jupyter/jupyter_notebook_config.py
+
+#################################################################
+# Install TigerVNC 1.9.0 -> Test 1.13.1
+ENV tigervnc_version=1.10.1
+RUN curl -sSfL https://sourceforge.net/projects/tigervnc/files/stable/${tigervnc_version}/tigervnc-${tigervnc_version}.x86_64.tar.gz/download | tar -zxf - -C /usr/local --strip=2
+
+#################################################################
+# Install noVNC 1.1.0 -> test 1.4.0
+ENV novnc_version=1.1.0
+RUN curl -sSfL https://github.com/novnc/noVNC/archive/v${novnc_version}.tar.gz | tar xvz -C /opt/ && \
+    chmod a+rX -R /opt/noVNC-${novnc_version}
+# Custom interface
+COPY --chown=root:root vnc_renku.html /opt/noVNC-${novnc_version}
+# Custom ui.js
+COPY --chown=root:root ui.js /opt/noVNC-${novnc_version}/app/ui.js
+# COPY --chown=root:root renku-48x48.png /opt/noVNC-${novnc_version}/app/images/icons
+# COPY --chown=root:root base.css /opt/noVNC-${novnc_version}/app/styles/base.css
+# COPY --chown=root:root fonts /opt/noVNC-${novnc_version}/app/styles/fonts
+
+#################################################################
+# Install firefox
+RUN wget -q 'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64' -O /tmp/firefox.tar.bz2 \
+    && tar xjf /tmp/firefox.tar.bz2 -C /opt/ \
+    && rm -rf /tmp/firefox.tar.bz2 \
+    && ln -sf /opt/firefox/firefox /usr/bin/firefox \
+    && apt update \
+    && apt install libdbus-glib-1-2 -y \
+    && apt-get autoremove --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && find /var/log -type f -exec cp /dev/null \{\} \;
+ENV BROWSER=firefox
+
+# Install miniconda
+ENV CONDA_DIR /opt/conda
+RUN wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh \
+   && /bin/bash ~/miniconda.sh -b -p /opt/conda
+#Put conda in path so we can use conda activate
+ENV PATH=$PATH:$CONDA_DIR/bin
+
+# Because I coulnd't get mamba to work, changethe libserver , thanks @oli ! ;) 
+# https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community 
+RUN conda update -n base conda \
+    && conda install -n base conda-libmamba-solver \ 
+    && conda config --set solver libmamba
+
+
+# create shortcut to start jupyter lab
+RUN mkdir /opt/jupyter
+COPY jupyter/start_jupyter.sh /opt/jupyter/start_jupyter.sh
+COPY jupyter/jupyter_.png /opt/jupyter/jupyter.png
+
+RUN chmod +x /opt/jupyter/start_jupyter.sh \
+    && chown -R biop:biop /opt/jupyter/ 
+
+RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
+    && printf '[Desktop Entry]\nVersion=4.2.6\nName=jupyter\nGenericName=jupyter\nX-GNOME-FullName=jupyter\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/jupyter/start_jupyter.sh\nTryExec=/opt/jupyter/start_jupyter.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/jupyter/jupyter.png\nStartupWMClass=jupyter\n' > /home/biop/Desktop/jupyter.desktop \
+    && chown -R biop:biop /home/biop \
+    && chmod -R a+rwx /home/biop/
+
+
+#################################################################
+# Install Inkscape 
+RUN sudo apt-get update -y \
+    && sudo apt-get install inkscape -y 
+
+
+RUN chown -R biop:biop /home/biop/ \
+    && chmod -R a+rwx /home/biop/ 
+
+#################################################################
+# Container start
+USER biop
+WORKDIR /home/biop
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
