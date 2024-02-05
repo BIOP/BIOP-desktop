@@ -1,0 +1,17 @@
+name: "stardist"
+channels:
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8.*
+  - pip
+  - cudatoolkit
+  - cudnn
+  - ipykernel
+  - tensorflow-gpu
+  - pip:
+      - stardist==0.8.5
+      - gputools
+      - edt
+prefix: "/opt/conda/envs/stardist"
