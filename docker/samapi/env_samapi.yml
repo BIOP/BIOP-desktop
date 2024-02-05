@@ -1,0 +1,10 @@
+name: "samapi"
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - https://github.com/ksugar/samapi/archive/refs/tags/v0.3.0.tar.gz
+prefix: "/opt/conda/envs/samapi"
