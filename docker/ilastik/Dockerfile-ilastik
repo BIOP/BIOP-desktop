@@ -1,0 +1,28 @@
+ARG BASE_IMAGE=0.0.1
+FROM biop-vnc-base:${BASE_IMAGE}
+
+ARG ILASTIK_VERSION 1.4.0-gpu
+
+USER root
+
+#################################################################
+# Install ilastik
+RUN wget https://files.ilastik.org/ilastik-${ILASTIK_VERSION}-Linux.tar.bz2 -O ilastik-${ILASTIK_VERSION}-Linux.tar.bz2 
+
+RUN tar -xf ilastik-${ILASTIK_VERSION}-Linux.tar.bz2 -C /opt/ \
+      && mv /opt/ilastik-${ILASTIK_VERSION}-Linux /opt/ilastik \
+      && rm ilastik-${ILASTIK_VERSION}-Linux.tar.bz2 \
+      && chmod -R a+rwX /opt/ilastik/
+
+RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
+    && printf '[Desktop Entry]\nVersion=1.4.0\nName=ilastik\nGenericName=ilastik\nX-GNOME-FullName=ilastik\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/ilastik/run_ilastik.sh %F\nTryExec=/opt/ilastik/run_ilastik.sh\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/ilastik/lib/python3.7/site-packages/ilastik/shell/gui/icons/96x96/ilastik-icon.png\nStartupWMClass=ilastik\n' > /home/biop/Desktop/ilastik.desktop \
+    && chown -R biop:biop /home/biop \
+    && chmod +x /home/biop//Desktop/ilastik.desktop
+
+
+#################################################################
+# Container start
+USER biop
+WORKDIR /home/biop
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
