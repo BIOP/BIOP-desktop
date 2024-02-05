@@ -1,0 +1,10 @@
+name: "devbio"
+channels:
+  - conda-forge
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.9 
+  - devbio-napari=0.10.1
+  - pyqt
+prefix: "/opt/conda/envs/devbio"
