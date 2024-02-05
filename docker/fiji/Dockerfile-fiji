@@ -1,7 +1,8 @@
 # https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-23-07.html 
 # FROM nvcr.io/nvidia/pytorch:23.07-py3
-ARG BASE_IMAGE=0.0.2
-FROM biop-vnc-base:${BASE_IMAGE}
+ARG BASE_IMAGE=0.0.3
+ARG ALIAS=biop/
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 ENV OMEROIJ_VERSION 5.8.3
 ENV SOC_VERSION 5.15.0
@@ -24,13 +25,6 @@ RUN wget -q https://downloads.imagej.net/fiji/latest/fiji-linux64.zip \
       && rm fiji-linux64.zip \
       && chmod -R a+rwX /opt/Fiji.app
 
-# because we use a lighter origin image, we don't have a biop user, nor dekstop...
-# TODO: let's see if we switch to the base image, to simplify things...
-# RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
-#     && printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop \
-#     && chown -R biop:biop /home/biop \
-#     && chmod +x /home/biop/Desktop/Fiji.desktop
-
 # Install Fiji plugins via update sites
 ENV fiji /opt/Fiji.app/ImageJ-linux64
 ENV updateCommand --update update
@@ -51,7 +45,6 @@ RUN ${fiji} ${updateCommand} \
     && chmod -R a+rwX /opt/Fiji.app
 
 # Install omeroij
-
 RUN wget -q https://github.com/ome/omero-insight/releases/download/v${OMEROIJ_VERSION}/omero_ij-${OMEROIJ_VERSION}-all.jar -O /opt/Fiji.app/plugins/omero_ij-${OMEROIJ_VERSION}-all.jar \
     && chmod -R a+rwX /opt/Fiji.app/plugins
 
