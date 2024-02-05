@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE preferences SYSTEM "http://java.sun.com/dtd/preferences.dtd">
+<preferences EXTERNAL_XML_VERSION="1.0">
+  <root type="user">
+    <map/>
+    <node name="io.github.qupath">
+      <map/>
+      <node name="0.4">
+        <map>
+          <entry key="cellposePythonPath" value="/opt/conda/envs/cellpose/bin/python"/>
+          <entry key="lastUpdateCheck" value="1692341778912"/>
+          <entry key="scriptsPath" value="/home/biop/QuPath_Common_Data_0.4/qupath-scripts"/>
+          <entry key="userPath" value="/home/biop/QuPath_Common_Data_0.4"/>
+        </map>
+      </node>
+    </node>
+  </root>
+</preferences>

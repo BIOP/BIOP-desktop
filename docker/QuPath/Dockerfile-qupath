@@ -1,0 +1,74 @@
+# https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-23-07.html 
+#FROM nvcr.io/nvidia/pytorch:23.07-py3
+ARG BASE_IMAGE=0.0.1
+FROM biop-vnc-base:${BASE_IMAGE}
+
+ARG QP_VERSION=v0.4.4
+
+USER root
+
+# FROM ubuntu:22.04
+# RUN apt-get update -y \
+#     && apt upgrade -y \
+#     && apt-get install -y wget git unzip \
+#     && apt-get autoremove --purge \
+#     && apt-get clean \
+#     && rm -rf /var/lib/apt/lists/* \
+#     && rm -rf /tmp/* \
+#     && find /var/log -type f -exec cp /dev/null \{\} \;
+
+#################################################################
+# Install QuPath
+# TODO? install from source to enable stardist GPU ? 
+# QuPath on Ubuntu can't use cellpose extension, needs to build from source ! 
+
+# QuPath from source :
+# https://qupath.readthedocs.io/en/stable/docs/reference/building.html
+# install OpenJDK > 17 https://www.linuxcapable.com/how-to-install-openjdk-17-on-ubuntu-linux/
+RUN apt-get update \
+    && apt install openjdk-17-jdk -y
+
+# install GPU by adding -Pcuda-redist to gradle command
+RUN git clone  https://github.com/qupath/qupath.git --branch ${QP_VERSION} 
+RUN cd qupath \
+    && ./gradlew clean jpackage
+
+RUN mv /home/biop/qupath/build/dist/QuPath/ /opt/QuPath \
+    && chmod u+x /opt/QuPath/bin/QuPath \        
+    && chmod u+x /opt/QuPath/bin/QuPath.sh  \
+    && rm -rf /home/biop/qupath
+
+
+# create icon
+RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
+    && printf '[Desktop Entry]\nVersion=0.4.4\nName=qupath\nGenericName=QuPath\nX-GNOME-FullName=QuPath\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/QuPath/bin/QuPath\nTryExec=/opt/QuPath/bin/QuPath.sh\nTerminal=false\nStartupNotify=true\nIcon=/opt/QuPath/lib/QuPath.png\nStartupWMClass=QuPath' > /home/biop/Desktop/QuPath.desktop \
+    && chown -R biop:biop /home/biop \
+    && chmod +x /home/biop/Desktop/QuPath.desktop 
+
+# install Extensions
+# TODO : discuss if we prepare unzip from zenodo, or if we update when container start via a git pull ... (less good for reproducibility but better to keep scripts up-to-date)
+#COPY QuPath/QuPath_Common_Data_0.4.zip ${TEMP_DIR}/QuPath_Common_Data_0.4.zip 
+RUN wget -q https://zenodo.org/records/10619547/files/QuPath_Common_Data_0.4.zip?download=1 -O ${TEMP_DIR}/QuPath_Common_Data_0.4.zip
+
+RUN unzip ${TEMP_DIR}/QuPath_Common_Data_0.4.zip -d /home/biop/ \
+    && rm ${TEMP_DIR}/QuPath_Common_Data_0.4.zip 
+
+#  Prepare to set QP_prefs 
+COPY QuPath/QuPath_setPaths.groovy /home/biop/tmp/QuPath_setPaths.groovy
+COPY QuPath/qp_prefs.xml /home/biop/tmp/qp_prefs.xml
+RUN chown -R biop:biop /home/biop/tmp
+USER biop
+# here we import prefs in QuPath so that we can use the extensions at the first start ! 
+RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' 
+# TODO test and uncomment below after testing 
+RUN rm -rf /home/biop/tmp 
+
+# set back to root to continue installation
+USER root
+
+#################################################################
+# Container start
+USER biop
+WORKDIR /home/biop
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
