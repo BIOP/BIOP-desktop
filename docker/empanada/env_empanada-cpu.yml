@@ -1,0 +1,18 @@
+name: "empanada"
+channels:
+  - conda-forge
+  - pytorch
+  - nvidia
+  - defaults
+dependencies:
+  - python=3.9
+  - pytorch 
+  - torchvision 
+  - pytorch-cuda=11.8
+  - scikit-image
+  - napari 
+  - pyqt
+  - pip
+  - pip:
+      - empanada-napari==0.2.3
+prefix: "/opt/conda/envs/empanada"

@@ -1,0 +1,33 @@
+ARG BASE_IMAGE=0.0.1
+FROM biop-vnc-base:${BASE_IMAGE}
+#ARG DEBIO_VERSION=0.10.1
+#FROM biop-devbio:${DEBIO_VERSION} as base
+
+USER root
+
+# install cellpose and download models ( https://cellpose.readthedocs.io/en/latest/models.html )
+COPY empanada/env_empanada-gpu.yml /tmp/env_empanada.yml
+RUN conda env update -n empanada -f /tmp/env_empanada.yml \
+    && conda clean --all -f -y \
+    && conda env export -n "biop" \ 
+    && rm /tmp/env_empanada.yml 
+
+# create shortcut to start empanada
+RUN mkdir /opt/empanada
+COPY empanada/start_empanada.sh /opt/empanada/start_empanada.sh
+COPY empanada/empanada_icon.png /opt/empanada/empanada_icon.png
+
+RUN chmod +x /opt/empanada/start_empanada.sh \
+    && chown -R biop:biop /opt/empanada/ 
+
+RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
+    && printf '[Desktop Entry]\nVersion=0.2.3\nName=empanada\nGenericName=empanada\nX-GNOME-FullName=empanada\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/empanada/start_empanada.sh\nTryExec=/opt/empanada/start_empanada.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/empanada/empanada_icon.png\nStartupWMClass=empanada\n' > /home/biop/Desktop/empanada.desktop \
+    && chown -R biop:biop /home/biop \
+    && chmod -R a+rwx /home/biop/
+
+#################################################################
+# Container start
+USER biop
+WORKDIR /home/biop
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]

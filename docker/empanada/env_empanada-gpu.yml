@@ -1,0 +1,14 @@
+name: "empanada"
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pyqt
+  - pip
+  - pip:
+      - napari[all]
+      - empanada-napari==0.2.3
+      - scikit-image
+prefix: "/opt/conda/envs/empanada"
+#TODO napari-ome-zarr
