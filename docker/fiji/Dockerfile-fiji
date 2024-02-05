@@ -1,0 +1,100 @@
+# https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-23-07.html 
+# FROM nvcr.io/nvidia/pytorch:23.07-py3
+ARG BASE_IMAGE=0.0.2
+FROM biop-vnc-base:${BASE_IMAGE}
+
+ENV OMEROIJ_VERSION 5.8.3
+ENV SOC_VERSION 5.15.0
+
+USER root
+
+RUN apt-get update -y \
+    && apt upgrade -y \
+    && apt-get install -y wget git unzip \
+    && apt-get autoremove --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && find /var/log -type f -exec cp /dev/null \{\} \;
+
+#################################################################
+# Install Fiji
+RUN wget -q https://downloads.imagej.net/fiji/latest/fiji-linux64.zip \
+      && unzip fiji-linux64.zip -d /opt/ \
+      && rm fiji-linux64.zip \
+      && chmod -R a+rwX /opt/Fiji.app
+
+# because we use a lighter origin image, we don't have a biop user, nor dekstop...
+# TODO: let's see if we switch to the base image, to simplify things...
+# RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
+#     && printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop \
+#     && chown -R biop:biop /home/biop \
+#     && chmod +x /home/biop/Desktop/Fiji.desktop
+
+# Install Fiji plugins via update sites
+ENV fiji /opt/Fiji.app/ImageJ-linux64
+ENV updateCommand --update update
+ENV addCommand --update add-update-sites 
+RUN ${fiji} ${updateCommand} \
+    && ${fiji} ${addCommand}    "clij" "https://sites.imagej.net/clij/" \
+                                "clij2" "https://sites.imagej.net/clij2/" \
+                                "PTBIOP" "https://biop.epfl.ch/Fiji-Update" \ 
+                                "IBMP-CNRS" "https://sites.imagej.net/Mutterer/" \
+                                "3D ImageJ Suite" "https://sites.imagej.net/Tboudier/" \
+                                "IJPB-plugins" "https://sites.imagej.net/IJPB-plugins/" \
+                                "ilastik" "https://sites.imagej.net/Ilastik/" \
+                                "CSBDeep" "https://sites.imagej.net/CSBDeep/" \
+                                "StarDist" "https://sites.imagej.net/StarDist/" \
+                                "OMERO 5.5-5.6" "https://sites.imagej.net/OMERO-5.5-5.6/" \
+                                "MiC mask comparator" "https://sites.imagej.net/MiC-mask-comparator/" \
+    && ${fiji} ${updateCommand} \
+    && chmod -R a+rwX /opt/Fiji.app
+
+# Install omeroij
+
+RUN wget -q https://github.com/ome/omero-insight/releases/download/v${OMEROIJ_VERSION}/omero_ij-${OMEROIJ_VERSION}-all.jar -O /opt/Fiji.app/plugins/omero_ij-${OMEROIJ_VERSION}-all.jar \
+    && chmod -R a+rwX /opt/Fiji.app/plugins
+
+# Install simple-omero-client
+
+RUN wget -q https://github.com/GReD-Clermont/simple-omero-client/releases/download/${SOC_VERSION}/simple-omero-client-${SOC_VERSION}.jar -O /opt/Fiji.app/plugins/simple-omero-client-${SOC_VERSION}.jar \
+    && chmod -R a+rwX /opt/Fiji.app/plugins
+
+# add some file so clij deconvolution with regularization can work
+RUN wget -q -q https://www.dropbox.com/sh/dxofkiyseuxn4l4/AADrPjPBbJK_77Ai2WCfaOTza/Linux-2.2.0.16?dl=1 -O Linux-2.2.0.16.zip \
+        && unzip -o Linux-2.2.0.16.zip -d /opt/Fiji.app/ -x / \
+        && rm Linux-2.2.0.16.zip \
+        && rm /opt/Fiji.app/plugins/clij2-fft_-2.2.0.15.jar
+## NOT WORKING
+# /opt/Fiji.app/ImageJ-linux64 --update update
+# [WARNING] Skipping plugins/clij2-fft_-2.2.0.15.jar
+# [WARNING] Skipping lib/linux64/libclij2fft.so
+# [WARNING] Skipping lib/linux64/libjniclij2fftWrapper.so
+
+
+# This needs to be done in the main Dockerfile
+# OpenCL installation for clij
+RUN apt-get update \
+    && apt-get install -y nvidia-opencl-dev \
+    && apt remove -y libnvidia-compute-535-server \
+    && apt-get autoremove --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && find /var/log -type f -exec cp /dev/null \{\} \;
+
+# create icon
+RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
+    && printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop
+
+RUN chown -R biop:biop /home/biop/ \
+    && chmod -R a+rwx /home/biop/    
+
+#################################################################
+# Container start
+USER biop
+WORKDIR /home/biop
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
+
+
