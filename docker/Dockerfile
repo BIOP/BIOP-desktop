@@ -1,5 +1,6 @@
 ARG BASE_IMAGE=0.0.3
-FROM biop-vnc-base:${BASE_IMAGE}
+ARG ALIAS=biop/
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE} as base
 
 #################################################################
 # Container start
