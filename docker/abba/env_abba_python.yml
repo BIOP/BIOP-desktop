@@ -1,0 +1,13 @@
+name: "abba_python"
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - pip=23.2.1
+  - pyimagej=1.4.1
+  - bg-atlasapi=1.0.2
+  - openjdk=8
+  - pip:
+      - abba-python==0.5.0
+prefix: "/opt/conda/envs/abba_python"
