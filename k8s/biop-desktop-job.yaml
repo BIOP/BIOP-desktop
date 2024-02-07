@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: biop-desktop
+  labels:
+    app: biop-desktop
+spec:
+  template:
+    metadata:
+      labels:
+        app: biop-desktop
+    spec:
+      containers:
+        - name: biop-desktop
+          image: registry.rcp.epfl.ch/ptbiop/biop-desktop:0.0.6
+          imagePullPolicy: Always
+          resources:
+            requests:
+              nvidia.com/gpu: "1"
+            limits:
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - mountPath: /dev/shm
+              name: dshm
+      restartPolicy: Never
+      volumes:
+        - emptyDir:
+            medium: Memory
+          name: dshm
+  backoffLimit: 0

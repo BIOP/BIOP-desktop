@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: biop-desktop
+  labels:
+    app: biop-desktop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: biop-desktop
+  template:
+    metadata:
+      labels:
+        app: biop-desktop
+    spec:
+      containers:
+        - image: registry.rcp.epfl.ch/ptbiop/biop-desktop:0.0.6
+          imagePullPolicy: Always
+          name: biop-desktop
+          resources:
+            requests:
+              nvidia.com/gpu: "1"
+            limits:
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - mountPath: /dev/shm
+              name: dshm
+      volumes:
+        - emptyDir:
+            medium: Memory
+          name: dshm

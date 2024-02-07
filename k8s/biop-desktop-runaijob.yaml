@@ -1,0 +1,31 @@
+apiVersion: run.ai/v1
+kind: RunaiJob
+metadata:
+  name: biop-desktop
+  labels:
+    app: biop-desktop
+    priorityClassName: build # Interactive Job if present, for Train Job REMOVE this line
+spec:
+  template:
+    metadata:
+      labels:
+        app: biop-desktop
+    spec:
+      schedulerName: runai-scheduler
+      containers:
+        - name: job
+          image: registry.rcp.epfl.ch/ptbiop/biop-desktop:0.0.6
+          imagePullPolicy: Always
+          resources:
+            requests:
+              nvidia.com/gpu: 1 # Must be set to 1 or more to work with Firefox
+            limits:
+              nvidia.com/gpu: 1 # Must be set to 1 or more to work with Firefox
+          volumeMounts:
+            - mountPath: /dev/shm
+              name: dshm
+      restartPolicy: Never
+      volumes:
+        - emptyDir:
+            medium: Memory
+          name: dshm

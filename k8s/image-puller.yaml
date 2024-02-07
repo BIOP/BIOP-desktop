@@ -1,0 +1,43 @@
+apiVersion: kubeflow.org/v2beta1
+kind: MPIJob
+metadata:
+  name: image-puller
+spec:
+  slotsPerWorker: 1
+  runPolicy:
+    cleanPodPolicy: All
+  mpiReplicaSpecs:
+    Launcher:
+      replicas: 1
+      template:
+        spec:
+          containers:
+            - image: alpine
+              name: image-puller
+              command: ["/bin/sh"]
+              args: ["-c", "sleep 60"]
+    Worker:
+      replicas: 8 # nombre de noeuds sur le cluster -> kubectl get nodes |grep gpu |wc -l
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: image-puller
+        spec: 
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 1
+                  podAffinityTerm:
+                    labelSelector:
+                      matchExpressions:
+                        - key: app.kubernetes.io/name
+                          operator: In
+                          values:
+                            - image-puller
+                    topologyKey: kubernetes.io/hostname
+          containers:
+            - name: image-puller
+              image: registry.rcp.epfl.ch/ptbiop/biop-vnc:latest # Image que tu souhaites pull sur tous les serveurs du cluster
+              imagePullPolicy: Always              
+              command: ["/bin/sh"]
+              args: ["-c", "sleep 60"]
