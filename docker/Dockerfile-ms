@@ -124,9 +124,6 @@ COPY --from=empanada-image /home/biop/Desktop/empanada.desktop /home/biop/Deskto
 #################################################################
 # Install stardist
 COPY --from=stardist-image /opt/conda/envs/stardist /opt/conda/envs/stardist
-# TODO Discuss if we need to copy the models and annotations (or leave them on S3)
-#COPY --from=stardist-image /home/biop/stardist/annotations /home/biop/stardist/annotations
-#COPY --from=stardist-image /home/biop/stardist/models/ /home/biop/stardist/models/
 
 #################################################################
 # Install abba
