@@ -1,0 +1,201 @@
+ARG BASE_IMAGE=0.0.3
+
+ARG ALIAS=biop/
+
+# because COPY --from= doesn't support build-arg (https://github.com/docker/for-mac/issues/2155)
+# we can still do a list of all sub-blocks here to be able to use them in the COPY --from=... below
+# base needs to be last, Don't Ask Wky !  (I don't know) ! and it seems it need to be named 'base' , D.A:W.2 ! but it works !
+ARG QUPATH_VERSION=v0.4.4
+ARG ILASTIK_VERSION=1.4.0-gpu
+ARG FIJI_VERSION=20231129
+ARG CELLPOSE_VERSION=2.2.2
+ARG DEVBIO_VERSION=0.10.1
+ARG SAMAPI_VERSION=0.3.0
+ARG EM_VERSION=0.2.3
+ARG STARDIST_VERSION=0.8.5
+ARG ABBA_VERSION=0.0.2
+ARG CELLPROFILER_VERSION=4.2.6
+ARG INKSCAPE_VERSION=0.0.1
+
+FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} as qupath-image
+FROM ${ALIAS}biop-ilastik:${ILASTIK_VERSION} as ilastik-image
+FROM ${ALIAS}biop-fiji:${FIJI_VERSION} as fiji-image
+FROM ${ALIAS}biop-cellpose:${CELLPOSE_VERSION} as cellpose-image
+FROM ${ALIAS}biop-devbio:${DEVBIO_VERSION} as devbio-image
+FROM ${ALIAS}biop-samapi:${SAMAPI_VERSION} as samapi-image
+FROM ${ALIAS}biop-empanada:${EM_VERSION} as empanada-image
+FROM ${ALIAS}biop-stardist:${STARDIST_VERSION} as stardist-image
+FROM ${ALIAS}biop-abba:${ABBA_VERSION} as abba-image
+FROM ${ALIAS}biop-cellprofiler:${CELLPROFILER_VERSION} as cellprofiler-image
+FROM ${ALIAS}biop-inkscape:${INKSCAPE_VERSION} as inkscape-image
+
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE} as base
+
+USER root
+
+RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop 
+
+################################################################# 
+# Install QuPath 
+# 
+COPY --from=qupath-image /opt/QuPath /opt/QuPath
+COPY --from=qupath-image /home/biop/Desktop/QuPath.desktop  /home/biop/Desktop/QuPath.desktop
+COPY --from=qupath-image /home/biop/QuPath_Common_Data_0.4/ /home/biop/QuPath_Common_Data_0.4/
+# TODO set pref 
+#  Prepare to set QP_prefs 
+COPY QuPath/QuPath_setPaths.groovy /home/biop/tmp/QuPath_setPaths.groovy
+COPY QuPath/qp_prefs.xml /home/biop/tmp/qp_prefs.xml
+RUN chown -R biop:biop /home/biop/tmp
+USER biop
+# here we import prefs in QuPath so that we can use the extensions at the first start ! 
+RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' 
+# TODO test and uncomment below after testing
+USER root 
+RUN rm -rf /home/biop/tmp 
+
+#################################################################
+# Install ilastik
+COPY --from=ilastik-image /opt/ilastik /opt/ilastik
+COPY --from=ilastik-image /home/biop//Desktop/ilastik.desktop /home/biop//Desktop/ilastik.desktop
+
+#################################################################
+# Install Fiji
+COPY --from=fiji-image /opt/Fiji.app /opt/Fiji.app
+COPY --from=fiji-image /home/biop/Desktop/Fiji.desktop /home/biop/Desktop/Fiji.desktop
+
+# Doesn't work on local WSL2 but works on runai !!!
+# OpenCL installation for clij
+RUN apt-get update \
+    && apt-get install -y nvidia-opencl-dev \
+    && apt remove -y libnvidia-compute-535-server \
+    && apt-get autoremove --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && find /var/log -type f -exec cp /dev/null \{\} \;
+# TODO : run Fiji to set prefs (done at the ABBA install, see below)
+
+#################################################################
+# From here, we'll install different conda envs
+# - cellpose
+# - devbio
+# - samapi
+# - empanada
+# - stardist, TODO make it work on RunAI
+#
+#################################################################
+# Install cellpose and models
+COPY --from=cellpose-image  /opt/conda/envs/cellpose /opt/conda/envs/cellpose
+COPY --from=cellpose-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
+RUN chmod -R a+rwX /home/biop/.cellpose  
+
+#################################################################
+# Install devbio
+COPY --from=devbio-image /opt/conda/envs/devbio /opt/conda/envs/devbio
+# create shortcut to start devbio-napari
+COPY --from=devbio-image /opt/devbio/ /opt/devbio/
+COPY --from=devbio-image /home/biop/Desktop/devbio-napari.desktop  /home/biop/Desktop/devbio-napari.desktop 
+
+#################################################################
+# Install samapi
+#
+# add samapi env 
+COPY --from=samapi-image /opt/conda/envs/samapi /opt/conda/envs/samapi
+# add models for samapi
+COPY --from=samapi-image /home/biop/.cache/torch/hub/checkpoints/ /home/biop/.cache/torch/hub/checkpoints/
+RUN chown -R biop:biop /home/biop/.cache/torch/hub/checkpoints/ \
+    && chmod -R a+rwX /home/biop/.cache/torch/hub/checkpoints/ 
+# create shortcut to start SAMAPI 
+# because it's a QuPath extension I add (ico & sh) to the QuPath Common Data folder
+# but we could also have them in /opt/samapi , as we have for empanada (see below)
+COPY --from=samapi-image /opt/samapi/ /opt/samapi/
+COPY --from=samapi-image /home/biop/Desktop/samapi.desktop /home/biop/Desktop/samapi.desktop
+
+#################################################################
+# Install empanada
+#
+# add empanada env
+COPY --from=empanada-image /opt/conda/envs/empanada /opt/conda/envs/empanada
+# add shortcut to start empanada
+COPY --from=empanada-image /opt/empanada /opt/empanada
+COPY --from=empanada-image /home/biop/Desktop/empanada.desktop /home/biop/Desktop/empanada.desktop
+# TODO ? download model, it's a light one so we can download it on demand
+
+#################################################################
+# Install stardist
+COPY --from=stardist-image /opt/conda/envs/stardist /opt/conda/envs/stardist
+# TODO Discuss if we need to copy the models and annotations (or leave them on S3)
+#COPY --from=stardist-image /home/biop/stardist/annotations /home/biop/stardist/annotations
+#COPY --from=stardist-image /home/biop/stardist/models/ /home/biop/stardist/models/
+
+#################################################################
+# Install abba
+COPY --from=abba-image /opt/abba /opt/abba
+RUN chown -R biop:biop /opt/abba/ \
+    && chmod -R a+rwX /opt/abba/
+COPY --from=abba-image /home/biop/Desktop/abba.desktop  /home/biop/Desktop/abba.desktop 
+
+# install abba_python env
+COPY --from=abba-image /opt/conda/envs/abba_python/ /opt/conda/envs/abba_python/
+
+# instal deepslice env
+COPY --from=abba-image /opt/conda/envs/deepslice/  /opt/conda/envs/deepslice/
+# and copy some atlases 
+COPY --from=abba-image /opt/conda/envs/deepslice/lib/site-packages/DeepSlice/metadata/weights/ /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/
+
+# and make deepslice_cli_v1.1.5.py executable
+RUN chown biop:biop /opt/conda/envs/deepslice/ \
+    && chmod -R a+rwx /opt/conda/envs/deepslice/  
+
+# add elastix
+COPY --from=abba-image /opt/elastix /opt/elastix
+RUN chown -R biop:biop /opt/elastix \
+    && chmod  a+rwx /opt/elastix/bin/elastix \
+    && chmod  a+rwx /opt/elastix/bin/transformix  
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/elastix/lib
+
+# Test if ABBA works again with all rights
+RUN chown biop:biop /opt/Fiji.app/ \
+    && chmod -R a+rwx /opt/Fiji.app/
+
+# set FIJI prefs (elastix, cellpose , stardist), and adds text to set the path to atlases
+COPY fiji/Fiji_setWrappersPaths.groovy /home/biop/tmp/Fiji_setWrappersPaths.groovy
+RUN chown -R biop:biop /home/biop/tmp \
+    && chmod -R a+rwX /home/biop/tmp
+
+USER biop
+RUN /opt/Fiji.app/ImageJ-linux64 --headless --run /home/biop/tmp/Fiji_setWrappersPaths.groovy
+USER root
+RUN rm -rf /home/biop/tmp
+
+# a text file to specify where the atlases are
+COPY --from=abba-image /opt/Fiji.app/plugins/BIOP/ABBA_Atlas_folder.txt /opt/Fiji.app/plugins/BIOP/ABBA_Atlas_folder.txt
+
+# To make the different conda env available in jupyter
+COPY jupyter/kernels/ /home/biop/.local/share/jupyter/kernels/
+
+
+#################################################################
+# Install cellprofiler
+COPY --from=cellprofiler-image /opt/conda/envs/cellprofiler /opt/conda/envs/cellprofiler
+# create shortcut to start cellprofiler
+COPY --from=cellprofiler-image /opt/cellprofiler /opt/cellprofiler
+COPY --from=cellprofiler-image /home/biop/Desktop/cellprofiler.desktop /home/biop/Desktop/cellprofiler.desktop
+
+#################################################################
+# Add the inkscape-imagej-panel extension for inskcape
+COPY --from=inkscape-image /home/biop/.config/inkscape/extensions/  /home/biop/.config/inkscape/extensions/ 
+
+#################################################################
+# final chown and chmod
+RUN chown -R biop:biop /home/biop/ \
+    && chmod -R a+rwx /home/biop/    
+
+#################################################################
+# Container start
+USER biop
+WORKDIR /home/biop
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
+
+
