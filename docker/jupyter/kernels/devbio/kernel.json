@@ -1,0 +1,14 @@
+{
+ "argv": [
+  "/opt/conda/envs/devbio/bin/python3.9",
+  "-m",
+  "ipykernel_launcher",
+  "-f",
+  "{connection_file}"
+ ],
+ "display_name": "devbio",
+ "language": "python",
+ "metadata": {
+  "debugger": true
+ }
+}

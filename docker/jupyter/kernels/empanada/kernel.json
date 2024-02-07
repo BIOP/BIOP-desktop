@@ -1,0 +1,14 @@
+{
+ "argv": [
+  "/opt/conda/envs/empanada/bin/python",
+  "-m",
+  "ipykernel_launcher",
+  "-f",
+  "{connection_file}"
+ ],
+ "display_name": "empanada",
+ "language": "python",
+ "metadata": {
+  "debugger": true
+ }
+}

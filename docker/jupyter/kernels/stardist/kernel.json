@@ -1,0 +1,14 @@
+{
+ "argv": [
+  "/opt/conda/envs/stardist/bin/python",
+  "-m",
+  "ipykernel_launcher",
+  "-f",
+  "{connection_file}"
+ ],
+ "display_name": "stardist",
+ "language": "python",
+ "metadata": {
+  "debugger": true
+ }
+}

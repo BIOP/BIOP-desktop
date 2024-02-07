@@ -1,0 +1,14 @@
+{
+ "argv": [
+  "/usr/bin/python",
+  "-m",
+  "ipykernel_launcher",
+  "-f",
+  "{connection_file}"
+ ],
+ "display_name": "cellpose",
+ "language": "python",
+ "metadata": {
+  "debugger": true
+ }
+}
