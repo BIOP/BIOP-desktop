@@ -5,15 +5,15 @@ ARG ALIAS=biop/
 # because COPY --from= doesn't support build-arg (https://github.com/docker/for-mac/issues/2155)
 # we can still do a list of all sub-blocks here to be able to use them in the COPY --from=... below
 # base needs to be last, Don't Ask Wky !  (I don't know) ! and it seems it need to be named 'base' , D.A:W.2 ! but it works !
-ARG QUPATH_VERSION=v0.4.4
+ARG QUPATH_VERSION=v0.5.0
 ARG ILASTIK_VERSION=1.4.0-gpu
-ARG FIJI_VERSION=20231129
+ARG FIJI_VERSION=20240207
 ARG CELLPOSE_VERSION=2.2.2
 ARG DEVBIO_VERSION=0.10.1
-ARG SAMAPI_VERSION=0.3.0
+ARG SAMAPI_VERSION=0.4.0
 ARG EM_VERSION=0.2.3
 ARG STARDIST_VERSION=0.8.5
-ARG ABBA_VERSION=0.0.2
+ARG ABBA_VERSION=0.8.0
 ARG CELLPROFILER_VERSION=4.2.6
 ARG INKSCAPE_VERSION=0.0.1
 
@@ -40,23 +40,28 @@ RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop
 # 
 COPY --from=qupath-image /opt/QuPath /opt/QuPath
 COPY --from=qupath-image /home/biop/Desktop/QuPath.desktop  /home/biop/Desktop/QuPath.desktop
-COPY --from=qupath-image /home/biop/QuPath_Common_Data_0.4/ /home/biop/QuPath_Common_Data_0.4/
-# TODO set pref 
-#  Prepare to set QP_prefs 
+
+# install Extensions
+COPY --from=qupath-image /opt/QuPath/QuPath_Common_Data_0.5 /opt/QuPath/QuPath_Common_Data_0.5  
+RUN chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.5 \
+    && chmod -R a+rwx /opt/QuPath/QuPath_Common_Data_0.5
+    
+# Prepare to set QP_prefs 
 COPY QuPath/QuPath_setPaths.groovy /home/biop/tmp/QuPath_setPaths.groovy
 COPY QuPath/qp_prefs.xml /home/biop/tmp/qp_prefs.xml
 RUN chown -R biop:biop /home/biop/tmp
 USER biop
 # here we import prefs in QuPath so that we can use the extensions at the first start ! 
 RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' 
-# TODO test and uncomment below after testing
-USER root 
+# set back to root to continue installation
+USER root
 RUN rm -rf /home/biop/tmp 
+
 
 #################################################################
 # Install ilastik
 COPY --from=ilastik-image /opt/ilastik /opt/ilastik
-COPY --from=ilastik-image /home/biop//Desktop/ilastik.desktop /home/biop//Desktop/ilastik.desktop
+COPY --from=ilastik-image /home/biop/Desktop/ilastik.desktop /home/biop/Desktop/ilastik.desktop
 
 #################################################################
 # Install Fiji
@@ -102,9 +107,9 @@ COPY --from=devbio-image /home/biop/Desktop/devbio-napari.desktop  /home/biop/De
 # add samapi env 
 COPY --from=samapi-image /opt/conda/envs/samapi /opt/conda/envs/samapi
 # add models for samapi
-COPY --from=samapi-image /home/biop/.cache/torch/hub/checkpoints/ /home/biop/.cache/torch/hub/checkpoints/
-RUN chown -R biop:biop /home/biop/.cache/torch/hub/checkpoints/ \
-    && chmod -R a+rwX /home/biop/.cache/torch/hub/checkpoints/ 
+COPY --from=samapi-image /home/biop/.samapi/ /home/biop/.samapi/
+RUN chown -R biop:biop /home/biop/.samapi/ \
+    && chmod -R a+rwX /home/biop/.samapi/ 
 # create shortcut to start SAMAPI 
 # because it's a QuPath extension I add (ico & sh) to the QuPath Common Data folder
 # but we could also have them in /opt/samapi , as we have for empanada (see below)
@@ -140,7 +145,7 @@ COPY --from=abba-image /opt/conda/envs/deepslice/  /opt/conda/envs/deepslice/
 # and copy some atlases 
 COPY --from=abba-image /opt/conda/envs/deepslice/lib/site-packages/DeepSlice/metadata/weights/ /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/
 
-# and make deepslice_cli_v1.1.5.py executable
+# and make deepslice_cli_v1.1.5.1.py executable
 RUN chown biop:biop /opt/conda/envs/deepslice/ \
     && chmod -R a+rwx /opt/conda/envs/deepslice/  
 

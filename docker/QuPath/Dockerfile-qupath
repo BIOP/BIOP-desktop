@@ -55,11 +55,11 @@ RUN chown -R biop:biop /home/biop/tmp
 USER biop
 # here we import prefs in QuPath so that we can use the extensions at the first start ! 
 RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' 
-# TODO test and uncomment below after testing 
+# set back to root to continue installation
+USER root
 RUN rm -rf /home/biop/tmp 
 
-# # set back to root to continue installation
-USER root
+
 
 #################################################################
 # Container start
