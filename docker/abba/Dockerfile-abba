@@ -1,15 +1,15 @@
 # https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-23-07.html 
 #FROM superelastix/elastix:5.0.1 as elastix-image
-ARG QUPATH_VERSION=v0.4.4
-ARG FIJI_VERSION=20231024
+ARG QUPATH_VERSION=v0.5.0
+ARG FIJI_VERSION=20240207
+ARG ALIAS=biop/
 
-
-FROM biop-qupath:${QUPATH_VERSION} as qupath-image
+FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} as qupath-image
 #TODO update FIJI to lastest in 23.01.2024
-FROM biop-fiji:${FIJI_VERSION} as fiji-image
+FROM ${ALIAS}biop-fiji:${FIJI_VERSION} as fiji-image
 
 
-FROM biop-vnc-base:0.0.1 as base
+FROM biop-vnc-base:0.0.3 as base
 
 
 USER root
@@ -42,7 +42,7 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/elastix/lib
 COPY --from=qupath-image /opt/QuPath /opt/QuPath
 COPY --from=qupath-image /opt/QuPath /opt/QuPath
 COPY --from=qupath-image /home/biop/Desktop/QuPath.desktop  /home/biop/Desktop/QuPath.desktop
-COPY --from=qupath-image /home/biop/QuPath_Common_Data_0.4/ /home/biop/QuPath_Common_Data_0.4/
+COPY --from=qupath-image /opt/QuPath/QuPath_Common_Data_0.5 /opt/QuPath/QuPath_Common_Data_0.5/
 # TODO set pref 
 #  Prepare to set QP_prefs 
 COPY QuPath/QuPath_setPaths.groovy /home/biop/tmp/QuPath_setPaths.groovy
@@ -92,9 +92,10 @@ RUN conda env update -n abba_python -f /tmp/env_abba_python.yml \
 # add a script to use deepslice from command line
 # TODO replace with wget https://raw.githubusercontent.com/BIOP/ijl-utilities-wrappers/master/src/main/resources/deepslice_cli_v1.1.5.1.py -O /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.1.py
 # modify below accordingly
-COPY abba/deepslice/deepslice_cli_v1.1.5.py /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.py 
-RUN chown biop:biop /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.py \
-    && chmod a+rwx /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.py
+# TODO :  REMOVE AFTER : COPY abba/deepslice/deepslice_cli_v1.1.5.py /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.py 
+RUN wget https://raw.githubusercontent.com/BIOP/ijl-utilities-wrappers/master/src/main/resources/deepslice_cli_v1.1.5.1.py -O /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.1.py 
+RUN chown biop:biop /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.1.py  \
+    && chmod a+rwx /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.1.py 
 
 # # Add test dataset
 # COPY abba/Sections_ABBA.zip /home/biop/Sections_ABBA.zip 
