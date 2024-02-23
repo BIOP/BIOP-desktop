@@ -42,7 +42,7 @@ RUN chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.5 \
     && chmod -R a+rwx /opt/QuPath/QuPath_Common_Data_0.5     
 
 # # TODO : discuss if we prepare unzip from zenodo, or if we update when container start via a git pull ... (less good for reproducibility but better to keep scripts up-to-date)
-RUN wget -q https://zenodo.org/records/10649020/files/QuPath_Common_Data_0.5.zip?download=1 -O ${TEMP_DIR}/QuPath_Common_Data_0.5.zip
+RUN wget -q https://zenodo.org/records/10684665/files/QuPath_Common_Data_0.5.zip?download=1 -O ${TEMP_DIR}/QuPath_Common_Data_0.5.zip
 RUN unzip ${TEMP_DIR}/QuPath_Common_Data_0.5.zip -d /opt/QuPath/QuPath_Common_Data_0.5 \
     && rm ${TEMP_DIR}/QuPath_Common_Data_0.5.zip 
 
