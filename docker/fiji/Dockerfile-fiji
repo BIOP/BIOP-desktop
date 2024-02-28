@@ -56,7 +56,7 @@ RUN wget -q https://github.com/GReD-Clermont/simple-omero-client/releases/downlo
 # add some file so clij deconvolution with regularization can work
 RUN wget -q -q https://www.dropbox.com/sh/dxofkiyseuxn4l4/AADrPjPBbJK_77Ai2WCfaOTza/Linux-2.2.0.16?dl=1 -O Linux-2.2.0.16.zip \
         && unzip -o Linux-2.2.0.16.zip -d /opt/Fiji.app/ -x / \
-        && rm Linux-2.2.0.16.zip \
+        && rm Linux-2.2.0.16.zip \ 
         && rm /opt/Fiji.app/plugins/clij2-fft_-2.2.0.15.jar
 ## NOT WORKING
 # /opt/Fiji.app/ImageJ-linux64 --update update
@@ -65,10 +65,16 @@ RUN wget -q -q https://www.dropbox.com/sh/dxofkiyseuxn4l4/AADrPjPBbJK_77Ai2WCfaO
 # [WARNING] Skipping lib/linux64/libjniclij2fftWrapper.so
 
 
-# This needs to be done in the main Dockerfile
 # OpenCL installation for clij
+# specificy version of "nvidia-opencl-dev" , because of the error : ... usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1: file exists: unknown.  
+# TODOs : find out which version make it crash !!! https://packages.ubuntu.com/search?suite=default&section=all&arch=any&keywords=+nvidia-opencl-dev&searchon=names
+# list  :
+# - jammy (22.04LTS) : 11.5.1-1ubuntu1 , WORKS ! (https://packages.ubuntu.com/jammy/nvidia-opencl-dev)
+# - lunar (23.04) : 11.8.89 , try but can't find it (https://packages.ubuntu.com/lunar/nvidia-opencl-dev)
+# - mantic (23.10) : 12.0.140, try but can't find it (https://packages.ubuntu.com/mantic/nvidia-opencl-dev)
+# >sudo apt-get update returns, jammy-security ...   might be why it can't find others (lunar and mantic)
 RUN apt-get update \
-    && apt-get install -y nvidia-opencl-dev=11.5.1-1ubuntu1 \
+    && apt-get install -y nvidia-opencl-dev \
     && apt remove -y libnvidia-compute-535-server \
     && apt-get autoremove --purge \
     && apt-get clean \
