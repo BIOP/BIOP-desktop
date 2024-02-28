@@ -1,0 +1,14 @@
+{
+ "argv": [
+  "/opt/conda/envs/omnipose/bin/python",
+  "-m",
+  "ipykernel_launcher",
+  "-f",
+  "{connection_file}"
+ ],
+ "display_name": "omnipose",
+ "language": "python",
+ "metadata": {
+  "debugger": true
+ }
+}

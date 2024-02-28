@@ -1,0 +1,31 @@
+ARG BASE_IMAGE=0.0.3
+ARG ALIAS=biop/
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
+
+USER root
+
+# install omnipose https://omnipose.readthedocs.io/index.html
+COPY omnipose/env_omnipose.yml /tmp/env_omnipose.yml
+RUN conda env update -n omnipose -f /tmp/env_omnipose.yml \
+    && source activate omnipose \
+    && git clone https://github.com/kevinjohncutler/omnipose.git \
+    && cd omnipose \
+    && pip install . \
+    #&& pip install aicsimageio \
+    #&& pip install torch_optimizer \
+    && conda deactivate \
+    && conda clean --all -f -y \
+    && conda env export -n "biop" \ 
+    && rm /tmp/env_omnipose.yml \
+    && rm -rf /home/biop/omnipose
+
+
+RUN chmod -R a+rwX /home/biop/ \
+    && chown -R biop:biop /home/biop/
+
+#################################################################
+# Container start
+USER biop
+WORKDIR /home/biop
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
