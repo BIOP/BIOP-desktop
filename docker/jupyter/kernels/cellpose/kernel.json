@@ -1,6 +1,6 @@
 {
  "argv": [
-  "/usr/bin/python",
+  "/opt/conda/envs/cellpose/bin/python",
   "-m",
   "ipykernel_launcher",
   "-f",
