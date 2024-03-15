@@ -1,0 +1,11 @@
+name: "devbio"
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9 
+  - napari
+  - pyqt
+  - pip
+  - pip :
+    - brainrender-napari
+prefix: "/opt/conda/envs/devbio"
