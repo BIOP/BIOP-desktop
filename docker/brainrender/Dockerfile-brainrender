@@ -1,0 +1,34 @@
+ARG BASE_IMAGE=0.0.3
+ARG ALIAS=biop/
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
+
+USER root
+
+# install brainrender  https://www.napari-hub.org/plugins/brainrender-napari 
+COPY brainrender/env_brainrender.yml /tmp/env_brainrender.yml
+RUN conda env update -n brainrender -f /tmp/env_brainrender.yml \
+    && conda clean --all -f -y \
+    && conda env export -n "biop" \ 
+    && rm /tmp/env_brainrender.yml 
+
+USER biop
+
+RUN source activate brainrender \
+    && python -m ipykernel install --user --name brainrender --display-name "Python (brainrender)" \
+    && conda deactivate
+
+RUN source activate brainrender \
+    && brainglobe install -a allen_mouse_25um \
+    && conda deactivate
+
+USER root 
+
+RUN chmod -R a+rwX /home/biop/ \
+    && chown -R biop:biop /home/biop/
+
+#################################################################
+# Container start
+USER biop
+WORKDIR /home/biop
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
