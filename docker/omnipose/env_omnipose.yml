@@ -1,0 +1,16 @@
+name: "omnipose"
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9.18
+  - pytorch
+  - torchvision
+  - pytorch-cuda=11.8
+  - aicsimageio
+  - pip :
+    - torch_optimizer
+    - ipykernel
+prefix: "/opt/conda/envs/omnipose"

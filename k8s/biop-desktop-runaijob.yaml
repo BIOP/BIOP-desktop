@@ -14,7 +14,7 @@ spec:
       schedulerName: runai-scheduler
       containers:
         - name: job
-          image: registry.rcp.epfl.ch/ptbiop/biop-desktop:0.0.6
+          image: registry.rcp.epfl.ch/ptbiop/biop-desktop:0.0.8
           imagePullPolicy: Always
           resources:
             requests:

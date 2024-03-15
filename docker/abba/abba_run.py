@@ -24,7 +24,7 @@ File = jimport('java.io.File')
 
 # Sets DeepSlice env path - hopefully it's a common location for all OSes
 deepslice_env_path = str('/opt/conda/envs/deepslice/')
-deepslice_version = JString(str('1.1.5'))
+deepslice_version = JString(str('1.1.5.1'))
 
 DeepSlice = jimport('ch.epfl.biop.wrappers.deepslice.DeepSlice')
 DeepSlice.setEnvDirPath(File(deepslice_env_path))
