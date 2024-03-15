@@ -5,12 +5,15 @@
     <map/>
     <node name="io.github.qupath">
       <map/>
-      <node name="0.4">
+      <node name="0.5">
         <map>
           <entry key="cellposePythonPath" value="/opt/conda/envs/cellpose/bin/python"/>
-          <entry key="lastUpdateCheck" value="1692341778912"/>
-          <entry key="scriptsPath" value="/home/biop/QuPath_Common_Data_0.4/qupath-scripts"/>
-          <entry key="userPath" value="/home/biop/QuPath_Common_Data_0.4"/>
+          <entry key="defaultPathClasses" value="rO0ABXNyABNqYXZhLnV0aWwuQXJyYXlMaXN0eIHSHZnHYZ0DAAFJAARzaXpleHAAAAAKdwQAAAAKc3IAJHF1cGF0aC5saWIub2JqZWN0cy5jbGFzc2VzLlBhdGhDbGFzcwAAAAAAAAABAgADTAAIY29sb3JSR0J0ABNMamF2YS9sYW5nL0ludGVnZXI7TAAEbmFtZXQAEkxqYXZhL2xhbmcvU3RyaW5nO0wAC3BhcmVudENsYXNzdAAmTHF1cGF0aC9saWIvb2JqZWN0cy9jbGFzc2VzL1BhdGhDbGFzczt4cHBwcHNxAH4AAnNyABFqYXZhLmxhbmcuSW50ZWdlchLioKT3gYc4AgABSQAFdmFsdWV4cgAQamF2YS5sYW5nLk51bWJlcoaslR0LlOCLAgAAeHD/yAAAdAAFVHVtb3Jwc3EAfgACc3EAfgAI/5bIlnQABlN0cm9tYXBzcQB+AAJzcQB+AAj/oFqgdAAMSW1tdW5lIGNlbGxzcHNxAH4AAnNxAH4ACP8yMjJ0AAhOZWNyb3Npc3BzcQB+AAJzcQB+AAj//8gAdAAFT3RoZXJwc3EAfgACc3EAfgAI/wAAtHQAB1JlZ2lvbipwc3EAfgACc3EAfgAI/7S0tHQAB0lnbm9yZSpwc3EAfgACc3EAfgAI//o+PnQACFBvc2l0aXZlcHNxAH4AAnNxAH4ACP9wcOF0AAhOZWdhdGl2ZXB4"/>
+          <entry key="defaultUsername" value="guiet"/>
+          <entry key="lastUpdateCheck" value="1708442956199"/>
+          <entry key="omniposePythonPath" value="/opt/conda/envs/omnipose/bin/python"/>
+          <entry key="scriptsPath" value="/opt/QuPath/QuPath_Common_Data_0.5/qupath-scripts"/>
+          <entry key="userPath" value="/opt/QuPath/QuPath_Common_Data_0.5"/>
         </map>
       </node>
     </node>

@@ -1,17 +1,21 @@
-ARG BASE_IMAGE=0.0.1
-FROM biop-vnc-base:${BASE_IMAGE}
+ARG BASE_IMAGE=0.0.3
+ARG ALIAS=biop/
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 USER root
 
-# install cellpose and download models ( https://cellpose.readthedocs.io/en/latest/models.html )
+# install samapi
 COPY samapi/env_samapi.yml /tmp/env_samapi.yml
 RUN conda env update -n samapi -f /tmp/env_samapi.yml \
     && conda clean --all -f -y \
     && conda env export -n "biop" \ 
     && rm /tmp/env_samapi.yml 
 
+# add lib for wsl 
+ENV LD_LIBRARY_PATH=/usr/lib/wsl/lib:$LD_LIBRARY_PATH
+
 # add models
-# COPY samapi/models.zip /home/biop/models.zip
+# COPY samapi/models.zip /home/biop/models.zip (https://github.com/ksugar/samapi)
 RUN mkdir -p /home/biop/.cache/torch/hub/checkpoints/
 # make a zip (for git lfs) and unzip in Dockerfile , nothing change for the multi-stage build as we copy the folder from this image.
 # RUN unzip /home/biop/models.zip -d /home/biop/.cache/torch/hub/checkpoints/ \
@@ -19,10 +23,10 @@ RUN mkdir -p /home/biop/.cache/torch/hub/checkpoints/
 #     && chown -R biop:biop /home/biop/.cache/torch/hub/checkpoints/ \
 #     && chmod -R a+rwX /home/biop/.cache/torch/hub/checkpoints/
 # download from repo
-RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth" -P /home/biop/.cache/torch/hub/checkpoints/
-RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth" -P /home/biop/.cache/torch/hub/checkpoints/
-RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth" -P /home/biop/.cache/torch/hub/checkpoints/
-RUN wget -q "https://github.com/ChaoningZhang/MobileSAM/raw/master/weights/mobile_sam.pt" -P /home/biop/.cache/torch/hub/checkpoints/
+RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth" -P /home/biop/.samapi/vit_h/
+RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth" -P /home/biop/.samapi/vit_l/
+RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth" -P /home/biop/.samapi/vit_b/
+RUN wget -q "https://github.com/ChaoningZhang/MobileSAM/raw/master/weights/mobile_sam.pt" -P /home/biop/.samapi/vit_t/
 
 #create shortcut to start SAMAPI 
 RUN mkdir -p /opt/samapi/

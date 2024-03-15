@@ -1,15 +1,13 @@
 # https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-23-07.html 
 #FROM superelastix/elastix:5.0.1 as elastix-image
-ARG QUPATH_VERSION=v0.4.4
-ARG FIJI_VERSION=20231024
+ARG QUPATH_VERSION=v0.5.0
+ARG FIJI_VERSION=20240220
+ARG ALIAS=biop/
 
+FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} as qupath-image
+FROM ${ALIAS}biop-fiji:${FIJI_VERSION} as fiji-image
 
-FROM biop-qupath:${QUPATH_VERSION} as qupath-image
-#TODO update FIJI to lastest in 23.01.2024
-FROM biop-fiji:${FIJI_VERSION} as fiji-image
-
-
-FROM biop-vnc-base:0.0.1 as base
+FROM ${ALIAS}biop-vnc-base:0.0.3 as base
 
 
 USER root
@@ -33,16 +31,13 @@ RUN chown -R biop:biop /opt/elastix \
 
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/elastix/lib
 
-
-
 ################################################################# 
 # Install QuPath 
 # 
-#ENV QP_VERSION='biop-qupath-v0.4.4'
 COPY --from=qupath-image /opt/QuPath /opt/QuPath
 COPY --from=qupath-image /opt/QuPath /opt/QuPath
 COPY --from=qupath-image /home/biop/Desktop/QuPath.desktop  /home/biop/Desktop/QuPath.desktop
-COPY --from=qupath-image /home/biop/QuPath_Common_Data_0.4/ /home/biop/QuPath_Common_Data_0.4/
+COPY --from=qupath-image /opt/QuPath/QuPath_Common_Data_0.5 /opt/QuPath/QuPath_Common_Data_0.5/
 # TODO set pref 
 #  Prepare to set QP_prefs 
 COPY QuPath/QuPath_setPaths.groovy /home/biop/tmp/QuPath_setPaths.groovy
@@ -90,18 +85,21 @@ RUN conda env update -n abba_python -f /tmp/env_abba_python.yml \
     && rm /tmp/env_abba_python.yml
 
 # add a script to use deepslice from command line
-# TODO replace with wget https://raw.githubusercontent.com/BIOP/ijl-utilities-wrappers/master/src/main/resources/deepslice_cli_v1.1.5.1.py -O /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.1.py
-# modify below accordingly
-COPY abba/deepslice/deepslice_cli_v1.1.5.py /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.py 
-RUN chown biop:biop /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.py \
-    && chmod a+rwx /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.py
+RUN wget https://raw.githubusercontent.com/BIOP/ijl-utilities-wrappers/master/src/main/resources/deepslice_cli_v1.1.5.1.py -O /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.1.py 
+# set permissions
+RUN chown biop:biop /opt/conda/envs/deepslice/ \
+    && chmod a+rwx /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.1.py 
 
-# # Add test dataset
-# COPY abba/Sections_ABBA.zip /home/biop/Sections_ABBA.zip 
-# RUN unzip /home/biop/Sections_ABBA.zip -d /home/biop/ \
-#     && rm /home/biop/Sections_ABBA.zip \
-#     && chown biop:biop /home/biop/Sections_ABBA/ \
-#     && chmod -R a+rwX /home/biop/Sections_ABBA/
+# When removing RUN chown biop:biop /opt/conda/envs/deepslice/ && chmod -R a+rwx /opt/conda/envs/deepslice/ 
+# tries to download but fails, so we download the weights manually
+RUN wget https://data-proxy.ebrains.eu/api/v1/buckets/deepslice/weights/xception_weights_tf_dim_ordering_tf_kernels.h5 -O /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/xception_weights_tf_dim_ordering_tf_kernels.h5 \
+    && wget https://data-proxy.ebrains.eu/api/v1/buckets/deepslice/weights/Allen_Mixed_Best.h5 -O /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/Allen_Mixed_Best.h5 \ 
+    && wget https://data-proxy.ebrains.eu/api/v1/buckets/deepslice/weights/Synthetic_data_final.hdf5 -O /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/Synthetic_data_final.hdf5
+# set permissions
+RUN chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/xception_weights_tf_dim_ordering_tf_kernels.h5 \
+    && chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/Allen_Mixed_Best.h5 \
+    && chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/Synthetic_data_final.hdf5
+
 
 # Copy atlases from zenodo repo
 # IDK why I need to first use the -P and mv, rather than directly use -O (got an error :  No such file or directory )
@@ -111,35 +109,26 @@ RUN wget https://zenodo.org/records/4173229/files/ccf2017-mod65000-border-center
     && mv /opt/abba/cached_atlas/ccf2017-mod65000-border-centered-mm-bc.xml?download=1 /opt/abba/cached_atlas/ccf2017-mod65000-border-centered-mm-bc.xml \
     && wget https://zenodo.org/records/4173229/files/1.json?download=1 -P /opt/abba/cached_atlas/\
     && mv /opt/abba/cached_atlas/1.json?download=1 /opt/abba/cached_atlas/1.json
+# set permissions
 RUN chown -R biop:biop /opt/abba/cached_atlas/ \
     && chmod -R a+rwX /opt/abba/cached_atlas/
 
-# local copy because issue with connexion to download the weights
-#COPY abba/brainglobe_atlases /opt/conda/envs/deepslice/lib/site-packages/DeepSlice/metadata/weights/
-RUN wget https://data-proxy.ebrains.eu/api/v1/buckets/deepslice/weights/xception_weights_tf_dim_ordering_tf_kernels.h5 -P /opt/conda/envs/deepslice/lib/site-packages/DeepSlice/metadata/weights/ 
-RUN wget https://data-proxy.ebrains.eu/api/v1/buckets/deepslice/weights/Allen_Mixed_Best.h5 -P /opt/conda/envs/deepslice/lib/site-packages/DeepSlice/metadata/weights/
-RUN wget https://data-proxy.ebrains.eu/api/v1/buckets/deepslice/weights/Synthetic_data_final.hdf5 -P /opt/conda/envs/deepslice/lib/site-packages/DeepSlice/metadata/weights/
-
-# it seems that we need all rights on deepslice env
-RUN chown biop:biop /opt/conda/envs/deepslice/ \
-    && chmod -R a+rwx /opt/conda/envs/deepslice/    
-
-RUN rm -rf /home/biop/tmp
 
 # Make a desktop icon for ABBA
 COPY abba/abba_run.py /opt/abba/abba_run.py 
+COPY abba/logo256x256.png /opt/abba/logo256x256.png
+COPY abba/start_abba.sh /opt/abba/start_abba.sh
+
+# set permissions
 RUN chown biop:biop /opt/abba/abba_run.py \
     && chmod a+rwx /opt/abba/abba_run.py
 
-COPY abba/logo256x256.png /opt/abba/logo256x256.png
-COPY abba/start_abba.sh /opt/abba/start_abba.sh
 RUN chown biop:biop /opt/abba/start_abba.sh \
     && chmod a+rwx /opt/abba/start_abba.sh
 
 RUN  printf '[Desktop Entry]\nVersion=1.0\nName=ABBA\nGenericName=ABBA\nX-GNOME-FullName=ABBA\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/abba/start_abba.sh\nTryExec=/opt/abba/start_abba.sh\nTerminal=true\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/abba/logo256x256.png\nStartupWMClass=ABBA\n' > /home/biop/Desktop/abba.desktop \
     && chown -R biop:biop /home/biop \
     && chmod +x /home/biop/Desktop/abba.desktop 
-    # && chmod a+rwx /opt/abba/abba_run.py
 
 # make Fiji not read only
 RUN  chown -R biop:biop /opt/Fiji.app/ \

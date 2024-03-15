@@ -1,12 +1,12 @@
 {
  "argv": [
-  "/opt/conda/envs/cellpose/bin/python",
+  "/opt/conda/envs/omnipose/bin/python",
   "-m",
   "ipykernel_launcher",
   "-f",
   "{connection_file}"
  ],
- "display_name": "cellpose",
+ "display_name": "omnipose",
  "language": "python",
  "metadata": {
   "debugger": true

@@ -3,8 +3,8 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.11
+  - python=3.10
   - pip
   - pip:
-      - https://github.com/ksugar/samapi/archive/refs/tags/v0.3.0.tar.gz
+      - https://github.com/ksugar/samapi/archive/refs/tags/v0.4.0.tar.gz
 prefix: "/opt/conda/envs/samapi"
