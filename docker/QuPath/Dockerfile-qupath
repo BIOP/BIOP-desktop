@@ -4,7 +4,7 @@ ARG BASE_IMAGE=0.0.3
 ARG ALIAS=biop/
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
-ARG QP_VERSION=v0.5.0
+ARG QP_VERSION=v0.5.1
 
 USER root
 
@@ -30,7 +30,7 @@ RUN mv /home/biop/qupath/build/dist/QuPath/ /opt/QuPath \
 
 # # create icon
 RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
-    && printf '[Desktop Entry]\nVersion=0.5.0\nName=qupath\nGenericName=QuPath\nX-GNOME-FullName=QuPath\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/QuPath/bin/QuPath\nTryExec=/opt/QuPath/bin/QuPath\nTerminal=false\nStartupNotify=true\nIcon=/opt/QuPath/lib/QuPath.png\nStartupWMClass=QuPath' > /home/biop/Desktop/QuPath.desktop \
+    && printf '[Desktop Entry]\nVersion=0.5.1\nName=qupath\nGenericName=QuPath\nX-GNOME-FullName=QuPath\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/QuPath/bin/QuPath\nTryExec=/opt/QuPath/bin/QuPath\nTerminal=false\nStartupNotify=true\nIcon=/opt/QuPath/lib/QuPath.png\nStartupWMClass=QuPath' > /home/biop/Desktop/QuPath.desktop \
     && chown -R biop:biop /home/biop \
     && chmod +x /home/biop/Desktop/QuPath.desktop
 
@@ -42,7 +42,7 @@ RUN chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.5 \
     && chmod -R a+rwx /opt/QuPath/QuPath_Common_Data_0.5     
 
 # # TODO : discuss if we prepare unzip from zenodo, or if we update when container start via a git pull ... (less good for reproducibility but better to keep scripts up-to-date)
-RUN wget -q https://zenodo.org/records/10684665/files/QuPath_Common_Data_0.5.zip?download=1 -O ${TEMP_DIR}/QuPath_Common_Data_0.5.zip
+RUN wget -q https://zenodo.org/records/10869324/files/QuPath_Common_Data_0.5.zip?download=1 -O ${TEMP_DIR}/QuPath_Common_Data_0.5.zip
 RUN unzip ${TEMP_DIR}/QuPath_Common_Data_0.5.zip -d /opt/QuPath/QuPath_Common_Data_0.5 \
     && rm ${TEMP_DIR}/QuPath_Common_Data_0.5.zip 
 

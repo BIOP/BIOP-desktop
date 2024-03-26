@@ -75,7 +75,7 @@ RUN wget -q -q https://www.dropbox.com/sh/dxofkiyseuxn4l4/AADrPjPBbJK_77Ai2WCfaO
 # >sudo apt-get update returns, jammy-security ...   might be why it can't find others (lunar and mantic)
 RUN apt-get update \
     && apt-get install -y nvidia-opencl-dev \
-    && apt remove -y libnvidia-compute-535-server \
+    && apt remove -y libnvidia-compute-545 \
     && apt-get autoremove --purge \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
