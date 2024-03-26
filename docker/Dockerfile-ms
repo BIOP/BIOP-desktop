@@ -5,9 +5,9 @@ ARG ALIAS=biop/
 # because COPY --from= doesn't support build-arg (https://github.com/docker/for-mac/issues/2155)
 # we can still do a list of all sub-blocks here to be able to use them in the COPY --from=... below
 # base needs to be last, Don't Ask Wky !  (I don't know) ! and it seems it need to be named 'base' , D.A:W.2 ! but it works !
-ARG QUPATH_VERSION=v0.5.0
+ARG QUPATH_VERSION=v0.5.1
 ARG ILASTIK_VERSION=1.4.0-gpu
-ARG FIJI_VERSION=20240220
+ARG FIJI_VERSION=20240325
 ARG CELLPOSE_VERSION=2.2.2
 ARG DEVBIO_VERSION=0.10.1
 ARG SAMAPI_VERSION=0.4.0
@@ -195,11 +195,6 @@ COPY --from=omnipose-image /opt/conda/envs/omnipose/ /opt/conda/envs/omnipose/
 # To make the different conda env available in jupyter
 COPY jupyter/kernels/ /home/biop/.local/share/jupyter/kernels/
 
-#################################################################
-# final chown and chmod
-RUN chown -R biop:biop /home/biop/ \
-    && chmod -R a+rwx /home/biop/    
-
 
 #################################################################
 # # Install OpenCL ( for clij ... )
@@ -207,15 +202,18 @@ RUN chown -R biop:biop /home/biop/ \
 # see https://github.com/NVIDIA/nvidia-container-toolkit/issues/371
 # We move at the end so that we can build a normal version and WSL one without it, as it is not supported anyway.
 RUN apt-get update \
-   && apt-get install -y nvidia-opencl-dev=11.5.1-1ubuntu1 \
-    && apt remove -y libnvidia-compute-535-server \
+    && apt-get install -y nvidia-opencl-dev \
+    && apt remove -y libnvidia-compute-545 \
     && apt-get autoremove --purge \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /tmp/* \
     && find /var/log -type f -exec cp /dev/null \{\} \;
 
-# # TODO : run Fiji to set prefs (done at the ABBA install, see below)
+#################################################################
+# final chown and chmod
+RUN chown -R biop:biop /home/biop/ \
+    && chmod -R a+rwx /home/biop/    
 
 #################################################################
 # Container start
