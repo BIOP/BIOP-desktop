@@ -1,0 +1,20 @@
+ARG ALIAS=biop/
+FROM ${ALIAS}biop-vnc-base:0.0.3 as base
+
+USER root
+
+# install deepslice 
+COPY abba/deepslice/env_deepslice.yml /tmp/env_deepslice.yml
+RUN conda env update -n deepslice -f /tmp/env_deepslice.yml \
+    && conda clean --all -f -y \
+    && conda env export -n "biop" \ 
+    && rm /tmp/env_deepslice.yml 
+
+
+################################################################
+# Container start
+USER biop
+WORKDIR /home/biop
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+#CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir="]

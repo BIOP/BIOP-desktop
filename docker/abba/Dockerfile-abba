@@ -1,11 +1,13 @@
 # https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-23-07.html 
 #FROM superelastix/elastix:5.0.1 as elastix-image
-ARG QUPATH_VERSION=v0.5.0
-ARG FIJI_VERSION=20240220
+ARG QUPATH_VERSION=v0.5.1
+ARG FIJI_VERSION=20240325
+ARG DEEPSLICE_VERSION=1.1.5
 ARG ALIAS=biop/
 
 FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} as qupath-image
 FROM ${ALIAS}biop-fiji:${FIJI_VERSION} as fiji-image
+FROM ${ALIAS}biop-deepslice:${DEEPSLICE_VERSION} as deepslice-image
 
 FROM ${ALIAS}biop-vnc-base:0.0.3 as base
 
@@ -71,11 +73,12 @@ USER root
 RUN rm -rf /home/biop/tmp
 
 # install deepslice 
-COPY abba/deepslice/env_deepslice.yml /tmp/env_deepslice.yml
-RUN conda env update -n deepslice -f /tmp/env_deepslice.yml \
-    && conda clean --all -f -y \
-    && conda env export -n "biop" \ 
-    && rm /tmp/env_deepslice.yml 
+# COPY abba/deepslice/env_deepslice.yml /tmp/env_deepslice.yml
+# RUN conda env update -n deepslice -f /tmp/env_deepslice.yml \
+#     && conda clean --all -f -y \
+#     && conda env export -n "biop" \ 
+#     && rm /tmp/env_deepslice.yml 
+COPY --from=deepslice-image /opt/conda/envs/deepslice /opt/conda/envs/deepslice
 
 # install abba_python
 COPY abba/env_abba_python.yml /tmp/env_abba_python.yml
@@ -126,7 +129,7 @@ RUN chown biop:biop /opt/abba/abba_run.py \
 RUN chown biop:biop /opt/abba/start_abba.sh \
     && chmod a+rwx /opt/abba/start_abba.sh
 
-RUN  printf '[Desktop Entry]\nVersion=1.0\nName=ABBA\nGenericName=ABBA\nX-GNOME-FullName=ABBA\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/abba/start_abba.sh\nTryExec=/opt/abba/start_abba.sh\nTerminal=true\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/abba/logo256x256.png\nStartupWMClass=ABBA\n' > /home/biop/Desktop/abba.desktop \
+RUN  printf '[Desktop Entry]\nVersion=0.8.0\nName=ABBA\nGenericName=ABBA\nX-GNOME-FullName=ABBA\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/abba/start_abba.sh\nTryExec=/opt/abba/start_abba.sh\nTerminal=true\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/abba/logo256x256.png\nStartupWMClass=ABBA\n' > /home/biop/Desktop/abba.desktop \
     && chown -R biop:biop /home/biop \
     && chmod +x /home/biop/Desktop/abba.desktop 
 
