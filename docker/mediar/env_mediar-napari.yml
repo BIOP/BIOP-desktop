@@ -1,0 +1,12 @@
+name: "mediar-napari"
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - napari
+  - pyqt
+  - pip
+  - pip :
+    - ipykernel
+prefix: "/opt/conda/envs/mediar-napari"
