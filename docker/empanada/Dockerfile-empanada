@@ -1,5 +1,6 @@
-ARG BASE_IMAGE=0.0.1
-FROM biop-vnc-base:${BASE_IMAGE}
+ARG BASE_IMAGE=0.0.3
+ARG ALIAS=biop/
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE} as base
 #ARG DEBIO_VERSION=0.10.1
 #FROM biop-devbio:${DEBIO_VERSION} as base
 

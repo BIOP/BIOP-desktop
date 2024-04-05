@@ -8,7 +8,7 @@ dependencies:
   - pip
   - pip:
       - napari[all]
-      - empanada-napari==0.2.3
+      - empanada-napari==1.1.0
       - scikit-image
 prefix: "/opt/conda/envs/empanada"
 #TODO napari-ome-zarr
