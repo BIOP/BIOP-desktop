@@ -7,18 +7,26 @@ USER root
 # install omnipose https://omnipose.readthedocs.io/index.html
 COPY omnipose/env_omnipose.yml /tmp/env_omnipose.yml
 RUN conda env update -n omnipose -f /tmp/env_omnipose.yml \
-    && source activate omnipose \
-    && git clone https://github.com/kevinjohncutler/omnipose.git \
-    && cd omnipose \
-    && pip install . \
-    #&& pip install aicsimageio \
-    #&& pip install torch_optimizer \
-    && conda deactivate \
     && conda clean --all -f -y \
     && conda env export -n "biop" \ 
     && rm /tmp/env_omnipose.yml \
     && rm -rf /home/biop/omnipose
 
+# Donwload models from https://osf.io/xmury/
+RUN mkdir -p /home/biop/.cellpose/models/
+RUN wget https://osf.io/download/93gsu/ -O /home/biop/.cellpose/models/bact_fluor_cptorch_0
+RUN wget https://osf.io/download/wqbes/ -O /home/biop/.cellpose/models/bact_fluor_omnitorch_0
+RUN wget https://osf.io/download/bngcp/ -O /home/biop/.cellpose/models/bact_phase_omnitorch_0
+RUN wget https://osf.io/download/9adk7/ -O /home/biop/.cellpose/models/cellpose_residual_on_style_on_concatenation_off_omni_nclasses_3_combined_2023_05_24_03_27_24.228162_epoch_11400
+RUN wget https://osf.io/download/8bvsn/ -O /home/biop/.cellpose/models/cyto2_omnitorch_0
+RUN wget https://osf.io/download/b7t4p/ -O /home/biop/.cellpose/models/plant_cptorch_0
+RUN wget https://osf.io/download/arfny/ -O /home/biop/.cellpose/models/plant_omnitorch_0
+
+# One model is in a issue thread 
+# TODO update link whenver the model is available elsewhere
+RUN wget https://github.com/kevinjohncutler/omnipose/files/14723437/size_cyto2_omnitorch_0.zip -O size_cyto2_omnitorch_0.zip \
+    && unzip size_cyto2_omnitorch_0.zip -d /home/biop/.cellpose/models/ \
+    && rm size_cyto2_omnitorch_0.zip
 
 RUN chmod -R a+rwX /home/biop/ \
     && chown -R biop:biop /home/biop/
