@@ -1,11 +1,11 @@
 # https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-23-07.html 
 # FROM nvcr.io/nvidia/pytorch:23.07-py3
-ARG BASE_IMAGE=0.0.3
+ARG BASE_IMAGE=0.1.0
 ARG ALIAS=biop/
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 ENV OMEROIJ_VERSION 5.8.3
-ENV SOC_VERSION 5.16.0
+ENV SOC_VERSION 5.18.0
 
 USER root
 
@@ -49,7 +49,6 @@ RUN wget -q https://github.com/ome/omero-insight/releases/download/v${OMEROIJ_VE
     && chmod -R a+rwX /opt/Fiji.app/plugins
 
 # Install simple-omero-client
-
 RUN wget -q https://github.com/GReD-Clermont/simple-omero-client/releases/download/${SOC_VERSION}/simple-omero-client-${SOC_VERSION}.jar -O /opt/Fiji.app/plugins/simple-omero-client-${SOC_VERSION}.jar \
     && chmod -R a+rwX /opt/Fiji.app/plugins
 
@@ -64,23 +63,6 @@ RUN wget -q -q https://www.dropbox.com/sh/dxofkiyseuxn4l4/AADrPjPBbJK_77Ai2WCfaO
 # [WARNING] Skipping lib/linux64/libclij2fft.so
 # [WARNING] Skipping lib/linux64/libjniclij2fftWrapper.so
 
-
-# OpenCL installation for clij
-# specificy version of "nvidia-opencl-dev" , because of the error : ... usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1: file exists: unknown.  
-# TODOs : find out which version make it crash !!! https://packages.ubuntu.com/search?suite=default&section=all&arch=any&keywords=+nvidia-opencl-dev&searchon=names
-# list  :
-# - jammy (22.04LTS) : 11.5.1-1ubuntu1 , WORKS ! (https://packages.ubuntu.com/jammy/nvidia-opencl-dev)
-# - lunar (23.04) : 11.8.89 , try but can't find it (https://packages.ubuntu.com/lunar/nvidia-opencl-dev)
-# - mantic (23.10) : 12.0.140, try but can't find it (https://packages.ubuntu.com/mantic/nvidia-opencl-dev)
-# >sudo apt-get update returns, jammy-security ...   might be why it can't find others (lunar and mantic)
-RUN apt-get update \
-    && apt-get install -y nvidia-opencl-dev \
-    && apt remove -y libnvidia-compute-545 \
-    && apt-get autoremove --purge \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /tmp/* \
-    && find /var/log -type f -exec cp /dev/null \{\} \;
 
 # create icon
 RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
