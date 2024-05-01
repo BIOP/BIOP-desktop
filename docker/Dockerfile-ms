@@ -1,22 +1,23 @@
-ARG BASE_IMAGE=0.0.3
+ARG BASE_IMAGE=0.1.0
 
 ARG ALIAS=biop/
 
 # because COPY --from= doesn't support build-arg (https://github.com/docker/for-mac/issues/2155)
 # we can still do a list of all sub-blocks here to be able to use them in the COPY --from=... below
 # base needs to be last, Don't Ask Wky !  (I don't know) ! and it seems it need to be named 'base' , D.A:W.2 ! but it works !
-ARG QUPATH_VERSION=v0.5.1
+ARG QUPATH_VERSION=v0.5.1-01
 ARG ILASTIK_VERSION=1.4.0-gpu
-ARG FIJI_VERSION=20240325
+ARG FIJI_VERSION=20240429
 ARG CELLPOSE_VERSION=2.2.2
 ARG DEVBIO_VERSION=0.10.1
 ARG SAMAPI_VERSION=0.4.0
-ARG EM_VERSION=0.2.3
+ARG EM_VERSION=1.1.0
 ARG STARDIST_VERSION=0.8.5
-ARG ABBA_VERSION=0.8.0
+ARG ABBA_VERSION=0.8.0-01
 ARG CELLPROFILER_VERSION=4.2.6
 ARG INKSCAPE_VERSION=0.0.1
-ARG OMNI_VERSION=1.0.7-dev
+ARG OMNI_VERSION=1.0.7-dev2
+ARG BRAINRENDER_VERSION=0.0.3
 
 FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} as qupath-image
 FROM ${ALIAS}biop-ilastik:${ILASTIK_VERSION} as ilastik-image
@@ -29,7 +30,8 @@ FROM ${ALIAS}biop-stardist:${STARDIST_VERSION} as stardist-image
 FROM ${ALIAS}biop-abba:${ABBA_VERSION} as abba-image
 FROM ${ALIAS}biop-cellprofiler:${CELLPROFILER_VERSION} as cellprofiler-image
 FROM ${ALIAS}biop-inkscape:${INKSCAPE_VERSION} as inkscape-image
-FROm ${ALIAS}biop-omnipose:${OMNI_VERSION} as omnipose-image
+FROM ${ALIAS}biop-omni:${OMNI_VERSION} as omnipose-image
+FROM ${ALIAS}biop-brainrender:${BRAINRENDER_VERSION} as brainrender-image
 
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE} as base
 
@@ -163,8 +165,17 @@ COPY fiji/Fiji_setWrappersPaths.groovy /home/biop/tmp/Fiji_setWrappersPaths.groo
 RUN chown -R biop:biop /home/biop/tmp \
     && chmod -R a+rwX /home/biop/tmp
 
+# add brainrender-napari env 
+COPY --from=brainrender-image /opt/conda/envs/brainrender /opt/conda/envs/brainrender
+
 USER biop
 RUN /opt/Fiji.app/ImageJ-linux64 --headless --run /home/biop/tmp/Fiji_setWrappersPaths.groovy
+
+# download allen_mouse_25um atlas from brainrender-napari
+RUN source activate brainrender \
+    && brainglobe install -a allen_mouse_25um \
+    && conda deactivate
+
 USER root
 RUN rm -rf /home/biop/tmp
 
@@ -194,21 +205,6 @@ COPY --from=omnipose-image /opt/conda/envs/omnipose/ /opt/conda/envs/omnipose/
 # 
 # To make the different conda env available in jupyter
 COPY jupyter/kernels/ /home/biop/.local/share/jupyter/kernels/
-
-
-#################################################################
-# # Install OpenCL ( for clij ... )
-# Doesn't work (anymore) on local WSL2 but works on runai !!!
-# see https://github.com/NVIDIA/nvidia-container-toolkit/issues/371
-# We move at the end so that we can build a normal version and WSL one without it, as it is not supported anyway.
-RUN apt-get update \
-    && apt-get install -y nvidia-opencl-dev \
-    && apt remove -y libnvidia-compute-545 \
-    && apt-get autoremove --purge \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /tmp/* \
-    && find /var/log -type f -exec cp /dev/null \{\} \;
 
 #################################################################
 # final chown and chmod
