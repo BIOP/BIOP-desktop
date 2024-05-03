@@ -1,14 +1,21 @@
 name: "empanada"
 channels:
+  - ome
   - conda-forge
   - defaults
 dependencies:
   - python=3.9
+  - ome::zeroc-ice36-python
+  - ipykernel
+  - napari
+  - conda-forge::omero-py
   - pyqt
   - pip
   - pip:
-      - napari[all]
-      - empanada-napari==0.2.3
+      - empanada-napari==1.1.0
       - scikit-image
+      - napari-ome-zarr 
+      - ome-zarr
+      - napari-omero
 prefix: "/opt/conda/envs/empanada"
 #TODO napari-ome-zarr

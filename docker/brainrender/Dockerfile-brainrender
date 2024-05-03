@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=0.0.3
+ARG BASE_IMAGE=0.1.0
 ARG ALIAS=biop/
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
@@ -13,10 +13,12 @@ RUN conda env update -n brainrender -f /tmp/env_brainrender.yml \
 
 USER biop
 
+# adds brainrender kernel
 RUN source activate brainrender \
     && python -m ipykernel install --user --name brainrender --display-name "Python (brainrender)" \
     && conda deactivate
 
+# download allen_mouse_25um atlas
 RUN source activate brainrender \
     && brainglobe install -a allen_mouse_25um \
     && conda deactivate

@@ -1,0 +1,42 @@
+ARG BASE_IMAGE=0.0.3
+ARG ALIAS=biop/
+
+
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
+
+
+USER root
+
+# install celldetection and download models ( https://celldetection.readthedocs.io/en/latest/models.html )
+COPY celldetection/env_celldetection.yml /tmp/env_celldetection.yml
+RUN conda env update -n celldetection -f /tmp/env_celldetection.yml \
+    && conda clean --all -f -y \
+    && conda env export -n "biop" \ 
+    && rm /tmp/env_celldetection.yml 
+
+# get model
+RUN mkdir -p /home/biop/.cache/torch/hub/checkpoints/
+RUN wget https://celldetection.org/torch/models/ginoro_CpnResNeXt101UNet-fbe875f1a3e5ce2c.pt -O /home/biop/.cache/torch/hub/checkpoints/ginoro_CpnResNeXt101UNet-fbe875f1a3e5ce2c.pt
+RUN wget https://celldetection.org/torch/models/.pt -O /home/biop/.cache/torch/hub/checkpoints/.pt
+
+RUN mkdir -p /home/biop/celldetection/ \
+    && chown -R biop:biop /home/biop/ \
+    && chmod -R a+rwX /home/biop/
+
+COPY celldetection/start_celldetection.sh /opt/celldetection/start_celldetection.sh
+COPY napari/napari-icon.ico /opt/celldetection/napari-icon.ico
+
+RUN  printf '[Desktop Entry]\nVersion=0.0.1\nName=celldetection\nGenericName=celldetection\nX-GNOME-FullName=celldetection\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/celldetection/start_celldetection.sh\nTryExec==/opt/celldetection/start_celldetection.sh\nTerminal=true\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/celldetection/napari-icon.ico\nStartupWMClass=celldetection\n' > /home/biop/Desktop/celldetection.desktop \
+    && chown -R biop:biop /home/biop \
+    && chmod +x /home/biop/Desktop/celldetection.desktop 
+
+
+RUN chmod -R a+rwX /home/biop/ \
+    && chown -R biop:biop /home/biop/
+
+#################################################################
+# Container start
+USER biop
+WORKDIR /home/biop
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]

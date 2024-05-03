@@ -1,13 +1,15 @@
 # https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-23-07.html 
 #FROM superelastix/elastix:5.0.1 as elastix-image
-ARG QUPATH_VERSION=v0.5.1
-ARG FIJI_VERSION=20240325
+ARG QUPATH_VERSION=v0.5.1-01
+ARG FIJI_VERSION=20240429
 ARG DEEPSLICE_VERSION=1.1.5
+ARG BRAINRENDER_VERSION=0.0.3
 ARG ALIAS=biop/
 
 FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} as qupath-image
 FROM ${ALIAS}biop-fiji:${FIJI_VERSION} as fiji-image
 FROM ${ALIAS}biop-deepslice:${DEEPSLICE_VERSION} as deepslice-image
+FROM ${ALIAS}biop-brainrender:${BRAINRENDER_VERSION} as brainrender-image
 
 FROM ${ALIAS}biop-vnc-base:0.0.3 as base
 
@@ -136,6 +138,27 @@ RUN  printf '[Desktop Entry]\nVersion=0.8.0\nName=ABBA\nGenericName=ABBA\nX-GNOM
 # make Fiji not read only
 RUN  chown -R biop:biop /opt/Fiji.app/ \
     && chmod -R a+rwX /opt/Fiji.app/
+
+# install brainrender
+COPY --from=brainrender-image /opt/conda/envs/brainrender /opt/conda/envs/brainrender
+
+
+USER biop
+
+# adds brainrender kernel
+RUN source activate brainrender \
+    && python -m ipykernel install --user --name brainrender --display-name "Python (brainrender)" \
+    && conda deactivate
+
+# download allen_mouse_25um atlas
+RUN source activate brainrender \
+    && brainglobe install -a allen_mouse_25um \
+    && conda deactivate
+
+USER root 
+
+RUN chmod -R a+rwX /home/biop/ \
+    && chown -R biop:biop /home/biop/
 
 #################################################################
 # Container start

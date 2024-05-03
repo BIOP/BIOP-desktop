@@ -1,4 +1,4 @@
-name: "devbio"
+name: "brainrender-napari"
 channels:
   - conda-forge
 dependencies:
@@ -7,5 +7,6 @@ dependencies:
   - pyqt
   - pip
   - pip :
-    - brainrender-napari
-prefix: "/opt/conda/envs/devbio"
+    - brainrender-napari==0.0.3
+    - bg-atlasapi
+prefix: "/opt/conda/envs/brainrender-napari"

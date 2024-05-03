@@ -1,0 +1,19 @@
+name: "celldetection"
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pytorch
+  - pyqt
+  - napari
+  - torchvision
+  - pytorch-cuda=11.8
+  - pip
+  - pip :
+    - celldetection
+    - git+https://github.com/FZJ-INM1-BDA/celldetection-napari.git
+    - ipykernel
+prefix: "/opt/conda/envs/celldetection"

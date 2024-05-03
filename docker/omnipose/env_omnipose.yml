@@ -13,4 +13,5 @@ dependencies:
   - pip :
     - torch_optimizer
     - ipykernel
+    - git+https://github.com/kevinjohncutler/omnipose.git@bf456e475be4490821f782cb785bbc943bb12abb
 prefix: "/opt/conda/envs/omnipose"

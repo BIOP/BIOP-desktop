@@ -107,13 +107,24 @@ RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
     && chown -R biop:biop /home/biop \
     && chmod -R a+rwx /home/biop/
 
-
 #################################################################
 # Install Inkscape 
 RUN sudo apt-get update -y \
     && sudo apt-get install inkscape -y 
 
 
+################################################################# 
+# OpenCL for clij ...
+RUN apt-get update \
+    && apt-get install -y nvidia-opencl-dev \
+    && apt remove -y libnvidia-compute-550-server \
+    && apt-get autoremove --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && find /var/log -type f -exec cp /dev/null \{\} \;
+
+#################################################################
 RUN chown -R biop:biop /home/biop/ \
     && chmod -R a+rwx /home/biop/ 
 

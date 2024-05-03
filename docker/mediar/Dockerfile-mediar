@@ -1,0 +1,44 @@
+ARG BASE_IMAGE=0.0.3
+ARG ALIAS=biop/
+
+FROM joonkeekim/mediar as mediar-image
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
+
+
+USER root
+
+# install omnipose https://omnipose.readthedocs.io/index.html
+COPY mediar/env_mediar-napari.yml /tmp/env_mediar-napari.yml
+RUN conda env update -n mediar-napari -f /tmp/env_mediar-napari.yml \
+    && source activate mediar-napari \
+    && git clone https://github.com/joonkeekim/mediar-napari \
+    && cd mediar-napari \
+    && pip install -r requirements.txt \
+    && pip install -e . \
+    && conda deactivate \
+    && conda clean --all -f -y \
+    && conda env export -n "biop" \ 
+    && rm /tmp/env_mediar-napari.yml
+#    && rm -rf /home/biop/mediar-napari
+
+# download models , replace with ZENODO link when available
+RUN wget https://drive.switch.ch/index.php/s/RpLeHuJrdecpDoE/download -O models.zip \
+    && unzip /home/biop/models.zip -d /home/biop/mediar-napari/weights/ 
+
+COPY mediar/start_mediar.sh /home/biop/mediar-napari/start_mediar.sh
+COPY napari/napari-icon.ico /home/biop/mediar-napari/napari-icon.ico
+
+RUN  printf '[Desktop Entry]\nVersion=0.0.1\nName=mediar\nGenericName=mediar\nX-GNOME-FullName=mediar\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/home/biop/mediar-napari/start_mediar.sh\nTryExec==/home/biop/mediar-napari/start_mediar.sh\nTerminal=true\nStartupNotify=true\nMimeType=image/*;\nIcon=/home/biop/mediar-napari/napari-icon.ico\nStartupWMClass=mediar\n' > /home/biop/Desktop/mediar.desktop \
+    && chown -R biop:biop /home/biop \
+    && chmod +x /home/biop/Desktop/mediar.desktop 
+
+
+RUN chmod -R a+rwX /home/biop/ \
+    && chown -R biop:biop /home/biop/
+
+#################################################################
+# Container start
+USER biop
+WORKDIR /home/biop
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
