@@ -1,0 +1,13 @@
+name: "openpiv"
+channels:
+  - conda-forge
+  - pytorch
+  - alexlib 
+  - defaults
+dependencies:
+  - python=3.9 
+  - devbio-napari=0.10.1
+  - pyqt
+  - pip
+  - openpiv
+prefix: "/opt/conda/envs/openpiv"
