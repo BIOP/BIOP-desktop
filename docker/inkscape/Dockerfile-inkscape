@@ -1,5 +1,6 @@
-ARG BASE_IMAGE=0.0.3
-FROM biop-vnc-base:${BASE_IMAGE}
+ARG BASE_IMAGE=0.1.0
+ARG ALIAS=biop/
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 USER root
 
@@ -16,6 +17,11 @@ RUN unzip inkscape-imagej-panel-master.zip \
     && cp -r inkscape-imagej-panel-master/* /home/biop/.config/inkscape/extensions/ \
     && rm -rf inkscape-imagej-panel-master.zip \
     && rm -rf inkscape-imagej-panel-master/
+
+#################################################################
+# Inkscape preferences with path to ImageJ, devbio conda env already set up
+# won't work ofr this image that does not have devbio nor Fiji
+COPY inkscape/preferences.xml /home/biop/.config/inkscape/preferences.xml
 
 RUN chown -R biop:biop /home/biop/ \
     && chmod -R a+rwx /home/biop/    
