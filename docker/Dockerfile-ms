@@ -15,25 +15,25 @@ ARG EM_VERSION=1.1.0
 ARG STARDIST_VERSION=0.8.5
 ARG ABBA_VERSION=0.8.0-01
 ARG CELLPROFILER_VERSION=4.2.6
-ARG INKSCAPE_VERSION=0.1.0
+ARG INKSCAPE_VERSION=0.1.2
 ARG OMNI_VERSION=1.0.7-dev2
 ARG BRAINRENDER_VERSION=0.0.3
 
-FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} as qupath-image
-FROM ${ALIAS}biop-ilastik:${ILASTIK_VERSION} as ilastik-image
-FROM ${ALIAS}biop-fiji:${FIJI_VERSION} as fiji-image
-FROM ${ALIAS}biop-cellpose:${CELLPOSE_VERSION} as cellpose-image
-FROM ${ALIAS}biop-devbio:${DEVBIO_VERSION} as devbio-image
-FROM ${ALIAS}biop-samapi:${SAMAPI_VERSION} as samapi-image
-FROM ${ALIAS}biop-empanada:${EM_VERSION} as empanada-image
-FROM ${ALIAS}biop-stardist:${STARDIST_VERSION} as stardist-image
-FROM ${ALIAS}biop-abba:${ABBA_VERSION} as abba-image
-FROM ${ALIAS}biop-cellprofiler:${CELLPROFILER_VERSION} as cellprofiler-image
-FROM ${ALIAS}biop-inkscape:${INKSCAPE_VERSION} as inkscape-image
-FROM ${ALIAS}biop-omni:${OMNI_VERSION} as omnipose-image
-FROM ${ALIAS}biop-brainrender:${BRAINRENDER_VERSION} as brainrender-image
+FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} AS qupath-image
+FROM ${ALIAS}biop-ilastik:${ILASTIK_VERSION} AS ilastik-image
+FROM ${ALIAS}biop-fiji:${FIJI_VERSION} AS fiji-image
+FROM ${ALIAS}biop-cellpose:${CELLPOSE_VERSION} AS cellpose-image
+FROM ${ALIAS}biop-devbio:${DEVBIO_VERSION} AS devbio-image
+FROM ${ALIAS}biop-samapi:${SAMAPI_VERSION} AS samapi-image
+FROM ${ALIAS}biop-empanada:${EM_VERSION} AS empanada-image
+FROM ${ALIAS}biop-stardist:${STARDIST_VERSION} AS stardist-image
+FROM ${ALIAS}biop-abba:${ABBA_VERSION} AS abba-image
+FROM ${ALIAS}biop-cellprofiler:${CELLPROFILER_VERSION} AS cellprofiler-image
+FROM ${ALIAS}biop-inkscape:${INKSCAPE_VERSION} AS inkscape-image
+FROM ${ALIAS}biop-omni:${OMNI_VERSION} AS omnipose-image
+FROM ${ALIAS}biop-brainrender:${BRAINRENDER_VERSION} AS brainrender-image
 
-FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE} as base
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE} AS base
 
 USER root
 
@@ -206,6 +206,23 @@ COPY --from=omnipose-image /opt/conda/envs/omnipose/ /opt/conda/envs/omnipose/
 # To make the different conda env available in jupyter
 COPY jupyter/kernels/ /home/biop/.local/share/jupyter/kernels/
 
+
+
+#################################################################
+# TODO : put back with inkscape installation
+# replace inkscape from base with the one from the inkscape-image (newer)
+RUN sudo apt-get update -y \
+    && sudo apt-get install software-properties-common -y \
+    && sudo apt-get update -y \
+    && sudo add-apt-repository ppa:inkscape.dev/stable \
+    && sudo apt-get update -y \
+    && sudo apt-get install inkscape -y
+
+# Install Inkscape extension
+# and the inkscape_modules environment
+# get a "docker: Error response from daemon: max depth exceeded."
+#COPY --from=inkscape-image /opt/conda/envs/inkscape_modules/ /opt/conda/envs/inkscape_modules/ 
+
 #################################################################
 # final chown and chmod
 RUN chown -R biop:biop /home/biop/ \
@@ -214,8 +231,7 @@ RUN chown -R biop:biop /home/biop/ \
 #################################################################
 # Container start
 USER biop
+RUN conda init
 WORKDIR /home/biop
 ENTRYPOINT ["/usr/local/bin/jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
-
-

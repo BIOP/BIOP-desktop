@@ -7,6 +7,10 @@ USER root
 #################################################################
 # Install Inkscape extension 
 RUN sudo apt-get update -y \
+    && sudo apt-get install software-properties-common -y \
+    && sudo apt-get update -y \
+    && sudo add-apt-repository ppa:inkscape.dev/stable \
+    && sudo apt-get update -y \
     && sudo apt-get install inkscape -y 
 
 #################################################################
@@ -19,9 +23,28 @@ RUN unzip inkscape-imagej-panel-master.zip \
     && rm -rf inkscape-imagej-panel-master/
 
 #################################################################
-# Inkscape preferences with path to ImageJ, devbio conda env already set up
-# won't work ofr this image that does not have devbio nor Fiji
+# Inkscape preferences with path to ImageJ, inkscape conda env already set up
+# won't work ofr this image that does not have inkscape nor Fiji
 COPY inkscape/preferences.xml /home/biop/.config/inkscape/preferences.xml
+
+
+#################################################################
+# Install SimpInkScr extension
+# RUN cd $HOME/.config/inkscape/extensions/ && git clone https://github.com/spakin/SimpInkScr.git
+RUN wget https://github.com/spakin/SimpInkScr/releases/download/v5.0.0/simple_inkscape_scripting.zip
+RUN unzip simple_inkscape_scripting.zip \
+    && cp -r simple_inkscape_scripting/* /home/biop/.config/inkscape/extensions/ \
+    && rm -rf simple_inkscape_scripting.zip \
+    && rm -rf simple_inkscape_scripting/
+
+##############################################################################
+# install inkscape_modules environment
+COPY inkscape/env_inkscape.yml /tmp/env_inkscape.yml
+RUN conda env update -n inkscape_modules -f /tmp/env_inkscape.yml \
+    && conda clean --all -f -y \
+    && conda env export -n "biop" \
+     && rm /tmp/env_inkscape.yml
+
 
 RUN chown -R biop:biop /home/biop/ \
     && chmod -R a+rwx /home/biop/    
