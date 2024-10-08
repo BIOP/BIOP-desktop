@@ -108,8 +108,12 @@ RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
     && chmod -R a+rwx /home/biop/
 
 #################################################################
-# Install Inkscape 
+# Install latest Inkscape stable version
 RUN sudo apt-get update -y \
+    && sudo apt-get install software-properties-common -y \
+    && sudo apt-get update -y \
+    && sudo add-apt-repository ppa:inkscape.dev/stable \
+    && sudo apt-get update -y \
     && sudo apt-get install inkscape -y 
 
 
