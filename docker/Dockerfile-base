@@ -94,7 +94,8 @@ ENV PATH=$PATH:$CONDA_DIR/bin
 #    && conda install -n base conda-libmamba-solver \ 
 #    && conda config --set solver libmamba
 
-# create shortcut to start jupyter lab
+#################################################################
+# Create shortcut to start jupyter lab
 RUN mkdir /opt/jupyter
 COPY jupyter/start_jupyter.sh /opt/jupyter/start_jupyter.sh
 COPY jupyter/jupyter_.png /opt/jupyter/jupyter.png
