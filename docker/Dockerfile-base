@@ -79,6 +79,8 @@ RUN wget -q 'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64
     && rm -rf /tmp/* \
     && find /var/log -type f -exec cp /dev/null \{\} \;
 ENV BROWSER=firefox
+# Load preferences for firefox, removing GPU acceleration
+COPY /mozilla/prefs.js /home/biop/.mozilla/firefox/petamwwd.default-release/prefs.js
 
 # Install miniconda
 ENV CONDA_DIR=/opt/conda
