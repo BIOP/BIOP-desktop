@@ -103,7 +103,7 @@ COPY jupyter/jupyter_.png /opt/jupyter/jupyter.png
 RUN chmod +x /opt/jupyter/start_jupyter.sh \
     && chown -R biop:biop /opt/jupyter/ \
     && mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
-    && printf '[Desktop Entry]\nVersion=4.2.6\nName=jupyter\nGenericName=jupyter\nX-GNOME-FullName=jupyter\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/jupyter/start_jupyter.sh\nTryExec=/opt/jupyter/start_jupyter.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/jupyter/jupyter.png\nStartupWMClass=jupyter\n' > /home/biop/Desktop/jupyter.desktop \
+    && printf '[Desktop Entry]\nVersion=3.6.8\nName=jupyter\nGenericName=jupyter\nX-GNOME-FullName=jupyter\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/jupyter/start_jupyter.sh\nTryExec=/opt/jupyter/start_jupyter.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/jupyter/jupyter.png\nStartupWMClass=jupyter\n' > /home/biop/Desktop/jupyter.desktop \
     && chown -R biop:biop /home/biop \
     && chmod -R a+rwx /home/biop/
 
