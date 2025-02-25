@@ -1,0 +1,43 @@
+ARG BASE_IMAGE=0.1.0
+ARG ALIAS=biop/
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
+
+USER root
+
+# upate and install necessary packages
+RUN apt-get update && apt-get install -y \
+    wget \
+    bzip2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install full JDK
+RUN apt-get update && apt-get install -y \
+    openjdk-11-jdk \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install OMERO.insight standalone
+RUN wget -q https://github.com/ome/omero-insight/releases/download/v5.8.6/OMERO.insight-5.8.6.zip \
+    && unzip OMERO.insight-5.8.6.zip -d /opt/OMERO.insight \
+    && rm OMERO.insight-5.8.6.zip \
+    && chmod -R a+rwX /opt/OMERO.insight
+
+# Copy the insight.sh script
+COPY omero-insight/insight.sh /opt/OMERO.insight/OMERO.insight-5.8.6/bin/insight.sh
+COPY omero-insight/insight.png /opt/OMERO.insight/insight.png 
+COPY omero-insight/container.xml /opt/OMERO.insight/OMERO.insight-5.8.6/config/container.xml
+RUN chmod +x /opt/OMERO.insight/OMERO.insight-5.8.6/bin/insight.sh
+
+# Create desktop icon
+RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
+    && printf '[Desktop Entry]\nVersion=5.8.6\nName=OMERO Insight\nGenericName=OMERO Insight\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/OMERO.insight/OMERO.insight-5.8.6/bin/insight.sh\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/OMERO.insight/insight.png\n' > /home/biop/Desktop/OMEROinsight.desktop \
+    && chmod +x /home/biop/Desktop/OMEROinsight.desktop
+
+    # Ensure the biop user has the necessary permissions
+RUN chown -R biop:biop /opt/OMERO.insight /usr/lib/jvm/java-11-openjdk-amd64
+
+#################################################################
+# Container start
+USER biop
+WORKDIR /home/biop
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
