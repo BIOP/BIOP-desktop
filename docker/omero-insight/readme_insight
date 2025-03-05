@@ -1,3 +1,5 @@
 docker build -f omero-insight/Dockerfile-insight  -t biop-insight:5.8.6 . 
 
 docker run -it --rm -p 8888:8888 --gpus device=0  --mount src=D:/,target=/home/biop/local,type=bind biop-insight:5.8.6
+
+docker tag biop-insight:5.8.6 biop/biop-insight:5.8.6
