@@ -32,7 +32,7 @@ RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
     && printf '[Desktop Entry]\nVersion=5.8.6\nName=OMERO Insight\nGenericName=OMERO Insight\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/OMERO.insight/OMERO.insight-5.8.6/bin/insight.sh\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/OMERO.insight/insight.png\n' > /home/biop/Desktop/OMEROinsight.desktop \
     && chmod +x /home/biop/Desktop/OMEROinsight.desktop
 
-    # Ensure the biop user has the necessary permissions
+# Ensure the biop user has the necessary permissions
 RUN chown -R biop:biop /opt/OMERO.insight /usr/lib/jvm/java-11-openjdk-amd64
 
 #################################################################
