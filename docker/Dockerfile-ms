@@ -227,6 +227,9 @@ RUN sudo apt-get update -y \
 # final chown and chmod
 RUN chown -R biop:biop /home/biop/ \
     && chmod -R a+rwx /home/biop/    
+## quick fix for the atlas download error TODO: update to latest Fiji-ABBA , and remove this with next fiji update
+RUN wget https://maven.scijava.org/content/repositories/releases/ch/epfl/biop/atlas/0.3.1/atlas-0.3.1.jar -O /opt/Fiji.app/jars/atlas-0.3.1.jar \
+    && rm -f /opt/Fiji.app/jars/atlas-0.2.2.jar 
 
 #################################################################
 # Container start
