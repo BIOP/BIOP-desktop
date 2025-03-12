@@ -7,7 +7,7 @@ ARG ALIAS=biop/
 # base needs to be last, Don't Ask Wky !  (I don't know) ! and it seems it need to be named 'base' , D.A:W.2 ! but it works !
 ARG QUPATH_VERSION=v0.5.1-01
 ARG ILASTIK_VERSION=1.4.0-gpu
-ARG FIJI_VERSION=20240816
+ARG FIJI_VERSION=20241008
 ARG CELLPOSE_VERSION=2.2.2
 ARG DEVBIO_VERSION=0.10.1
 ARG SAMAPI_VERSION=0.4.0
