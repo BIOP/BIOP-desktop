@@ -1,14 +1,14 @@
-# https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-23-07.html 
-#FROM nvcr.io/nvidia/pytorch:23.07-py3
-ARG BASE_IMAGE=0.1.0
+ARG BASE_IMAGE=0.2.0
 ARG ALIAS=biop/
+ARG CELLPOSE_VERSION=3.1.1.1
+
+
+FROM ${ALIAS}biop-cellpose:${CELLPOSE_VERSION} AS cellpose-image
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 ARG QP_VERSION=v0.5.1
 
 USER root
-
-
 #################################################################
 # Install QuPath
 # QuPath on Ubuntu can't use cellpose extension, needs to build from source ! 
@@ -35,31 +35,32 @@ RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
     && chmod +x /home/biop/Desktop/QuPath.desktop
 
 # install Extensions
-#TODO : reaplace with a zip 
-RUN mkdir -p /opt/QuPath/QuPath_Common_Data_0.5 
-# COPY QuPath/QuPath_Common_Data_0.5 /opt/QuPath/QuPath_Common_Data_0.5 
-RUN chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.5 \
+RUN mkdir -p /opt/QuPath/QuPath_Common_Data_0.5 \
+    && chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.5 \
     && chmod -R a+rwx /opt/QuPath/QuPath_Common_Data_0.5     
 
-# # TODO : discuss if we prepare unzip from zenodo, or if we update when container start via a git pull ... (less good for reproducibility but better to keep scripts up-to-date)
-RUN wget -q https://zenodo.org/records/14851794/files/QuPath_Common_Data_0.5.zip?download=1 -O ${TEMP_DIR}/QuPath_Common_Data_0.5.zip
-RUN unzip ${TEMP_DIR}/QuPath_Common_Data_0.5.zip -d /opt/QuPath/QuPath_Common_Data_0.5 \
+RUN wget -q https://zenodo.org/records/15040056/files/QuPath_Common_Data_0.5.zip?download=1 -O ${TEMP_DIR}/QuPath_Common_Data_0.5.zip \
+    && unzip ${TEMP_DIR}/QuPath_Common_Data_0.5.zip -d /opt/QuPath/QuPath_Common_Data_0.5 \
     && rm ${TEMP_DIR}/QuPath_Common_Data_0.5.zip 
 
-# #  Prepare to set QP_prefs 
-COPY QuPath/QuPath_setPaths.groovy /home/biop/tmp/QuPath_setPaths.groovy
-COPY QuPath/qp_prefs.xml /home/biop/tmp/qp_prefs.xml
-RUN chown -R biop:biop /home/biop/tmp
-USER biop
-# here we import prefs in QuPath so that we can use the extensions at the first start ! 
-RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' 
-# set back to root to continue installation
-USER root
-RUN rm -rf /home/biop/tmp 
+# Prepare to set QP_prefs , see below `QuPath_setPaths.groovy`
+COPY QuPath/prefs/* /home/biop/tmp/
+
+#################################################################
+# Install cellpose and models
+COPY --from=cellpose-image  /opt/conda/envs/cellpose /opt/conda/envs/cellpose
+COPY --from=cellpose-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
+#RUN chmod -R a+rwX /home/biop/.cellpose  
+
+RUN chown -R biop:biop /home/biop/ \
+    && chmod -R a+rwx /home/biop/   
 
 #################################################################
 # Container start
 USER biop
+# here we import prefs in QuPath so that we can use the extensions at the first start ! 
+RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' \
+    && rm -rf /home/biop/tmp
 WORKDIR /home/biop
 ENTRYPOINT ["/usr/local/bin/jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
