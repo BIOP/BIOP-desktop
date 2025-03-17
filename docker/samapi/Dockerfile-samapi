@@ -14,6 +14,7 @@ USER root
 COPY --from=qupath-image /opt/QuPath /opt/QuPath
 COPY --from=qupath-image /home/biop/Desktop/QuPath.desktop  /home/biop/Desktop/QuPath.desktop
 COPY QuPath/prefs/* /home/biop/tmp/
+
 # install samapi
 COPY samapi/env_samapi.yml /tmp/env_samapi.yml
 RUN conda env update -n samapi -f /tmp/env_samapi.yml \
