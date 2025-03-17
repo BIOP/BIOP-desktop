@@ -1,9 +1,19 @@
 ARG BASE_IMAGE=0.2.0
+ARG QUPATH_VERSION=v0.5.1-04
 ARG ALIAS=biop/
+
+FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} AS qupath-image
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 USER root
 
+
+################################################################# 
+# Install QuPath 
+# 
+COPY --from=qupath-image /opt/QuPath /opt/QuPath
+COPY --from=qupath-image /home/biop/Desktop/QuPath.desktop  /home/biop/Desktop/QuPath.desktop
+COPY QuPath/prefs/* /home/biop/tmp/
 # install samapi
 COPY samapi/env_samapi.yml /tmp/env_samapi.yml
 RUN conda env update -n samapi -f /tmp/env_samapi.yml \
@@ -43,6 +53,9 @@ RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
 #################################################################
 # Container start
 USER biop
+# here we import prefs in QuPath so that we can use the extensions at the first start ! 
+RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' \
+    && rm -rf /home/biop/tmp
 WORKDIR /home/biop
 ENTRYPOINT ["/usr/local/bin/jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
