@@ -1,5 +1,6 @@
 # https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-23-07.html 
 FROM nvcr.io/nvidia/pytorch:23.07-py3
+#FROM nvcr.io/nvidia/pytorch:25.01-py3
 
 #################################################################
 # Install 
