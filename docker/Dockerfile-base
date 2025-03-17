@@ -144,18 +144,25 @@ RUN apt-get update \
     && rm -rf /tmp/* \
     && find /var/log -type f -exec cp /dev/null \{\} \;
 
+# # Load preferences for firefox, removing GPU acceleration
+# USER biop
+# #################################################################
+# # Copy custom pref.js into the Firefox profile
+# COPY mozilla/prefs.js /home/biop/prefs.js 
 
-# Load preferences for firefox, removing GPU acceleration
-USER biop
-#################################################################
-# Copy custom pref.js into the Firefox profile
-COPY mozilla/prefs.js /home/biop/prefs.js 
+# #################################################################
+# # Start Firefox once in headless mode to generate profile directory
+# RUN firefox --headless --no-remote --setDefaultBrowser & sleep 5 \
+#     && pkill firefox \
+# #################################################################
+# # Find the dynamically created profile folder and copy the custom pref.js into it
+#     && PROFILE_DIR=$(find /home/biop/.mozilla/firefox -type d -name "*.default-release") \
+#     && mv /home/biop/prefs.js $PROFILE_DIR/prefs.js
+# USER root
 
 #################################################################
-# Start Firefox once in headless mode to generate profile directory
-#RUN mkdir -p /home/biop/.mozilla/firefox \
-RUN firefox --headless --no-remote --setDefaultBrowser & sleep 5 \
-    && pkill firefox \
+
+#################################################################
 #################################################################
 # Find the dynamically created profile folder and copy the custom pref.js into it
     && PROFILE_DIR=$(find /home/biop/.mozilla/firefox -type d -name "*.default-release") \
