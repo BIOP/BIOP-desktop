@@ -164,11 +164,7 @@ RUN apt-get update \
 
 #################################################################
 #################################################################
-# Find the dynamically created profile folder and copy the custom pref.js into it
-    && PROFILE_DIR=$(find /home/biop/.mozilla/firefox -type d -name "*.default-release") \
-    && mv /home/biop/prefs.js $PROFILE_DIR/prefs.js
 
-USER root
 #################################################################
 RUN chown -R biop:biop /home/biop/ \
     && chmod -R a+rwx /home/biop/ 
