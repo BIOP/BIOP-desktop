@@ -98,6 +98,11 @@ RUN wget https://github.com/conda-forge/miniforge/releases/latest/download/Minif
     && rm Miniforge3-Linux-x86_64.sh \
     && conda init 
 
+################################################################# 
+# Install VScode
+RUN wget https://go.microsoft.com/fwlink/?LinkID=760868 -O /tmp/vscode.deb \
+    && apt install -y /tmp/vscode.deb \
+    && rm /tmp/vscode.deb
 #################################################################
 # Create shortcut to start jupyter lab
 RUN mkdir /opt/jupyter
