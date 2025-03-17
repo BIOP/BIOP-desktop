@@ -45,6 +45,9 @@ RUN printf 'source activate samapi\npython -m uvicorn samapi.main:app --workers 
     && chown biop:biop /home/biop/Desktop/samapi.desktop \
     && chmod a+rxx /opt/icons/start_samapi.sh
 
+
+RUN chown -R biop:biop /home/biop/ \
+    && chmod -R a+rwx /home/biop/   
 #################################################################
 # Container start
 USER biop
