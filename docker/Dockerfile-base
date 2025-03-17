@@ -161,6 +161,19 @@ RUN apt-get update \
 # USER root
 
 #################################################################
+# # Install miniconda
+# ENV CONDA_DIR=/opt/conda
+# RUN wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh \
+#    && /bin/bash ~/miniconda.sh -b -p /opt/conda
+# #Put conda in path so we can use conda activate
+# ENV PATH=$PATH:$CONDA_DIR/bin
+
+# TODO : remove this part as conda should have mamba solver by default (https://conda.org/blog/2023-11-06-conda-23-10-0-release/)
+# Because I coulnd't get mamba to work, changethe libserver , thanks @oli ! ;) 
+# https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community 
+# RUN conda update -n base conda \
+#    && conda install -n base conda-libmamba-solver\ 
+#    && conda config --set solver libmamba
 
 #################################################################
 #################################################################
