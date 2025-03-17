@@ -27,6 +27,7 @@ RUN apt-get update -y \
         sudo \
         ncdu \
         p7zip-full \
+        bzip2 \
     && apt-get autoremove --purge \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
@@ -70,9 +71,9 @@ COPY --chown=root:root ui.js /opt/noVNC-${novnc_version}/app/ui.js
 
 #################################################################
 # Install firefox
-RUN wget -q 'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64' -O /tmp/firefox.tar.bz2 \
-    && tar xjf /tmp/firefox.tar.bz2 -C /opt/ \
-    && rm -rf /tmp/firefox.tar.bz2 \
+RUN wget -q 'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64' -O /tmp/firefox.tar.xz \
+    && tar -xJf /tmp/firefox.tar.xz -C /opt/ \
+    && rm -rf /tmp/firefox.tar.xz \
     && ln -sf /opt/firefox/firefox /usr/bin/firefox \
     && apt update \
     && apt install libdbus-glib-1-2 -y \
