@@ -181,12 +181,13 @@ RUN printf 'jupyter lab\n\$ read -rsp \$"Press enter to continue..."\nPress ente
     && printf '[Desktop Entry]\nVersion=1.98.2\nName=VScode\nGenericName=VScode\nX-GNOME-FullName=VScode\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_vscode.sh\nTryExec=/opt/icons/start_vscode.sh\nTerminal=false\nStartupNotify=true\nIcon=/opt/icons/vscode.png\n' > /home/biop/Desktop/vscode.desktop
 
 #################################################################
-RUN chown -R biop:biop /home/biop/ \
-    && chmod -R a+rwx /home/biop/ 
+RUN chown -R biop:biop /home/biop/ /opt/icons/ /opt/OMERO.insight /usr/lib/jvm/java-11-openjdk-amd64  \
+    && chmod -R a+rwx /home/biop/  /opt/icons/ /opt/OMERO.insight /usr/lib/jvm/java-11-openjdk-amd64
 
 #################################################################
 # Container start
 USER biop
+RUN conda init
 WORKDIR /home/biop
 ENTRYPOINT ["/usr/local/bin/jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
