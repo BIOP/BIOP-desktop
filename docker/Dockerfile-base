@@ -121,7 +121,7 @@ RUN chmod +x /opt/jupyter/start_jupyter.sh \
 RUN sudo apt-get update -y \
     && sudo apt-get install software-properties-common -y \
     && sudo apt-get update -y \
-    && sudo add-apt-repository ppa:inkscape.dev/stable \
+    && sudo add-apt-repository ppa:inkscape.dev/stable -y \
     && sudo apt-get update -y \
     && sudo apt-get install inkscape -y 
 
