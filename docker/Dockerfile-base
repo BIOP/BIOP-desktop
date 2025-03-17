@@ -2,6 +2,8 @@
 FROM nvcr.io/nvidia/pytorch:23.07-py3
 #FROM nvcr.io/nvidia/pytorch:25.01-py3
 
+USER root
+
 #################################################################
 # Install 
 ENV DEBIAN_FRONTEND=noninteractive
