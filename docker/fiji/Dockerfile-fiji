@@ -27,9 +27,9 @@ RUN wget -q https://downloads.imagej.net/fiji/latest/fiji-linux64.zip \
       && chmod -R a+rwX /opt/Fiji.app
 
 # Install Fiji plugins via update sites
-ENV fiji /opt/Fiji.app/ImageJ-linux64
-ENV updateCommand --update update
-ENV addCommand --update add-update-sites 
+ENV fiji=/opt/Fiji.app/ImageJ-linux64
+ENV updateCommand="--update update"
+ENV addCommand="--update add-update-sites" 
 RUN ${fiji} ${updateCommand} \
     && ${fiji} ${addCommand}    "clij" "https://sites.imagej.net/clij/" \
                                 "clij2" "https://sites.imagej.net/clij2/" \
@@ -38,7 +38,7 @@ RUN ${fiji} ${updateCommand} \
                                 "3D ImageJ Suite" "https://sites.imagej.net/Tboudier/" \
                                 "IJPB-plugins" "https://sites.imagej.net/IJPB-plugins/" \
                                 "ilastik" "https://sites.imagej.net/Ilastik/" \
-                               # "ImageScience" "https://sites.imagej.net/ImageScience/" \
+                                #"ImageScience" "https://sites.imagej.net/ImageScience/" \ 
                                 "CSBDeep" "https://sites.imagej.net/CSBDeep/" \
                                 "StarDist" "https://sites.imagej.net/StarDist/" \
                                 "TensorFlow" "https://sites.imagej.net/TensorFlow/" \
