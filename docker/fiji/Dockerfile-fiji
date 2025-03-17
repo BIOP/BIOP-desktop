@@ -5,8 +5,8 @@ ARG ALIAS=biop/
 FROM ${ALIAS}biop-cellpose:${CELLPOSE_VERSION} AS cellpose-image
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
-ENV OMEROIJ_VERSION 5.8.3
-ENV SOC_VERSION 5.18.0
+ENV OMEROIJ_VERSION=5.8.6
+ENV SOC_VERSION=5.19.0
 
 USER root
 
@@ -43,6 +43,8 @@ RUN ${fiji} ${updateCommand} \
                                 "StarDist" "https://sites.imagej.net/StarDist/" \
                                 "OMERO 5.5-5.6" "https://sites.imagej.net/OMERO-5.5-5.6/" \
                                 "MiC mask comparator" "https://sites.imagej.net/MiC-mask-comparator/" \
+                                "Fiji-Deconv" " https://sites.imagej.net/clijx-deconvolution/" \
+                                "3Dscript" "https://romulus.oice.uni-erlangen.de/updatesite/" \
     && ${fiji} ${updateCommand} \
     && chmod -R a+rwX /opt/Fiji.app
 
