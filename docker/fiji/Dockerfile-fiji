@@ -1,6 +1,4 @@
-# https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-23-07.html 
-# FROM nvcr.io/nvidia/pytorch:23.07-py3
-ARG BASE_IMAGE=0.1.0
+ARG BASE_IMAGE=0.2.0
 ARG ALIAS=biop/
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
