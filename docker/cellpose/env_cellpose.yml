@@ -3,9 +3,10 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.8
+  - python=3.10
   - pip
   - pip:
-      - cellpose==2.2.2
-      - scikit-image
+      - cellpose==3.1.1.1
+      - scikit-image # for Quality check when training models
+      - wget # for downloading models
 prefix: "/opt/conda/envs/cellpose"
