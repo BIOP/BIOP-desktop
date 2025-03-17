@@ -12,38 +12,13 @@ RUN conda env update -n cellpose -f /tmp/env_cellpose.yml \
     && rm /tmp/env_cellpose.yml 
 
 # download models
-RUN wget https://www.cellpose.org/models/bact_omnitorch_0 -P home/biop/.cellpose/models/ \
-    && wget https://www.cellpose.org/models/bact_phase_omnitorch_0 -P home/biop/.cellpose/models/ \
-    && wget https://www.cellpose.org/models/cyto_0 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/cyto_1 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/cyto_2 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/cyto_3 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/cyto2_omnitorch_0 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/cyto2torch_0 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/cyto2torch_1 -P home/biop/.cellpose/models \     
-    && wget https://www.cellpose.org/models/cyto2torch_2 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/cyto2torch_3 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/cytotorch_0 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/cytotorch_1 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/cytotorch_2 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/cytotorch_3 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/nuclei_0 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/nuclei_1 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/nuclei_2 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/nuclei_3 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/nucleitorch_0 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/nucleitorch_1 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/nucleitorch_2 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/nucleitorch_3 -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/size_cyto2_omnitorch_0.npy  -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/size_cytotorch_0.npy -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/size_cyto2torch_0.npy -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/size_cyto_0.npy -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/size_nucleitorch_0.npy -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/size_nuclei_0.npy -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/tissuenet -P home/biop/.cellpose/models \ 
-    && wget https://www.cellpose.org/models/livecell -P home/biop/.cellpose/models 
+USER biop
+COPY cellpose/download_all_models.py /home/biop/download_all_models.py
+RUN source activate cellpose \
+    && python /home/biop/download_all_models.py \
+    && rm /home/biop/download_all_models.py
 
+USER root
 RUN chmod -R a+rwX /home/biop/ \
     && chown -R biop:biop /home/biop/
 
