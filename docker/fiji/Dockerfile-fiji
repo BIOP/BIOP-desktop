@@ -51,39 +51,17 @@ RUN ${fiji} ${updateCommand} \
 
 # Install omeroij
 RUN wget -q https://github.com/ome/omero-insight/releases/download/v${OMEROIJ_VERSION}/omero_ij-${OMEROIJ_VERSION}-all.jar -O /opt/Fiji.app/plugins/omero_ij-${OMEROIJ_VERSION}-all.jar \
-    && chmod -R a+rwX /opt/Fiji.app/plugins
-
-# Install simple-omero-client
-RUN wget -q https://github.com/GReD-Clermont/simple-omero-client/releases/download/${SOC_VERSION}/simple-omero-client-${SOC_VERSION}.jar -O /opt/Fiji.app/plugins/simple-omero-client-${SOC_VERSION}.jar \
-    && chmod -R a+rwX /opt/Fiji.app/plugins
-
-# add some file so clij deconvolution with regularization can work
-RUN wget -q -q https://www.dropbox.com/sh/dxofkiyseuxn4l4/AADrPjPBbJK_77Ai2WCfaOTza/Linux-2.2.0.16?dl=1 -O Linux-2.2.0.16.zip \
-        && unzip -o Linux-2.2.0.16.zip -d /opt/Fiji.app/ -x / \
-        && rm Linux-2.2.0.16.zip \ 
-        && rm /opt/Fiji.app/plugins/clij2-fft_-2.2.0.15.jar
-
-# Install some extratool for PhD Course
-# ThunderSTORM
-RUN wget -q https://github.com/zitmen/thunderstorm/releases/download/v1.3/Thunder_STORM.jar -O /opt/Fiji.app/plugins/Thunder_STORM.jar \
+# ... simple-omero-client
+    && wget -q https://github.com/GReD-Clermont/simple-omero-client/releases/download/${SOC_VERSION}/simple-omero-client-${SOC_VERSION}.jar -O /opt/Fiji.app/plugins/simple-omero-client-${SOC_VERSION}.jar \
+# ... ThunderSTORM
+    && wget -q https://github.com/zitmen/thunderstorm/releases/download/v1.3/Thunder_STORM.jar -O /opt/Fiji.app/plugins/Thunder_STORM.jar \
     && chmod -R a+rwX /opt/Fiji.app/plugins
 
 #ij2-LocalizeJ (depends from)
 RUN wget -q https://maven.scijava.org/service/local/repositories/central/content/colt/colt/1.2.0/colt-1.2.0.jar -O /opt/Fiji.app/jars/colt-1.2.0.jar \
+    && wget -q "https://maven.scijava.org/service/local/artifact/maven/redirect?r=releases&g=sc.fiji&a=imagescience&v=3.0.0&e=jar" -O /opt/Fiji.app/jars/imagescience-3.0.0.jar \
+    && wget -q  https://github.com/ArneS70/ij2-LocalizeJ/raw/main/target/LocalizeJ-0.1.0-SNAPSHOT.jar -O /opt/Fiji.app/jars/LocalizeJ-0.1.0-SNAPSHOT.jar \
     && chmod -R a+rwX /opt/Fiji.app/jars
-
-RUN wget -q "https://maven.scijava.org/service/local/artifact/maven/redirect?r=releases&g=sc.fiji&a=imagescience&v=3.0.0&e=jar" -O /opt/Fiji.app/jars/imagescience-3.0.0.jar \
-    && chmod -R a+rwX /opt/Fiji.app/jars
-
-RUN wget -q  https://github.com/ArneS70/ij2-LocalizeJ/raw/main/target/LocalizeJ-0.1.0-SNAPSHOT.jar -O /opt/Fiji.app/jars/LocalizeJ-0.1.0-SNAPSHOT.jar \
-    && chmod -R a+rwX /opt/Fiji.app/jars
-
-## NOT WORKING
-# /opt/Fiji.app/ImageJ-linux64 --update update
-# [WARNING] Skipping plugins/clij2-fft_-2.2.0.15.jar
-# [WARNING] Skipping lib/linux64/libclij2fft.so
-# [WARNING] Skipping lib/linux64/libjniclij2fftWrapper.so
-
 
 # create icon
 RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
@@ -94,9 +72,9 @@ RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
 COPY --from=cellpose-image  /opt/conda/envs/cellpose /opt/conda/envs/cellpose
 COPY --from=cellpose-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
 RUN chmod -R a+rwX /home/biop/.cellpose  
+
 RUN chown -R biop:biop /home/biop/ \
     && chmod -R a+rwx /home/biop/   
-
 
 #################################################################
 # Container start
@@ -104,5 +82,3 @@ USER biop
 WORKDIR /home/biop
 ENTRYPOINT ["/usr/local/bin/jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
-
-
