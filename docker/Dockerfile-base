@@ -26,8 +26,12 @@ RUN apt-get update -y \
         emacs \
         sudo \
         ncdu \
-        p7zip-full \
+        p7zip-full \    
+        wget \
         bzip2 \
+        # install jdk (for OMERO.insight)
+        openjdk-11-jdk \
+    # cleaning up 
     && apt-get autoremove --purge \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
@@ -115,6 +119,14 @@ RUN sudo apt-get update -y \
     && sudo add-apt-repository ppa:inkscape.dev/stable \
     && sudo apt-get update -y \
     && sudo apt-get install inkscape -y 
+
+################################################################# 
+# Install OMERO.insight standalone
+RUN wget -q https://github.com/ome/omero-insight/releases/download/v5.8.6/OMERO.insight-5.8.6.zip \
+    && unzip OMERO.insight-5.8.6.zip -d /opt/OMERO.insight \
+    && rm OMERO.insight-5.8.6.zip
+# to have OMERO EPFL pre-configured
+COPY omero-insight/container.xml /opt/OMERO.insight/OMERO.insight-5.8.6/config/container.xml
 
 ################################################################# 
 # OpenCL for clij ...
