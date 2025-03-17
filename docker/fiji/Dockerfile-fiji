@@ -1,5 +1,8 @@
 ARG BASE_IMAGE=0.2.0
+ARG CELLPOSE_VERSION=3.1.1.1
 ARG ALIAS=biop/
+
+FROM ${ALIAS}biop-cellpose:${CELLPOSE_VERSION} AS cellpose-image
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 ENV OMEROIJ_VERSION 5.8.3
@@ -83,6 +86,11 @@ RUN wget -q  https://github.com/ArneS70/ij2-LocalizeJ/raw/main/target/LocalizeJ-
 RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
     && printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop
 
+#################################################################
+# Install cellpose and models
+COPY --from=cellpose-image  /opt/conda/envs/cellpose /opt/conda/envs/cellpose
+COPY --from=cellpose-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
+RUN chmod -R a+rwX /home/biop/.cellpose  
 RUN chown -R biop:biop /home/biop/ \
     && chmod -R a+rwx /home/biop/   
 
