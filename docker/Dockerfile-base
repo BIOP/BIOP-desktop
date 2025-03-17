@@ -88,7 +88,6 @@ RUN wget -q 'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64
     && find /var/log -type f -exec cp /dev/null \{\} \;
 ENV BROWSER=firefox
 
-
 #################################################################
 # Replace conda with miniforge
 #Put conda in path so we can use conda activate
@@ -103,18 +102,6 @@ RUN wget https://github.com/conda-forge/miniforge/releases/latest/download/Minif
 RUN wget https://go.microsoft.com/fwlink/?LinkID=760868 -O /tmp/vscode.deb \
     && apt install -y /tmp/vscode.deb \
     && rm /tmp/vscode.deb
-#################################################################
-# Create shortcut to start jupyter lab
-RUN mkdir /opt/jupyter
-COPY jupyter/start_jupyter.sh /opt/jupyter/start_jupyter.sh
-COPY jupyter/jupyter_.png /opt/jupyter/jupyter.png
-
-RUN chmod +x /opt/jupyter/start_jupyter.sh \
-    && chown -R biop:biop /opt/jupyter/ \
-    && mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
-    && printf '[Desktop Entry]\nVersion=3.6.8\nName=jupyter\nGenericName=jupyter\nX-GNOME-FullName=jupyter\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/jupyter/start_jupyter.sh\nTryExec=/opt/jupyter/start_jupyter.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/jupyter/jupyter.png\nStartupWMClass=jupyter\n' > /home/biop/Desktop/jupyter.desktop \
-    && chown -R biop:biop /home/biop \
-    && chmod -R a+rwx /home/biop/
 
 #################################################################
 # Install latest Inkscape stable version
@@ -176,7 +163,22 @@ RUN apt-get update \
 #    && conda config --set solver libmamba
 
 #################################################################
+# All icons and *.sh file for the desktop will now be in /opt/icons
+RUN mkdir -p /home/biop/Desktop \
+    && mkdir /opt/icons
+COPY icons/* /opt/icons/
+
 #################################################################
+# Create shortcuts
+# to start jupyter lab
+RUN printf 'jupyter lab\n\$ read -rsp \$"Press enter to continue..."\nPress enter to continue...' > /opt/icons/start_jupyter.sh \
+    && printf '[Desktop Entry]\nVersion=3.6.8\nName=jupyter\nGenericName=jupyter\nX-GNOME-FullName=jupyter\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_jupyter.sh\nTryExec=/opt/icons/start_jupyter.sh\nTerminal=true\nStartupNotify=false\nIcon=/opt/icons/jupyter.png\nStartupWMClass=jupyter\n' > /home/biop/Desktop/jupyter.desktop \
+# to start omero.insight 
+    && printf '#!/bin/bash\n# Navigate to the directory containing the OMERO.insight binary\ncd /opt/OMERO.insight/OMERO.insight-5.8.6/bin\n# Execute the OMERO.insight application\n./omero-insight\n' > /opt/icons/start_omero.sh \
+    && printf '[Desktop Entry]\nVersion=5.8.6\nName=OMERO Insight\nGenericName=OMERO Insight\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_omero.sh\nTryExec=/opt/icons/start_omero.sh\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/icons/omero.png\n' > /home/biop/Desktop/omero.desktop \
+# to start VScode
+    && printf 'yes | code' > /opt/icons/start_vscode.sh \
+    && printf '[Desktop Entry]\nVersion=1.98.2\nName=VScode\nGenericName=VScode\nX-GNOME-FullName=VScode\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_vscode.sh\nTryExec=/opt/icons/start_vscode.sh\nTerminal=false\nStartupNotify=true\nIcon=/opt/icons/vscode.png\n' > /home/biop/Desktop/vscode.desktop
 
 #################################################################
 RUN chown -R biop:biop /home/biop/ \
