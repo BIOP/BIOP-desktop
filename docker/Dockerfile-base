@@ -121,10 +121,10 @@ RUN wget -q https://github.com/ome/omero-insight/releases/download/v5.8.6/OMERO.
 COPY omero-insight/container.xml /opt/OMERO.insight/OMERO.insight-5.8.6/config/container.xml
 
 ################################################################# 
-# OpenCL for clij ...
+# # OpenCL for clij ...
 RUN apt-get update \
     && apt-get install -y nvidia-opencl-dev \
-    && apt remove -y libnvidia-compute-550-server \
+    && apt remove -y libnvidia-compute-570-server \
     && apt-get autoremove --purge \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
