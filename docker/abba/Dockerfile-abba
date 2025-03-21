@@ -65,11 +65,6 @@ USER root
 RUN rm -rf /home/biop/tmp
 
 # install deepslice 
-# COPY abba/deepslice/env_deepslice.yml /tmp/env_deepslice.yml
-# RUN conda env update -n deepslice -f /tmp/env_deepslice.yml \
-#     && conda clean --all -f -y \
-#     && conda env export -n "biop" \ 
-#     && rm /tmp/env_deepslice.yml 
 COPY --from=deepslice-image /opt/conda/envs/deepslice /opt/conda/envs/deepslice
 
 # install abba_python
