@@ -42,20 +42,10 @@ COPY --from=qupath-image /opt/QuPath /opt/QuPath
 COPY --from=qupath-image /opt/QuPath /opt/QuPath
 COPY --from=qupath-image /home/biop/Desktop/QuPath.desktop  /home/biop/Desktop/QuPath.desktop
 COPY --from=qupath-image /opt/QuPath/QuPath_Common_Data_0.5 /opt/QuPath/QuPath_Common_Data_0.5/
-# TODO set pref 
-#  Prepare to set QP_prefs 
-COPY QuPath/QuPath_setPaths.groovy /home/biop/tmp/QuPath_setPaths.groovy
-COPY QuPath/qp_prefs.xml /home/biop/tmp/qp_prefs.xml
-RUN chown -R biop:biop /home/biop/tmp
-USER biop
-# here we import prefs in QuPath so that we can use the extensions at the first start ! 
-RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' 
-# TODO test and uncomment below after testing
-USER root 
-RUN rm -rf /home/biop/tmp 
 
-# set back to root to continue installation
-USER root
+# Prepare to set QP_prefs , see below `QuPath_setPaths.groovy`
+COPY QuPath/prefs/* /home/biop/tmp/
+
 
 #################################################################
 # Install Fiji
