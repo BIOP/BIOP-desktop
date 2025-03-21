@@ -1,5 +1,11 @@
 ARG BASE_IMAGE=0.2.1
+
+ARG FIJI_VERSION=20250319
+
 ARG ALIAS=biop/
+
+FROM ${ALIAS}biop-fiji:${FIJI_VERSION} AS fiji-image
+
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 USER root
@@ -19,9 +25,7 @@ RUN unzip inkscape-imagej-panel-master.zip \
 
 #################################################################
 # Inkscape preferences with path to ImageJ, inkscape conda env already set up
-# won't work ofr this image that does not have inkscape nor Fiji
 COPY inkscape/preferences.xml /home/biop/.config/inkscape/preferences.xml
-
 
 #################################################################
 # Install SimpInkScr extension
@@ -32,6 +36,10 @@ RUN unzip simple_inkscape_scripting.zip \
     && rm -rf simple_inkscape_scripting.zip \
     && rm -rf simple_inkscape_scripting/
 
+#################################################################
+# Install Fiji    
+COPY --from=fiji-image /opt/Fiji.app /opt/Fiji.app
+RUN printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop
 ##############################################################################
 # install inkscape_modules environment
 COPY inkscape/env_inkscape.yml /tmp/env_inkscape.yml
@@ -41,8 +49,8 @@ RUN conda env update -n inkscape_modules -f /tmp/env_inkscape.yml \
      && rm /tmp/env_inkscape.yml
 
 
-RUN chown -R biop:biop /home/biop/ \
-    && chmod -R a+rwx /home/biop/    
+RUN chown -R biop:biop /home/biop/ /opt/Fiji.app \
+    && chmod -R a+rwx /home/biop/  /opt/Fiji.app  
 
 #################################################################
 # Container start
