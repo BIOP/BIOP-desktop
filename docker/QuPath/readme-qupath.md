@@ -3,7 +3,7 @@
 ## build
 
 ```
-docker build -f cellpose/Dockerfile-cellpose  -t biop-qupath:v0.5.1-04 . --no-cache
+docker build -f QuPath/Dockerfile-qupath  -t biop-qupath:v0.5.1-04 . --no-cache
 ```
 
 ## start to test (see below)
