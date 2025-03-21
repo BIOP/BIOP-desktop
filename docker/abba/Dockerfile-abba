@@ -112,6 +112,7 @@ RUN  chown -R biop:biop /opt/Fiji.app/ \
     && chmod -R a+rwX /opt/Fiji.app/
 
 # install brainrender
+# TODO : update to the latest version 0.0.7
 COPY --from=brainrender-image /opt/conda/envs/brainrender /opt/conda/envs/brainrender
 
 # Make icons 
