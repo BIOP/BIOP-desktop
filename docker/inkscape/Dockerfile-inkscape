@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=0.1.0
+ARG BASE_IMAGE=0.2.1
 ARG ALIAS=biop/
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
