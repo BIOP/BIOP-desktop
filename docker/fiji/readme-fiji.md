@@ -3,7 +3,7 @@
 ## build
 
 ```
-docker build -f cellpose/Dockerfile-cellpose  -t biop-fiji:20250319 . --no-cache
+docker build -f fiji/Dockerfile-fiji  -t biop-fiji:20250319 . --no-cache
 ```
 
 ## start to test (see below)
