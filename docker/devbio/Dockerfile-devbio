@@ -1,26 +1,22 @@
-ARG BASE_IMAGE=0.0.1
-FROM biop-vnc-base:${BASE_IMAGE}
+# BASE 0.0.1 is working
+ARG ALIAS=biop/
+ARG NAPARI_VERSION=0.5.6
+
+#FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE} AS base
+FROM ${ALIAS}biop-napari:${NAPARI_VERSION} AS base
 
 USER root
 
 ##############################################################################
 # install devbio-napari
-COPY devbio/env_devbio.yml /tmp/env_devbio.yml
-RUN conda env update -n devbio -f /tmp/env_devbio.yml \
-    && conda clean --all -f -y \
-    && conda env export -n "biop" \
-     && rm /tmp/env_devbio.yml
+RUN mamba create --name devbio napari[all] python=3.9 devbio-napari=0.11.0 pyqt -c conda-forge -c pytorch \
+    && conda clean --all -f -y
 
-#create shortcut to start devbio-napari 
-COPY napari/napari-icon.ico /opt/devbio/napari-icon.ico
-COPY devbio/start_devbio.sh /opt/devbio/start_devbio.sh
-RUN chmod +x /opt/devbio/start_devbio.sh \
-    && chmod -R a+rwX /opt/devbio/ 
-
-RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
-    && printf '[Desktop Entry]\nVersion=0.10.1\nName=devbio-napari\nGenericName=devbio-napari\nX-GNOME-FullName=devbio-napari\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/devbio/start_devbio.sh\nTryExec=/opt/devbio/start_devbio.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/devbio/napari-icon.ico\nStartupWMClass=devbio-napari\n' > /home/biop/Desktop/devbio-napari.desktop \
-    && chown -R biop:biop /home/biop \
-    && chmod +x /home/biop/Desktop/devbio-napari.desktop 
+COPY icons/* /opt/icons/
+RUN printf 'source activate devbio\nnaparia\n\$ read -rsp \$"Press enter to continue..."\n' > /opt/icons/start_devbio.sh \
+    && printf '[Desktop Entry]\nVersion=0.11.0\nName=devbio-napari\nGenericName=devbio-napari\nX-GNOME-FullName=devbio-napari\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=xterm -e /opt/icons/start_devbio.sh\nTryExec=xterm -e /opt/icons/start_devbio.sh\nTerminal=false\nStartupNotify=true\nIcon=/opt/icons/napari-icon.ico\nStartupWMClass=devbio-napari\n' > /home/biop/Desktop/devbio-napari.desktop \
+    && chown -R biop:biop /home/biop/ /opt/icons/\
+    && chmod -R a+rwx /home/biop/Desktop/ /opt/icons/
     
 #################################################################
 # Container start
