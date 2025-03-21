@@ -5,13 +5,8 @@ FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 USER root
 
 #################################################################
-# Install Inkscape extension 
-RUN sudo apt-get update -y \
-    && sudo apt-get install software-properties-common -y \
-    && sudo apt-get update -y \
-    && sudo add-apt-repository ppa:inkscape.dev/stable \
-    && sudo apt-get update -y \
-    && sudo apt-get install inkscape -y 
+# Install Inkscape
+# No need as it's installed in the base image now
 
 #################################################################
 # and the inkscape-imagej-panel https://gitlab.com/doctormo/inkscape-imagej-panel/
