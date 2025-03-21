@@ -6,10 +6,10 @@ ARG DEEPSLICE_VERSION=1.1.5
 ARG BRAINRENDER_VERSION=0.0.3
 ARG ALIAS=biop/
 
-FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} as qupath-image
-FROM ${ALIAS}biop-fiji:${FIJI_VERSION} as fiji-image
-FROM ${ALIAS}biop-deepslice:${DEEPSLICE_VERSION} as deepslice-image
-FROM ${ALIAS}biop-brainrender:${BRAINRENDER_VERSION} as brainrender-image
+FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} AS qupath-image
+FROM ${ALIAS}biop-fiji:${FIJI_VERSION} AS fiji-image
+FROM ${ALIAS}biop-deepslice:${DEEPSLICE_VERSION} AS deepslice-image
+FROM ${ALIAS}biop-brainrender:${BRAINRENDER_VERSION} AS brainrender-image
 
 FROM ${ALIAS}biop-vnc-base:0.0.3 as base
 
