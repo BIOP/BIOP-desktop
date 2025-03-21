@@ -1,7 +1,7 @@
 # https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-23-07.html 
 #FROM superelastix/elastix:5.0.1 as elastix-image
-ARG QUPATH_VERSION=v0.5.1-01
-ARG FIJI_VERSION=20240429
+ARG QUPATH_VERSION=v0.5.1-04
+ARG FIJI_VERSION=20250319
 ARG DEEPSLICE_VERSION=1.1.5
 ARG BRAINRENDER_VERSION=0.0.3
 ARG ALIAS=biop/
@@ -11,7 +11,7 @@ FROM ${ALIAS}biop-fiji:${FIJI_VERSION} AS fiji-image
 FROM ${ALIAS}biop-deepslice:${DEEPSLICE_VERSION} AS deepslice-image
 FROM ${ALIAS}biop-brainrender:${BRAINRENDER_VERSION} AS brainrender-image
 
-FROM ${ALIAS}biop-vnc-base:0.0.3 as base
+FROM ${ALIAS}biop-vnc-base:0.2.1 AS base
 
 
 USER root
