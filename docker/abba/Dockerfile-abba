@@ -56,10 +56,15 @@ COPY abba/ABBA_Atlas_folder.txt /opt/Fiji.app/plugins/BIOP/ABBA_Atlas_folder.txt
 # set FIJI text to set the path to atlases
 COPY fiji/Fiji_setWrappersPaths.groovy /home/biop/tmp/Fiji_setWrappersPaths.groovy
 
+#################################################################
 # install deepslice 
 COPY --from=deepslice-image /opt/conda/envs/deepslice /opt/conda/envs/deepslice
 
+
+#################################################################
 # install abba_python
+# dependencies from https://github.com/BIOP/abba-installer/blob/main/construct.yaml 
+# and abba_python from https://pypi.org/project/abba-python/
 COPY abba/env_abba_python.yml /tmp/env_abba_python.yml
 RUN conda env update -n abba_python -f /tmp/env_abba_python.yml \
     && conda clean --all -f -y \
@@ -95,8 +100,8 @@ RUN wget https://zenodo.org/records/4173229/files/ccf2017-mod65000-border-center
 RUN chown -R biop:biop /opt/abba/cached_atlas/ \
     && chmod -R a+rwX /opt/abba/cached_atlas/
 
-
 # Make a desktop icon for ABBA
+# modified from : https://github.com/BIOP/abba-installer/blob/main/abba/start-abba.py
 COPY abba/abba_run.py /opt/abba/abba_run.py 
 # set permissions
 RUN chown biop:biop /opt/abba/abba_run.py \
