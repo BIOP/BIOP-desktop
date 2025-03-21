@@ -1,5 +1,5 @@
 ARG ALIAS=biop/
-ARG BASE_IMAGE=0.2.0
+ARG BASE_IMAGE=0.2.1
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 USER root
