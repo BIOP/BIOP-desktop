@@ -3,11 +3,12 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.8
-  - pip=23.2.1
-  - pyimagej=1.4.1
-  - bg-atlasapi=1.0.2
-  - openjdk=8
+  - python=3.12.4
+  - pip=24.0
+  - pyimagej=1.5.0
+  - brainglobe-atlasapi=2.0.11
+  - openjdk=8 # enforce jdk8 for imagej
+  - maven
   - pip:
-      - abba-python==0.5.0
+      - abba-python==0.10.6
 prefix: "/opt/conda/envs/abba_python"
