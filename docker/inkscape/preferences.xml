@@ -917,7 +917,7 @@
   <group
      id="extensions"
      org.cnrs.mutterer.figure.imagej_panel.tab="Options"
-     org.cnrs.mutterer.figure.imagej_panel.imagej="/opt/Fiji.app/jars/ij-1.54f.jar"
+     org.cnrs.mutterer.figure.imagej_panel.imagej="/opt/Fiji.app/jars/ij-1.54p.jar"
      org.cnrs.mutterer.figure.imagej_panel.java="/opt/Fiji.app/java/linux-amd64/zulu8.60.0.21-ca-fx-jdk8.0.322-linux_x64/jre/bin/java"
      org.cnrs.mutterer.figure.imagej_panel.data_path="/home/biop/inkscape/data/"
      org.cnrs.mutterer.figure.imagej_panel.images_path="/home/biop/inkscape/images/"
