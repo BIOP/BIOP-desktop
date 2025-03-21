@@ -40,13 +40,6 @@ RUN unzip simple_inkscape_scripting.zip \
 # Install Fiji    
 COPY --from=fiji-image /opt/Fiji.app /opt/Fiji.app
 RUN printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop
-##############################################################################
-# install inkscape_modules environment
-COPY inkscape/env_inkscape.yml /tmp/env_inkscape.yml
-RUN conda env update -n inkscape_modules -f /tmp/env_inkscape.yml \
-    && conda clean --all -f -y \
-    && conda env export -n "biop" \
-     && rm /tmp/env_inkscape.yml
 
 
 RUN chown -R biop:biop /home/biop/ /opt/Fiji.app \
