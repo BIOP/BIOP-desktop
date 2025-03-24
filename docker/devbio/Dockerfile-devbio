@@ -9,7 +9,7 @@ USER root
 
 ##############################################################################
 # install devbio-napari
-RUN mamba create --name devbio napari[all] python=3.9 devbio-napari=0.11.0 pyqt -c conda-forge -c pytorch \
+RUN mamba create --name devbio napari[all] python=3.9 devbio-napari=0.11.0 pyqt napari-omero -c conda-forge -c pytorch \
     && conda clean --all -f -y
 
 COPY icons/* /opt/icons/
