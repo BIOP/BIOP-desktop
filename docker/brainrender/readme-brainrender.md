@@ -23,3 +23,4 @@ docker push biop/biop-brainrender:0.0.7
 
 ## brainrender workflow
 - Start brainrender (icon on desktop)
+- Load atlas
