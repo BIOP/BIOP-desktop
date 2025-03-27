@@ -29,8 +29,14 @@ RUN apt-get update -y \
         p7zip-full \    
         wget \
         bzip2 \
+        xterm \
         # install jdk (for OMERO.insight)
         openjdk-11-jdk \
+    # napari necessary dependencies
+    && sudo apt-get install -y libegl1 libdbus-1-3 libxkbcommon-x11-0 \
+        libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+        libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0 \
+        x11-utils libxcb-cursor0 libopengl0 \      
     # cleaning up 
     && apt-get autoremove --purge \
     && apt-get clean \
