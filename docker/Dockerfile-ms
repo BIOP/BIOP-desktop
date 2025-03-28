@@ -64,7 +64,9 @@ COPY fiji/Fiji_setWrappersPaths.groovy /home/biop/tmp/Fiji_setWrappersPaths.groo
 # Install cellpose and models
 COPY --from=cellpose-image  /opt/conda/envs/cellpose /opt/conda/envs/cellpose
 COPY --from=cellpose-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
-#RUN chmod -R a+rwX /home/biop/.cellpose  
+#################################################################
+# Install omnipose
+COPY --from=omnipose-image /opt/conda/envs/omnipose/ /opt/conda/envs/omnipose/
 
 #################################################################
 # Install devbio
