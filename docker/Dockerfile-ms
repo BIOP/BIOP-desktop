@@ -154,16 +154,15 @@ COPY icons/* /opt/icons/
     && ln -s /usr/lib/x86_64-linux-gnu/libcuda.so.1 /usr/lib/x86_64-linux-gnu/libcuda.so
 
 
-# chown and chmod for all 
+# set chown and chmod for all necessary folders
 RUN chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.5 \
     && chmod -R a+rwx /opt/QuPath/QuPath_Common_Data_0.5 \
+    && chmod a+rwx /opt/QuPath/bin/QuPath \
     # cellpose models
     && chmod -R a+rwx /home/biop/.cellpose \ 
+    # samapi
     && chown -R biop:biop /home/biop/.samapi/ \
     && chmod -R a+rwx /home/biop/.samapi/ \
-    # abba
-    && chown -R biop:biop /opt/abba/ \
-    && chmod -R a+rwx /opt/abba/ \ 
     # deepslice
     && chown biop:biop /opt/conda/envs/deepslice/ \
     && chmod a+rwx /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.1.py \
@@ -176,7 +175,10 @@ RUN chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.5 \
     && chmod  a+rwx /opt/elastix/bin/transformix  \
     # fiji
     && chown biop:biop /opt/Fiji.app/ \
-    && chmod -R a+rwx /opt/Fiji.app/
+    && chmod -R a+rwx /opt/Fiji.app/ \
+    # abba
+    && chown -R biop:biop /opt/abba/ \
+    && chmod -R a+rwX /opt/abba/ 
 
 #################################################################
 # Container start
