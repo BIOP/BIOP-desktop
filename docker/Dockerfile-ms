@@ -168,12 +168,6 @@ COPY --from=cellprofiler-image /opt/cellprofiler /opt/cellprofiler
 # Add the inkscape-imagej-panel extension for inskcape
 COPY --from=inkscape-image /home/biop/.config/inkscape/  /home/biop/.config/inkscape/
 
-#################################################################
-# Install omnipose
-# https://omnipose.readthedocs.io/index.html
-COPY --from=omnipose-image /opt/conda/envs/omnipose/ /opt/conda/envs/omnipose/
-# TODO : add kernels! 
-# TODO : add models!
 
 #################################################################
 # Jupyter kernels 
