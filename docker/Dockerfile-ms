@@ -109,59 +109,19 @@ COPY --from=stardist-image /opt/conda/envs/stardist /opt/conda/envs/stardist
 
 #################################################################
 # Install abba
-COPY --from=abba-image /opt/abba /opt/abba
-# set permissions , includes /opt/abba/cached_atlas/ 
-# RUN chown -R biop:biop /opt/abba/ \
-#     && chmod -R a+rwX /opt/abba/
-
-# install abba_python env
-COPY --from=abba-image /opt/conda/envs/abba_python/ /opt/conda/envs/abba_python/
-
-# instal deepslice env
-COPY --from=abba-image /opt/conda/envs/deepslice/  /opt/conda/envs/deepslice/
-
-# and make deepslice_cli_v1.1.5.1.py executable
-# RUN chown biop:biop /opt/conda/envs/deepslice/ \
-#     && chmod a+rwx /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.1.py 
-
-# change permission of atlases 
-# should be copy with the COPY above # COPY --from=abba-image /opt/conda/envs/deepslice/lib/site-packages/DeepSlice/metadata/weights/ /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/
-# RUN chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/xception_weights_tf_dim_ordering_tf_kernels.h5 \
-#     && chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/Allen_Mixed_Best.h5 \
-#     && chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/Synthetic_data_final.hdf5
-
-# add elastix
-COPY --from=abba-image /opt/elastix /opt/elastix
-# RUN chown -R biop:biop /opt/elastix \
-#     && chmod  a+rwx /opt/elastix/bin/elastix \
-#     && chmod  a+rwx /opt/elastix/bin/transformix  
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/elastix/lib
-
-# Test if ABBA works again with all rights
-# RUN chown biop:biop /opt/Fiji.app/ \
-#     && chmod -R a+rwx /opt/Fiji.app/
-
-# set FIJI prefs (elastix, cellpose , stardist), and adds text to set the path to atlases
-COPY fiji/Fiji_setWrappersPaths.groovy /home/biop/tmp/Fiji_setWrappersPaths.groovy
-# RUN chown -R biop:biop /home/biop/tmp \
-#     && chmod -R a+rwX /home/biop/tmp
-
-# add brainrender-napari env 
-COPY --from=brainrender-image /opt/conda/envs/brainrender /opt/conda/envs/brainrender
-
-USER biop
-# set the paths to the wrappers in Fiji
-RUN /opt/Fiji.app/ImageJ-linux64 --headless --run /home/biop/tmp/Fiji_setWrappersPaths.groovy \
-    # download allen_mouse_25um atlas from brainrender-napari
-    && source activate brainrender \
-    && brainglobe install -a allen_mouse_25um \
-    && conda deactivate
-
-USER root
-
 # a text file to specify where the atlases are
 COPY --from=abba-image /opt/Fiji.app/plugins/BIOP/ABBA_Atlas_folder.txt /opt/Fiji.app/plugins/BIOP/ABBA_Atlas_folder.txt
-
+COPY --from=abba-image /opt/abba/ /opt/abba/
+# install abba_python env
+COPY --from=abba-image /opt/conda/envs/abba_python/ /opt/conda/envs/abba_python/
+# instal deepslice env
+COPY --from=abba-image /opt/conda/envs/deepslice/  /opt/conda/envs/deepslice/
+# add elastix
+COPY --from=abba-image /opt/elastix /opt/elastix
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/elastix/lib
+# add brainrender-napari env 
+COPY --from=brainrender-image /opt/conda/envs/brainrender /opt/conda/envs/brainrender
+COPY --from=brainrender-image /home/biop/.brainglobe/ /home/biop/.brainglobe/
 
 #################################################################
 # Jupyter kernels 
