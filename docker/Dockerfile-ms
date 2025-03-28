@@ -153,9 +153,6 @@ COPY icons/* /opt/icons/
  # waiting for RunAI patch
     && ln -s /usr/lib/x86_64-linux-gnu/libcuda.so.1 /usr/lib/x86_64-linux-gnu/libcuda.so
 
-## quick fix for the atlas download error TODO: update to latest Fiji-ABBA , and remove this with next fiji update
-RUN wget https://maven.scijava.org/content/repositories/releases/ch/epfl/biop/atlas/0.3.1/atlas-0.3.1.jar -O /opt/Fiji.app/jars/atlas-0.3.1.jar \
-    && rm -f /opt/Fiji.app/jars/atlas-0.2.2.jar 
 
 # chown and chmod for all 
 RUN chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.5 \
