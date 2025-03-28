@@ -121,48 +121,36 @@ COPY --from=brainrender-image /home/biop/.brainglobe/ /home/biop/.brainglobe/
 # To make the different conda env available in jupyter
 COPY jupyter/kernels/ /home/biop/.local/share/jupyter/kernels/
 
-#################################################################
-# TODO : put back with inkscape installation
-# replace inkscape from base with the one from the inkscape-image (newer)
-RUN sudo apt-get update -y \
-    && sudo apt-get install software-properties-common -y \
-    && sudo apt-get update -y \
-    && sudo add-apt-repository ppa:inkscape.dev/stable \
-    && sudo apt-get update -y \
-    && sudo apt-get install inkscape -y 
-    # && apt-get autoremove --purge \
-    # && apt-get clean \
-    # && rm -rf /var/lib/apt/lists/* \
-    # && rm -rf /tmp/* \
-    # && find /var/log -type f -exec cp /dev/null \{\} \;
-
-# Install Inkscape extension
-# and the inkscape_modules environment
-# get a "docker: Error response from daemon: max depth exceeded."
-#COPY --from=inkscape-image /opt/conda/envs/inkscape_modules/ /opt/conda/envs/inkscape_modules/ 
-
-# Replace copy of icons of all tools with a single run that printf all of them 
-# COPY --from=qupath-image /home/biop/Desktop/QuPath.desktop  /home/biop/Desktop/QuPath.desktop # DONE
-# COPY --from=ilastik-image /home/biop/Desktop/ilastik.desktop /home/biop/Desktop/ilastik.desktop
-# COPY --from=fiji-image /home/biop/Desktop/Fiji.desktop /home/biop/Desktop/Fiji.desktop
-# COPY --from=devbio-image /home/biop/Desktop/devbio-napari.desktop  /home/biop/Desktop/devbio-napari.desktop 
-# COPY --from=samapi-image /home/biop/Desktop/samapi.desktop /home/biop/Desktop/samapi.desktop
-# COPY --from=empanada-image /home/biop/Desktop/empanada.desktop /home/biop/Desktop/empanada.desktop
-# COPY --from=abba-image /home/biop/Desktop/abba.desktop  /home/biop/Desktop/abba.desktop 
-# COPY --from=cellprofiler-image /home/biop/Desktop/cellprofiler.desktop /home/biop/Desktop/cellprofiler.desktop
-
-# create shortcuts to start the different tools and chown and chmod folders
-RUN printf '[Desktop Entry]\nVersion=0.5.1\nName=qupath\nGenericName=QuPath\nX-GNOME-FullName=QuPath\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/QuPath/bin/QuPath\nTryExec=/opt/QuPath/bin/QuPath\nTerminal=false\nStartupNotify=true\nIcon=/opt/QuPath/lib/QuPath.png\nStartupWMClass=QuPath' > /home/biop/Desktop/QuPath.desktop \
+# Make icons on desktop
+COPY icons/* /opt/icons/
+# to start fiji
+ RUN printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop \
+# to start QuPath
+    && printf '[Desktop Entry]\nVersion=0.5.1\nName=qupath\nGenericName=QuPath\nX-GNOME-FullName=QuPath\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/QuPath/bin/QuPath\nTryExec=/opt/QuPath/bin/QuPath\nTerminal=false\nStartupNotify=true\nIcon=/opt/QuPath/lib/QuPath.png\nStartupWMClass=QuPath' > /home/biop/Desktop/QuPath.desktop \
+# to start ilastik
     && printf '[Desktop Entry]\nVersion=1.4.0\nName=ilastik\nGenericName=ilastik\nX-GNOME-FullName=ilastik\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/ilastik/run_ilastik.sh %F\nTryExec=/opt/ilastik/run_ilastik.sh\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/ilastik/lib/python3.7/site-packages/ilastik/shell/gui/icons/96x96/ilastik-icon.png\nStartupWMClass=ilastik\n' > /home/biop/Desktop/ilastik.desktop \
-    && printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop \
-    && printf '[Desktop Entry]\nVersion=0.10.1\nName=devbio-napari\nGenericName=devbio-napari\nX-GNOME-FullName=devbio-napari\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/devbio/start_devbio.sh\nTryExec=/opt/devbio/start_devbio.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/devbio/napari-icon.ico\nStartupWMClass=devbio-napari\n' > /home/biop/Desktop/devbio-napari.desktop \
-    && printf '[Desktop Entry]\nVersion=0.3.0\nName=samapi\nGenericName=samapi\nX-GNOME-FullName=samapi\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/samapi/start_samapi.sh\nTryExec=/opt/samapi/start_samapi.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/samapi/samapi.ico\nStartupWMClass=samapi\n' > /home/biop/Desktop/samapi.desktop \
-    && printf '[Desktop Entry]\nVersion=0.2.3\nName=empanada\nGenericName=empanada\nX-GNOME-FullName=empanada\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/empanada/start_empanada.sh\nTryExec=/opt/empanada/start_empanada.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/empanada/empanada_icon.png\nStartupWMClass=empanada\n' > /home/biop/Desktop/empanada.desktop \
-    &&  printf '[Desktop Entry]\nVersion=0.8.0\nName=ABBA\nGenericName=ABBA\nX-GNOME-FullName=ABBA\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/abba/start_abba.sh\nTryExec=/opt/abba/start_abba.sh\nTerminal=true\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/abba/logo256x256.png\nStartupWMClass=ABBA\n' > /home/biop/Desktop/abba.desktop \
-    && printf '[Desktop Entry]\nVersion=4.2.6\nName=cellprofiler\nGenericName=cellprofiler\nX-GNOME-FullName=cellprofiler\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/cellprofiler/start_cellprofiler.sh\nTryExec=/opt/cellprofiler/start_cellprofiler.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/cellprofiler/CellProfiler.ico\nStartupWMClass=cellprofiler\n' > /home/biop/Desktop/cellprofiler.desktop \
-    && chown -R biop:biop /home/biop/ \
-    && chmod -R a+rwx /home/biop/  \ 
-    && rm -rf /home/biop/tmp \
+# cellprofiler
+    && printf 'source activate cellprofiler\ncellprofiler\n\$ read -rsp \$"Press enter to continue..."\n' > /opt/icons/start_cellprofiler.sh \
+    && printf '[Desktop Entry]\nVersion=4.2.6\nName=cellprofiler\nGenericName=cellprofiler\nX-GNOME-FullName=cellprofiler\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_cellprofiler.sh\nTryExec=/opt/icons/start_cellprofiler.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/CellProfiler.ico\nStartupWMClass=cellprofiler\n' > /home/biop/Desktop/cellprofiler.desktop \
+# to start abba
+    && printf 'source activate abba_python\npython /opt/abba/abba_run.py\n\$ read -rsp \$"Press enter to continue..."' > /opt/icons/start_abba.sh \
+    && printf '[Desktop Entry]\nVersion=0.10.6\nName=ABBA\nGenericName=ABBA\nX-GNOME-FullName=ABBA\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_abba.sh\nTryExec=/opt/icons/start_abba.sh\nTerminal=true\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/icons/abba.png\nStartupWMClass=ABBA\n' > /home/biop/Desktop/abba.desktop \
+# to start SAMAPI
+    && printf 'source activate samapi\npython -m uvicorn samapi.main:app --workers 2\n\$ read -rsp \$"Press enter to continue..."' > /opt/icons/start_samapi.sh \
+    && printf '[Desktop Entry]\nVersion=0.6.1\nName=samapi\nGenericName=samapi\nX-GNOME-FullName=samapi\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_samapi.sh\nTryExec=/opt/icons/start_samapi.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/samapi.ico\nStartupWMClass=samapi\n' > /home/biop/Desktop/samapi.desktop \
+# devbio
+    && printf 'source activate devbio\nnaparia\n\$ read -rsp \$"Press enter to continue..."\n' > /opt/icons/start_devbio.sh \
+    && printf '[Desktop Entry]\nVersion=0.11.0\nName=devbio-napari\nGenericName=devbio-napari\nX-GNOME-FullName=devbio-napari\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_devbio.sh\nTryExec=/opt/icons/start_devbio.sh\nTerminal=false\nStartupNotify=true\nIcon=/opt/icons/napari-icon.ico\nStartupWMClass=devbio-napari\n' > /home/biop/Desktop/devbio-napari.desktop \
+# empanada
+    && printf 'source activate empanada\nnapari\n\$ read -rsp \$"Press enter to continue..."\n' > /opt/icons/start_empanada.sh \
+    && printf '[Desktop Entry]\nVersion=1.1.1\nName=empanada\nGenericName=empanada\nX-GNOME-FullName=empanada\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_empanada.sh\nTryExec=/opt/icons/start_empanada.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/empanada_icon.png\nStartupWMClass=empanada\n' > /home/biop/Desktop/empanada.desktop \
+# brainrender
+    && printf 'source activate brainrender\nnapari\n\$ read -rsp \$"Press enter to continue..."' > /opt/icons/start_brainrender.sh \
+    && printf '[Desktop Entry]\nVersion=0.0.7\nName=brainrender\nGenericName=brainrender\nX-GNOME-FullName=brainrender\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_brainrender.sh\nTryExec=/opt/icons/start_brainrender.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/brainglobe.png\nStartupWMClass=brainrender\n' > /home/biop/Desktop/brainrender.desktop \
+# set permissions
+    && chown -R biop:biop   /home/biop/             /opt/icons/ \
+    && chmod -R a+rwx       /home/biop/Desktop/     /opt/icons/ \
+ # waiting for RunAI patch
     && ln -s /usr/lib/x86_64-linux-gnu/libcuda.so.1 /usr/lib/x86_64-linux-gnu/libcuda.so
 
 ## quick fix for the atlas download error TODO: update to latest Fiji-ABBA , and remove this with next fiji update
