@@ -100,11 +100,8 @@ COPY --from=samapi-image /opt/samapi/ /opt/samapi/
 
 #################################################################
 # Install empanada
-#
-# add empanada env
 COPY --from=empanada-image /opt/conda/envs/empanada /opt/conda/envs/empanada
-# add shortcut to start empanada
-COPY --from=empanada-image /opt/empanada /opt/empanada
+COPY --from=empanada-image /home/biop/.empanada/ /home/biop/.empanada/
 
 #################################################################
 # Install stardist
