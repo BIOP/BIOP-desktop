@@ -73,6 +73,10 @@ COPY --from=omnipose-image /opt/conda/envs/omnipose/ /opt/conda/envs/omnipose/
 COPY --from=devbio-image /opt/conda/envs/devbio /opt/conda/envs/devbio
 
 #################################################################
+# Install cellprofiler
+COPY --from=cellprofiler-image /opt/conda/envs/cellprofiler /opt/conda/envs/cellprofiler
+
+#################################################################
 # Add the inkscape-imagej-panel extension for inskcape
 COPY --from=inkscape-image /home/biop/.config/inkscape/  /home/biop/.config/inkscape/
 
@@ -161,11 +165,6 @@ USER root
 # a text file to specify where the atlases are
 COPY --from=abba-image /opt/Fiji.app/plugins/BIOP/ABBA_Atlas_folder.txt /opt/Fiji.app/plugins/BIOP/ABBA_Atlas_folder.txt
 
-#################################################################
-# Install cellprofiler
-COPY --from=cellprofiler-image /opt/conda/envs/cellprofiler /opt/conda/envs/cellprofiler
-# create shortcut to start cellprofiler
-COPY --from=cellprofiler-image /opt/cellprofiler /opt/cellprofiler
 
 #################################################################
 # Jupyter kernels 
