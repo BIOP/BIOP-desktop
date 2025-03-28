@@ -43,21 +43,8 @@ RUN mkdir -p /home/biop/Desktop \
 
 ################################################################# 
 # Install QuPath 
-# 
 COPY --from=qupath-image /opt/QuPath /opt/QuPath
-# install Extensions
-COPY --from=qupath-image /opt/QuPath/QuPath_Common_Data_0.5 /opt/QuPath/QuPath_Common_Data_0.5  
-# RUN chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.5 \
-#     && chmod -R a+rwx /opt/QuPath/QuPath_Common_Data_0.5
-    
-# Prepare to set QP_prefs 
-COPY QuPath/QuPath_setPaths.groovy /home/biop/tmp/QuPath_setPaths.groovy
-COPY QuPath/qp_prefs.xml /home/biop/tmp/qp_prefs.xml
-USER biop
-# here we import prefs in QuPath so that we can use the extensions at the first start ! 
-RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' 
-# set back to root to continue installation
-USER root
+COPY QuPath/prefs/* /home/biop/tmp/
 
 #################################################################
 # Install ilastik
