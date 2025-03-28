@@ -1,22 +1,22 @@
-ARG BASE_IMAGE=0.1.0
+ARG BASE_IMAGE=0.2.2
 ARG ALIAS=biop/
 
 # because COPY --from= doesn't support build-arg (https://github.com/docker/for-mac/issues/2155)
 # we can still do a list of all sub-blocks here to be able to use them in the COPY --from=... below
 # base needs to be last, Don't Ask Wky !  (I don't know) ! and it seems it need to be named 'base' , D.A:W.2 ! but it works !
-ARG QUPATH_VERSION=v0.5.1-01
+ARG QUPATH_VERSION=v0.5.1-04
 ARG ILASTIK_VERSION=1.4.0-gpu
-ARG FIJI_VERSION=20241008
-ARG CELLPOSE_VERSION=2.2.2
-ARG DEVBIO_VERSION=0.10.1
-ARG SAMAPI_VERSION=0.4.0
-ARG EM_VERSION=1.1.0
+ARG FIJI_VERSION=20250319
+ARG CELLPOSE_VERSION=3.1.1.1
+ARG DEVBIO_VERSION=0.11.0
+ARG SAMAPI_VERSION=0.6.1
+ARG EM_VERSION=1.1.1
 ARG STARDIST_VERSION=0.8.5
-ARG ABBA_VERSION=0.8.0-01
+ARG ABBA_VERSION=0.10.6
 ARG CELLPROFILER_VERSION=4.2.6
-ARG INKSCAPE_VERSION=0.1.2
+ARG INKSCAPE_VERSION=0.1.4
 ARG OMNI_VERSION=1.0.7-dev2
-ARG BRAINRENDER_VERSION=0.0.3
+ARG BRAINRENDER_VERSION=0.0.7
 
 FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} AS qupath-image
 FROM ${ALIAS}biop-ilastik:${ILASTIK_VERSION} AS ilastik-image
