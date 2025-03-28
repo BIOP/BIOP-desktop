@@ -89,14 +89,6 @@ ENV LD_LIBRARY_PATH=/usr/lib/wsl/lib:$LD_LIBRARY_PATH
 COPY --from=samapi-image /opt/conda/envs/samapi /opt/conda/envs/samapi
 # add models for samapi
 COPY --from=samapi-image /home/biop/.samapi/ /home/biop/.samapi/
-# RUN chown -R biop:biop /home/biop/.samapi/ \
-#     && chmod -R a+rwX /home/biop/.samapi/ 
-
-# create shortcut to start SAMAPI 
-# because it's a QuPath extension I add (ico & sh) to the QuPath Common Data folder
-# but we could also have them in /opt/samapi , as we have for empanada (see below)
-COPY --from=samapi-image /opt/samapi/ /opt/samapi/
-
 
 #################################################################
 # Install empanada
