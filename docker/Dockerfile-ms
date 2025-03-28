@@ -124,7 +124,7 @@ COPY jupyter/kernels/ /home/biop/.local/share/jupyter/kernels/
 # Make icons on desktop
 COPY icons/* /opt/icons/
 # to start fiji
- RUN printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop \
+RUN printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop \
 # to start QuPath
     && printf '[Desktop Entry]\nVersion=0.5.1\nName=qupath\nGenericName=QuPath\nX-GNOME-FullName=QuPath\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/QuPath/bin/QuPath\nTryExec=/opt/QuPath/bin/QuPath\nTerminal=false\nStartupNotify=true\nIcon=/opt/QuPath/lib/QuPath.png\nStartupWMClass=QuPath' > /home/biop/Desktop/QuPath.desktop \
 # to start ilastik
