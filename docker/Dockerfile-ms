@@ -53,15 +53,13 @@ COPY --from=ilastik-image /opt/ilastik /opt/ilastik
 #################################################################
 # Install Fiji
 COPY --from=fiji-image /opt/Fiji.app /opt/Fiji.app
+COPY fiji/Fiji_setWrappersPaths.groovy /home/biop/tmp/Fiji_setWrappersPaths.groovy
 
 #################################################################
 # From here, we'll install different conda envs
 # - cellpose
 # - devbio
-# - samapi
-# - empanada
-# - stardist, TODO make it work on RunAI
-#
+# ...
 #################################################################
 # Install cellpose and models
 COPY --from=cellpose-image  /opt/conda/envs/cellpose /opt/conda/envs/cellpose
