@@ -1,0 +1,31 @@
+ARG ALIAS=biop/
+ARG BASE_IMAGE=0.2.2
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
+
+USER root
+
+#############################################################################
+# install napari
+RUN conda create --name napari --clone base \
+    && source activate napari \
+    && pip install --upgrade pip \
+    && pip install napari[all] \
+    && conda clean --all -f -y
+
+# Create shortcut to start napari
+COPY icons/* /opt/icons/
+RUN printf 'source activate napari\nnapari\n\$ read -rsp \$"Press enter to continue..."' > /opt/icons/start_napari.sh \
+    && printf '[Desktop Entry]\nVersion=0.5.6\nName=napari\nGenericName=napari\nX-GNOME-FullName=napari\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_napari.sh\nTryExec=/opt/icons/start_napari.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/napari-icon.ico\nStartupWMClass=napari\n' > /home/biop/Desktop/napari.desktop \
+    && chown -R biop:biop /home/biop /opt/icons/ \
+    && chmod -R +rwx /home/biop/Desktop/napari.desktop /opt/icons/
+
+#################################################################
+RUN chown -R biop:biop /home/biop/ \
+&& chmod -R a+rwx /home/biop/ 
+
+#################################################################
+# Container start
+USER biop
+WORKDIR /home/biop
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]

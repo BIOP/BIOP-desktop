@@ -1,30 +1,29 @@
-ARG BASE_IMAGE=0.0.3
 ARG ALIAS=biop/
-FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE} as base
-#ARG DEBIO_VERSION=0.10.1
-#FROM biop-devbio:${DEBIO_VERSION} as base
+ARG BASE_IMAGE=0.2.2
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 USER root
 
-# install cellpose and download models ( https://cellpose.readthedocs.io/en/latest/models.html )
-COPY empanada/env_empanada-gpu.yml /tmp/env_empanada.yml
-RUN conda env update -n empanada -f /tmp/env_empanada.yml \
-    && conda clean --all -f -y \
-    && conda env export -n "biop" \ 
-    && rm /tmp/env_empanada.yml 
+##############################################################################
+# install leonardo-napari
+RUN  conda update -n base -c conda-forge conda  \
+    && conda create --name empanada python=3.9\
+    && source activate empanada \
+    && pip install --upgrade pip \ 
+    && pip install napari[all] empanada-napari==1.1.1 napari-omero
 
-# create shortcut to start empanada
-RUN mkdir /opt/empanada
-COPY empanada/start_empanada.sh /opt/empanada/start_empanada.sh
-COPY empanada/empanada_icon.png /opt/empanada/empanada_icon.png
+# create desktop shortcut the new way 
+RUN mkdir /home/biop/.empanada/ \
+    && wget "https://zenodo.org/record/6861565/files/MitoNet_v1_mini.pth?download=1" -O /home/biop/.empanada/MitoNet_v1_mini.pth \
+    && wget "https://zenodo.org/record/6861565/files/MitoNet_v1.pth?download=1" -O /home/biop/.empanada/MitoNet_v1.pth
 
-RUN chmod +x /opt/empanada/start_empanada.sh \
-    && chown -R biop:biop /opt/empanada/ 
+# Create shortcut to start napari
+COPY icons/* /opt/icons/
+RUN printf 'source activate empanada\nnapari\n\$ read -rsp \$"Press enter to continue..."' > /opt/icons/start_empanada.sh \
+    && printf '[Desktop Entry]\nVersion=1.1.1\nName=empanada\nGenericName=empanada\nX-GNOME-FullName=empanada\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_empanada.sh\nTryExec=/opt/icons/start_empanada.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/empanada_icon.png\nStartupWMClass=empanada\n' > /home/biop/Desktop/empanada.desktop \
+    && chown -R biop:biop /home/biop /opt/icons/ \
+    && chmod -R +rwx /home/biop/Desktop/empanada.desktop /opt/icons/
 
-RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
-    && printf '[Desktop Entry]\nVersion=0.2.3\nName=empanada\nGenericName=empanada\nX-GNOME-FullName=empanada\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/empanada/start_empanada.sh\nTryExec=/opt/empanada/start_empanada.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/empanada/empanada_icon.png\nStartupWMClass=empanada\n' > /home/biop/Desktop/empanada.desktop \
-    && chown -R biop:biop /home/biop \
-    && chmod -R a+rwx /home/biop/
 
 #################################################################
 # Container start

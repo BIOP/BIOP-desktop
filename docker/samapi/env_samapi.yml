@@ -4,7 +4,10 @@ channels:
   - defaults
 dependencies:
   - python=3.10
+  - cudatoolkit=11.8
   - pip
   - pip:
-      - https://github.com/ksugar/samapi/archive/refs/tags/v0.4.0.tar.gz
+      - torch>=2.3.1,<2.4
+      - torchvision
+      - https://github.com/ksugar/samapi/archive/refs/tags/v0.6.1.tar.gz
 prefix: "/opt/conda/envs/samapi"

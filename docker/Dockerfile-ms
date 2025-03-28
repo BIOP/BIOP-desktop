@@ -1,22 +1,22 @@
-ARG BASE_IMAGE=0.1.0
+ARG BASE_IMAGE=0.2.2
 ARG ALIAS=biop/
 
 # because COPY --from= doesn't support build-arg (https://github.com/docker/for-mac/issues/2155)
 # we can still do a list of all sub-blocks here to be able to use them in the COPY --from=... below
 # base needs to be last, Don't Ask Wky !  (I don't know) ! and it seems it need to be named 'base' , D.A:W.2 ! but it works !
-ARG QUPATH_VERSION=v0.5.1-01
+ARG QUPATH_VERSION=v0.5.1-04
 ARG ILASTIK_VERSION=1.4.0-gpu
-ARG FIJI_VERSION=20241008
-ARG CELLPOSE_VERSION=2.2.2
-ARG DEVBIO_VERSION=0.10.1
-ARG SAMAPI_VERSION=0.4.0
-ARG EM_VERSION=1.1.0
+ARG FIJI_VERSION=20250319
+ARG CELLPOSE_VERSION=3.1.1.1
+ARG DEVBIO_VERSION=0.11.0
+ARG SAMAPI_VERSION=0.6.1
+ARG EM_VERSION=1.1.1
 ARG STARDIST_VERSION=0.8.5
-ARG ABBA_VERSION=0.8.0-01
+ARG ABBA_VERSION=0.10.6
 ARG CELLPROFILER_VERSION=4.2.6
-ARG INKSCAPE_VERSION=0.1.2
+ARG INKSCAPE_VERSION=0.1.4
 ARG OMNI_VERSION=1.0.7-dev2
-ARG BRAINRENDER_VERSION=0.0.3
+ARG BRAINRENDER_VERSION=0.0.7
 
 FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} AS qupath-image
 FROM ${ALIAS}biop-ilastik:${ILASTIK_VERSION} AS ilastik-image
@@ -43,21 +43,8 @@ RUN mkdir -p /home/biop/Desktop \
 
 ################################################################# 
 # Install QuPath 
-# 
 COPY --from=qupath-image /opt/QuPath /opt/QuPath
-# install Extensions
-COPY --from=qupath-image /opt/QuPath/QuPath_Common_Data_0.5 /opt/QuPath/QuPath_Common_Data_0.5  
-# RUN chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.5 \
-#     && chmod -R a+rwx /opt/QuPath/QuPath_Common_Data_0.5
-    
-# Prepare to set QP_prefs 
-COPY QuPath/QuPath_setPaths.groovy /home/biop/tmp/QuPath_setPaths.groovy
-COPY QuPath/qp_prefs.xml /home/biop/tmp/qp_prefs.xml
-USER biop
-# here we import prefs in QuPath so that we can use the extensions at the first start ! 
-RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' 
-# set back to root to continue installation
-USER root
+COPY QuPath/prefs/* /home/biop/tmp/
 
 #################################################################
 # Install ilastik
@@ -66,27 +53,32 @@ COPY --from=ilastik-image /opt/ilastik /opt/ilastik
 #################################################################
 # Install Fiji
 COPY --from=fiji-image /opt/Fiji.app /opt/Fiji.app
+COPY fiji/Fiji_setWrappersPaths.groovy /home/biop/tmp/Fiji_setWrappersPaths.groovy
 
 #################################################################
 # From here, we'll install different conda envs
 # - cellpose
 # - devbio
-# - samapi
-# - empanada
-# - stardist, TODO make it work on RunAI
-#
+# ...
 #################################################################
 # Install cellpose and models
 COPY --from=cellpose-image  /opt/conda/envs/cellpose /opt/conda/envs/cellpose
 COPY --from=cellpose-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
-#RUN chmod -R a+rwX /home/biop/.cellpose  
+#################################################################
+# Install omnipose
+COPY --from=omnipose-image /opt/conda/envs/omnipose/ /opt/conda/envs/omnipose/
 
 #################################################################
 # Install devbio
 COPY --from=devbio-image /opt/conda/envs/devbio /opt/conda/envs/devbio
-# create shortcut to start devbio-napari
-COPY --from=devbio-image /opt/devbio/ /opt/devbio/
 
+#################################################################
+# Install cellprofiler
+COPY --from=cellprofiler-image /opt/conda/envs/cellprofiler /opt/conda/envs/cellprofiler
+
+#################################################################
+# Add the inkscape-imagej-panel extension for inskcape
+COPY --from=inkscape-image /home/biop/.config/inkscape/  /home/biop/.config/inkscape/
 
 #################################################################
 # Install samapi
@@ -97,22 +89,11 @@ ENV LD_LIBRARY_PATH=/usr/lib/wsl/lib:$LD_LIBRARY_PATH
 COPY --from=samapi-image /opt/conda/envs/samapi /opt/conda/envs/samapi
 # add models for samapi
 COPY --from=samapi-image /home/biop/.samapi/ /home/biop/.samapi/
-# RUN chown -R biop:biop /home/biop/.samapi/ \
-#     && chmod -R a+rwX /home/biop/.samapi/ 
-
-# create shortcut to start SAMAPI 
-# because it's a QuPath extension I add (ico & sh) to the QuPath Common Data folder
-# but we could also have them in /opt/samapi , as we have for empanada (see below)
-COPY --from=samapi-image /opt/samapi/ /opt/samapi/
-
 
 #################################################################
 # Install empanada
-#
-# add empanada env
 COPY --from=empanada-image /opt/conda/envs/empanada /opt/conda/envs/empanada
-# add shortcut to start empanada
-COPY --from=empanada-image /opt/empanada /opt/empanada
+COPY --from=empanada-image /home/biop/.empanada/ /home/biop/.empanada/
 
 #################################################################
 # Install stardist
@@ -120,75 +101,19 @@ COPY --from=stardist-image /opt/conda/envs/stardist /opt/conda/envs/stardist
 
 #################################################################
 # Install abba
-COPY --from=abba-image /opt/abba /opt/abba
-# set permissions , includes /opt/abba/cached_atlas/ 
-# RUN chown -R biop:biop /opt/abba/ \
-#     && chmod -R a+rwX /opt/abba/
-
-# install abba_python env
-COPY --from=abba-image /opt/conda/envs/abba_python/ /opt/conda/envs/abba_python/
-
-# instal deepslice env
-COPY --from=abba-image /opt/conda/envs/deepslice/  /opt/conda/envs/deepslice/
-
-# and make deepslice_cli_v1.1.5.1.py executable
-# RUN chown biop:biop /opt/conda/envs/deepslice/ \
-#     && chmod a+rwx /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.1.py 
-
-# change permission of atlases 
-# should be copy with the COPY above # COPY --from=abba-image /opt/conda/envs/deepslice/lib/site-packages/DeepSlice/metadata/weights/ /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/
-# RUN chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/xception_weights_tf_dim_ordering_tf_kernels.h5 \
-#     && chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/Allen_Mixed_Best.h5 \
-#     && chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/Synthetic_data_final.hdf5
-
-# add elastix
-COPY --from=abba-image /opt/elastix /opt/elastix
-# RUN chown -R biop:biop /opt/elastix \
-#     && chmod  a+rwx /opt/elastix/bin/elastix \
-#     && chmod  a+rwx /opt/elastix/bin/transformix  
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/elastix/lib
-
-# Test if ABBA works again with all rights
-# RUN chown biop:biop /opt/Fiji.app/ \
-#     && chmod -R a+rwx /opt/Fiji.app/
-
-# set FIJI prefs (elastix, cellpose , stardist), and adds text to set the path to atlases
-COPY fiji/Fiji_setWrappersPaths.groovy /home/biop/tmp/Fiji_setWrappersPaths.groovy
-# RUN chown -R biop:biop /home/biop/tmp \
-#     && chmod -R a+rwX /home/biop/tmp
-
-# add brainrender-napari env 
-COPY --from=brainrender-image /opt/conda/envs/brainrender /opt/conda/envs/brainrender
-
-USER biop
-# set the paths to the wrappers in Fiji
-RUN /opt/Fiji.app/ImageJ-linux64 --headless --run /home/biop/tmp/Fiji_setWrappersPaths.groovy \
-    # download allen_mouse_25um atlas from brainrender-napari
-    && source activate brainrender \
-    && brainglobe install -a allen_mouse_25um \
-    && conda deactivate
-
-USER root
-
 # a text file to specify where the atlases are
 COPY --from=abba-image /opt/Fiji.app/plugins/BIOP/ABBA_Atlas_folder.txt /opt/Fiji.app/plugins/BIOP/ABBA_Atlas_folder.txt
-
-#################################################################
-# Install cellprofiler
-COPY --from=cellprofiler-image /opt/conda/envs/cellprofiler /opt/conda/envs/cellprofiler
-# create shortcut to start cellprofiler
-COPY --from=cellprofiler-image /opt/cellprofiler /opt/cellprofiler
-
-#################################################################
-# Add the inkscape-imagej-panel extension for inskcape
-COPY --from=inkscape-image /home/biop/.config/inkscape/  /home/biop/.config/inkscape/
-
-#################################################################
-# Install omnipose
-# https://omnipose.readthedocs.io/index.html
-COPY --from=omnipose-image /opt/conda/envs/omnipose/ /opt/conda/envs/omnipose/
-# TODO : add kernels! 
-# TODO : add models!
+COPY --from=abba-image /opt/abba/ /opt/abba/
+# install abba_python env
+COPY --from=abba-image /opt/conda/envs/abba_python/ /opt/conda/envs/abba_python/
+# instal deepslice env
+COPY --from=abba-image /opt/conda/envs/deepslice/  /opt/conda/envs/deepslice/
+# add elastix
+COPY --from=abba-image /opt/elastix /opt/elastix
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/elastix/lib
+# add brainrender-napari env 
+COPY --from=brainrender-image /opt/conda/envs/brainrender /opt/conda/envs/brainrender
+COPY --from=brainrender-image /home/biop/.brainglobe/ /home/biop/.brainglobe/
 
 #################################################################
 # Jupyter kernels 
@@ -196,64 +121,48 @@ COPY --from=omnipose-image /opt/conda/envs/omnipose/ /opt/conda/envs/omnipose/
 # To make the different conda env available in jupyter
 COPY jupyter/kernels/ /home/biop/.local/share/jupyter/kernels/
 
-#################################################################
-# TODO : put back with inkscape installation
-# replace inkscape from base with the one from the inkscape-image (newer)
-RUN sudo apt-get update -y \
-    && sudo apt-get install software-properties-common -y \
-    && sudo apt-get update -y \
-    && sudo add-apt-repository ppa:inkscape.dev/stable \
-    && sudo apt-get update -y \
-    && sudo apt-get install inkscape -y 
-    # && apt-get autoremove --purge \
-    # && apt-get clean \
-    # && rm -rf /var/lib/apt/lists/* \
-    # && rm -rf /tmp/* \
-    # && find /var/log -type f -exec cp /dev/null \{\} \;
-
-# Install Inkscape extension
-# and the inkscape_modules environment
-# get a "docker: Error response from daemon: max depth exceeded."
-#COPY --from=inkscape-image /opt/conda/envs/inkscape_modules/ /opt/conda/envs/inkscape_modules/ 
-
-# Replace copy of icons of all tools with a single run that printf all of them 
-# COPY --from=qupath-image /home/biop/Desktop/QuPath.desktop  /home/biop/Desktop/QuPath.desktop # DONE
-# COPY --from=ilastik-image /home/biop/Desktop/ilastik.desktop /home/biop/Desktop/ilastik.desktop
-# COPY --from=fiji-image /home/biop/Desktop/Fiji.desktop /home/biop/Desktop/Fiji.desktop
-# COPY --from=devbio-image /home/biop/Desktop/devbio-napari.desktop  /home/biop/Desktop/devbio-napari.desktop 
-# COPY --from=samapi-image /home/biop/Desktop/samapi.desktop /home/biop/Desktop/samapi.desktop
-# COPY --from=empanada-image /home/biop/Desktop/empanada.desktop /home/biop/Desktop/empanada.desktop
-# COPY --from=abba-image /home/biop/Desktop/abba.desktop  /home/biop/Desktop/abba.desktop 
-# COPY --from=cellprofiler-image /home/biop/Desktop/cellprofiler.desktop /home/biop/Desktop/cellprofiler.desktop
-
-# create shortcuts to start the different tools and chown and chmod folders
-RUN printf '[Desktop Entry]\nVersion=0.5.1\nName=qupath\nGenericName=QuPath\nX-GNOME-FullName=QuPath\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/QuPath/bin/QuPath\nTryExec=/opt/QuPath/bin/QuPath\nTerminal=false\nStartupNotify=true\nIcon=/opt/QuPath/lib/QuPath.png\nStartupWMClass=QuPath' > /home/biop/Desktop/QuPath.desktop \
+# Make icons on desktop
+COPY icons/* /opt/icons/
+# to start fiji
+RUN printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop \
+# to start QuPath
+    && printf '[Desktop Entry]\nVersion=0.5.1\nName=qupath\nGenericName=QuPath\nX-GNOME-FullName=QuPath\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/QuPath/bin/QuPath\nTryExec=/opt/QuPath/bin/QuPath\nTerminal=false\nStartupNotify=true\nIcon=/opt/QuPath/lib/QuPath.png\nStartupWMClass=QuPath' > /home/biop/Desktop/QuPath.desktop \
+# to start ilastik
     && printf '[Desktop Entry]\nVersion=1.4.0\nName=ilastik\nGenericName=ilastik\nX-GNOME-FullName=ilastik\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/ilastik/run_ilastik.sh %F\nTryExec=/opt/ilastik/run_ilastik.sh\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/ilastik/lib/python3.7/site-packages/ilastik/shell/gui/icons/96x96/ilastik-icon.png\nStartupWMClass=ilastik\n' > /home/biop/Desktop/ilastik.desktop \
-    && printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop \
-    && printf '[Desktop Entry]\nVersion=0.10.1\nName=devbio-napari\nGenericName=devbio-napari\nX-GNOME-FullName=devbio-napari\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/devbio/start_devbio.sh\nTryExec=/opt/devbio/start_devbio.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/devbio/napari-icon.ico\nStartupWMClass=devbio-napari\n' > /home/biop/Desktop/devbio-napari.desktop \
-    && printf '[Desktop Entry]\nVersion=0.3.0\nName=samapi\nGenericName=samapi\nX-GNOME-FullName=samapi\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/samapi/start_samapi.sh\nTryExec=/opt/samapi/start_samapi.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/samapi/samapi.ico\nStartupWMClass=samapi\n' > /home/biop/Desktop/samapi.desktop \
-    && printf '[Desktop Entry]\nVersion=0.2.3\nName=empanada\nGenericName=empanada\nX-GNOME-FullName=empanada\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/empanada/start_empanada.sh\nTryExec=/opt/empanada/start_empanada.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/empanada/empanada_icon.png\nStartupWMClass=empanada\n' > /home/biop/Desktop/empanada.desktop \
-    &&  printf '[Desktop Entry]\nVersion=0.8.0\nName=ABBA\nGenericName=ABBA\nX-GNOME-FullName=ABBA\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/abba/start_abba.sh\nTryExec=/opt/abba/start_abba.sh\nTerminal=true\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/abba/logo256x256.png\nStartupWMClass=ABBA\n' > /home/biop/Desktop/abba.desktop \
-    && printf '[Desktop Entry]\nVersion=4.2.6\nName=cellprofiler\nGenericName=cellprofiler\nX-GNOME-FullName=cellprofiler\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/cellprofiler/start_cellprofiler.sh\nTryExec=/opt/cellprofiler/start_cellprofiler.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/cellprofiler/CellProfiler.ico\nStartupWMClass=cellprofiler\n' > /home/biop/Desktop/cellprofiler.desktop \
-    && chown -R biop:biop /home/biop/ \
-    && chmod -R a+rwx /home/biop/  \ 
-    && rm -rf /home/biop/tmp \
+# cellprofiler
+    && printf 'source activate cellprofiler\ncellprofiler\n\$ read -rsp \$"Press enter to continue..."\n' > /opt/icons/start_cellprofiler.sh \
+    && printf '[Desktop Entry]\nVersion=4.2.6\nName=cellprofiler\nGenericName=cellprofiler\nX-GNOME-FullName=cellprofiler\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_cellprofiler.sh\nTryExec=/opt/icons/start_cellprofiler.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/CellProfiler.ico\nStartupWMClass=cellprofiler\n' > /home/biop/Desktop/cellprofiler.desktop \
+# to start abba
+    && printf 'source activate abba_python\npython /opt/abba/abba_run.py\n\$ read -rsp \$"Press enter to continue..."' > /opt/icons/start_abba.sh \
+    && printf '[Desktop Entry]\nVersion=0.10.6\nName=ABBA\nGenericName=ABBA\nX-GNOME-FullName=ABBA\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_abba.sh\nTryExec=/opt/icons/start_abba.sh\nTerminal=true\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/icons/abba.png\nStartupWMClass=ABBA\n' > /home/biop/Desktop/abba.desktop \
+# to start SAMAPI
+    && printf 'source activate samapi\npython -m uvicorn samapi.main:app --workers 2\n\$ read -rsp \$"Press enter to continue..."' > /opt/icons/start_samapi.sh \
+    && printf '[Desktop Entry]\nVersion=0.6.1\nName=samapi\nGenericName=samapi\nX-GNOME-FullName=samapi\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_samapi.sh\nTryExec=/opt/icons/start_samapi.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/samapi.ico\nStartupWMClass=samapi\n' > /home/biop/Desktop/samapi.desktop \
+# devbio
+    && printf 'source activate devbio\nnaparia\n\$ read -rsp \$"Press enter to continue..."\n' > /opt/icons/start_devbio.sh \
+    && printf '[Desktop Entry]\nVersion=0.11.0\nName=devbio-napari\nGenericName=devbio-napari\nX-GNOME-FullName=devbio-napari\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_devbio.sh\nTryExec=/opt/icons/start_devbio.sh\nTerminal=false\nStartupNotify=true\nIcon=/opt/icons/napari-icon.ico\nStartupWMClass=devbio-napari\n' > /home/biop/Desktop/devbio-napari.desktop \
+# empanada
+    && printf 'source activate empanada\nnapari\n\$ read -rsp \$"Press enter to continue..."\n' > /opt/icons/start_empanada.sh \
+    && printf '[Desktop Entry]\nVersion=1.1.1\nName=empanada\nGenericName=empanada\nX-GNOME-FullName=empanada\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_empanada.sh\nTryExec=/opt/icons/start_empanada.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/empanada_icon.png\nStartupWMClass=empanada\n' > /home/biop/Desktop/empanada.desktop \
+# brainrender
+    && printf 'source activate brainrender\nnapari\n\$ read -rsp \$"Press enter to continue..."' > /opt/icons/start_brainrender.sh \
+    && printf '[Desktop Entry]\nVersion=0.0.7\nName=brainrender\nGenericName=brainrender\nX-GNOME-FullName=brainrender\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_brainrender.sh\nTryExec=/opt/icons/start_brainrender.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/brainglobe.png\nStartupWMClass=brainrender\n' > /home/biop/Desktop/brainrender.desktop \
+# set permissions
+    && chown -R biop:biop   /home/biop/             /opt/icons/ \
+    && chmod -R a+rwx       /home/biop/Desktop/     /opt/icons/ \
+ # waiting for RunAI patch
     && ln -s /usr/lib/x86_64-linux-gnu/libcuda.so.1 /usr/lib/x86_64-linux-gnu/libcuda.so
 
-## quick fix for the atlas download error TODO: update to latest Fiji-ABBA , and remove this with next fiji update
-RUN wget https://maven.scijava.org/content/repositories/releases/ch/epfl/biop/atlas/0.3.1/atlas-0.3.1.jar -O /opt/Fiji.app/jars/atlas-0.3.1.jar \
-    && rm -f /opt/Fiji.app/jars/atlas-0.2.2.jar 
 
-# chown and chmod for all 
+# set chown and chmod for all necessary folders
 RUN chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.5 \
     && chmod -R a+rwx /opt/QuPath/QuPath_Common_Data_0.5 \
+    && chmod a+rwx /opt/QuPath/bin/QuPath \
     # cellpose models
     && chmod -R a+rwx /home/biop/.cellpose \ 
+    # samapi
     && chown -R biop:biop /home/biop/.samapi/ \
     && chmod -R a+rwx /home/biop/.samapi/ \
-    # abba
-    && chown -R biop:biop /opt/abba/ \
-    && chmod -R a+rwx /opt/abba/ \ 
     # deepslice
     && chown biop:biop /opt/conda/envs/deepslice/ \
     && chmod a+rwx /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.1.py \
@@ -266,12 +175,17 @@ RUN chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.5 \
     && chmod  a+rwx /opt/elastix/bin/transformix  \
     # fiji
     && chown biop:biop /opt/Fiji.app/ \
-    && chmod -R a+rwx /opt/Fiji.app/
+    && chmod -R a+rwx /opt/Fiji.app/ \
+    # abba
+    && chown -R biop:biop /opt/abba/ \
+    && chmod -R a+rwX /opt/abba/ 
 
 #################################################################
 # Container start
-USER biop
-RUN conda init
+USER biop 
+RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' \
+    && /opt/Fiji.app/ImageJ-linux64 --headless --run /home/biop/tmp/Fiji_setWrappersPaths.groovy \
+    && rm -rf /home/biop/tmp
 WORKDIR /home/biop
 ENTRYPOINT ["/usr/local/bin/jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]

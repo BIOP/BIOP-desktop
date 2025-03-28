@@ -1,60 +1,84 @@
-# core dependencies
+import os
+import platform
 import time
-from abba_python.abba import add_brainglobe_atlases
-# in order to wait for a jvm shutdown
-import jpype
+
+from abba_python import abba
+
+import jpype  # in order to wait for a jvm shutdown
 import imagej
 
-import os
+# THIS FILE SETS MANY PATHS EXPLICITLY WHEN ABBA IS INSTALLED FROM THE INSTALLER
 
-# THIS FILE SETS MANY PATHS EXPLICITLY WHEN ABBA IS INSTALLED FROM THE INSTALLER!
-# IF YOU WANT TO RUN ABBA FROM PYTHON, TRY run-abba.py first!
+if __name__ == '__main__':
+    directory_on_launch = os.path.dirname(os.getcwd())
+    import scyjava
 
-# In ABBA PYthon, Fiji.app is in the parent directory of this script
-ij = imagej.init("/opt/Fiji.app/", mode="interactive")
+    # scyjava.config.add_option('-XX:+UseZGC') # Use ZGC
+    scyjava.config.add_option('-Xmx8g') # 5 Gb
 
-add_brainglobe_atlases(ij)
+    # You can swap the lines below if you want to use a  Fiji instead of the maven downloaded one
+    ij = imagej.init("/opt/Fiji.app/", mode="interactive")
 
-# For importing java classes, do not put this import sooner
-# or it will cause issue !!!
-from scyjava import jimport 
-from jpype.types import JString
+    print('ImageJ/Fiji successfully initialized.')
 
-File = jimport('java.io.File')
+    # Makes BrainGlobe atlases discoverable by ABBA in Fiji
+    from abba_python.abba import add_brainglobe_atlases
+    add_brainglobe_atlases(ij)
 
-# Sets DeepSlice env path - hopefully it's a common location for all OSes
-deepslice_env_path = str('/opt/conda/envs/deepslice/')
-deepslice_version = JString(str('1.1.5.1'))
+    from scyjava import jimport  # For importing java classes, do not put this import sooner
 
-DeepSlice = jimport('ch.epfl.biop.wrappers.deepslice.DeepSlice')
-DeepSlice.setEnvDirPath(File(deepslice_env_path))
-DeepSlice.setVersion(deepslice_version)
+    from jpype.types import JString
 
-# Elastix and transformix location,
-Elastix = jimport('ch.epfl.biop.wrappers.elastix.Elastix')
-Transformix = jimport('ch.epfl.biop.wrappers.transformix.Transformix')
+    DebugTools = jimport('loci.common.DebugTools')
+    # DebugTools.enableLogging('OFF') # less logging
+    DebugTools.enableLogging("INFO")
+    # DebugTools.enableLogging("DEBUG"); # more logging
+    python_info = 'ABBA Python (BIOP-desktop) v0.10.6'
+    ABBAForumHelpCommand = jimport('ch.epfl.biop.atlas.aligner.command.ABBAForumHelpCommand')
+    ABBAForumHelpCommand.pythonInformation = JString(python_info)
 
-elastixPath = str(os.path.join('/opt/elastix/bin', 'elastix'))
-transformixPath = str(os.path.join('/opt/elastix/bin', 'transformix'))
+    File = jimport('java.io.File')
+    # Sets DeepSlice env path - hopefully it's a common location for all OSes
+    deepslice_env_path = str('/opt/conda/envs/deepslice/')
+    deepslice_version = JString(str('1.1.5.1'))
+    DeepSlice = jimport('ch.epfl.biop.wrappers.deepslice.DeepSlice')
+    DeepSlice.setEnvDirPath(File(deepslice_env_path))
+    DeepSlice.setVersion(deepslice_version)  # not autodetected. Do not matter for 1.1.5, but may matter later
 
-Elastix.exePath = JString(str(elastixPath))
-Elastix.setExePath(File(JString(str(elastixPath))))
-Transformix.exePath = JString(str(transformixPath))
-Transformix.setExePath(File(JString(str(transformixPath))))
+    # For setting elastix and transformix location, OS dependent
+    # File ch.epfl.biop.wrappers.elastix.Elastix exePath
+    # File ch.epfl.biop.wrappers.transformix.Transformix exePath
+    Elastix = jimport('ch.epfl.biop.wrappers.elastix.Elastix')
+    Transformix = jimport('ch.epfl.biop.wrappers.transformix.Transformix')
 
-# Atlas
-AtlasLocationHelper = jimport('ch.epfl.biop.atlas.AtlasLocationHelper')
-atlas_dir = os.path.join('/opt/abba/', 'cached_atlas')
-os.makedirs(atlas_dir, exist_ok=True)
-atlasPath = str(atlas_dir)
+    # For setting the atlas cache folder, OS dependent, we want this property to be system-wide
+    AtlasLocationHelper = jimport('ch.epfl.biop.atlas.AtlasLocationHelper')
 
-AtlasLocationHelper.defaultCacheDir = File(JString(atlasPath))
+    # Conda
+    #Conda = jimport('ch.epfl.biop.wrappers.Conda')
+    #condaPath = str(os.path.join(directory_on_launch, 'condabin', 'conda.bat'))
+    #Conda.windowsCondaCommand = JString(str(condaPath))  # Sets the conda path
 
-# Show the UI
-ij.ui().showUI()
+    elastixPath = str(os.path.join('/opt/elastix/bin', 'elastix'))
+    transformixPath = str(os.path.join('/opt/elastix/bin', 'transformix'))
 
- # Wait for the JVM to shut down
-while jpype.isJVMStarted():
-    time.sleep(1)
+    Elastix.exePath = JString(str(elastixPath))
+    Elastix.setExePath(File(JString(str(elastixPath))))
+    Transformix.exePath = JString(str(transformixPath))
+    Transformix.setExePath(File(JString(str(transformixPath))))
 
-print("JVM has shut down")
+    # Atlas
+    AtlasLocationHelper = jimport('ch.epfl.biop.atlas.AtlasLocationHelper')
+    atlas_dir = os.path.join('/opt/abba/', 'cached_atlas')
+    os.makedirs(atlas_dir, exist_ok=True)
+    atlasPath = str(atlas_dir)
+
+    AtlasLocationHelper.defaultCacheDir = File(JString(atlasPath))
+
+    ij.ui().showUI()  # will showing the UI at the end fix Mac threading issues ?
+
+    # Wait for the JVM to shut down
+    while jpype.isJVMStarted():
+        time.sleep(1)
+
+    print("JVM has shut down")

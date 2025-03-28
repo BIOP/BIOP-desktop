@@ -1,17 +1,17 @@
 # https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-23-07.html 
 #FROM superelastix/elastix:5.0.1 as elastix-image
-ARG QUPATH_VERSION=v0.5.1-01
-ARG FIJI_VERSION=20240429
+ARG QUPATH_VERSION=v0.5.1-04
+ARG FIJI_VERSION=20250319
 ARG DEEPSLICE_VERSION=1.1.5
 ARG BRAINRENDER_VERSION=0.0.3
 ARG ALIAS=biop/
 
-FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} as qupath-image
-FROM ${ALIAS}biop-fiji:${FIJI_VERSION} as fiji-image
-FROM ${ALIAS}biop-deepslice:${DEEPSLICE_VERSION} as deepslice-image
-FROM ${ALIAS}biop-brainrender:${BRAINRENDER_VERSION} as brainrender-image
+FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} AS qupath-image
+FROM ${ALIAS}biop-fiji:${FIJI_VERSION} AS fiji-image
+FROM ${ALIAS}biop-deepslice:${DEEPSLICE_VERSION} AS deepslice-image
+FROM ${ALIAS}biop-brainrender:${BRAINRENDER_VERSION} AS brainrender-image
 
-FROM ${ALIAS}biop-vnc-base:0.0.3 as base
+FROM ${ALIAS}biop-vnc-base:0.2.1 AS base
 
 
 USER root
@@ -42,20 +42,10 @@ COPY --from=qupath-image /opt/QuPath /opt/QuPath
 COPY --from=qupath-image /opt/QuPath /opt/QuPath
 COPY --from=qupath-image /home/biop/Desktop/QuPath.desktop  /home/biop/Desktop/QuPath.desktop
 COPY --from=qupath-image /opt/QuPath/QuPath_Common_Data_0.5 /opt/QuPath/QuPath_Common_Data_0.5/
-# TODO set pref 
-#  Prepare to set QP_prefs 
-COPY QuPath/QuPath_setPaths.groovy /home/biop/tmp/QuPath_setPaths.groovy
-COPY QuPath/qp_prefs.xml /home/biop/tmp/qp_prefs.xml
-RUN chown -R biop:biop /home/biop/tmp
-USER biop
-# here we import prefs in QuPath so that we can use the extensions at the first start ! 
-RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' 
-# TODO test and uncomment below after testing
-USER root 
-RUN rm -rf /home/biop/tmp 
 
-# set back to root to continue installation
-USER root
+# Prepare to set QP_prefs , see below `QuPath_setPaths.groovy`
+COPY QuPath/prefs/* /home/biop/tmp/
+
 
 #################################################################
 # Install Fiji
@@ -63,26 +53,18 @@ COPY --from=fiji-image /opt/Fiji.app /opt/Fiji.app
 # create icon
 COPY --from=fiji-image /home/biop/Desktop/Fiji.desktop /home/biop/Desktop/Fiji.desktop
 COPY abba/ABBA_Atlas_folder.txt /opt/Fiji.app/plugins/BIOP/ABBA_Atlas_folder.txt
-
 # set FIJI text to set the path to atlases
 COPY fiji/Fiji_setWrappersPaths.groovy /home/biop/tmp/Fiji_setWrappersPaths.groovy
-RUN chown -R biop:biop /home/biop/tmp \
-    && chmod -R a+rwX /home/biop/tmp
 
-USER biop
-RUN /opt/Fiji.app/ImageJ-linux64 --headless --run /home/biop/tmp/Fiji_setWrappersPaths.groovy
-USER root
-RUN rm -rf /home/biop/tmp
-
+#################################################################
 # install deepslice 
-# COPY abba/deepslice/env_deepslice.yml /tmp/env_deepslice.yml
-# RUN conda env update -n deepslice -f /tmp/env_deepslice.yml \
-#     && conda clean --all -f -y \
-#     && conda env export -n "biop" \ 
-#     && rm /tmp/env_deepslice.yml 
 COPY --from=deepslice-image /opt/conda/envs/deepslice /opt/conda/envs/deepslice
 
+
+#################################################################
 # install abba_python
+# dependencies from https://github.com/BIOP/abba-installer/blob/main/construct.yaml 
+# and abba_python from https://pypi.org/project/abba-python/
 COPY abba/env_abba_python.yml /tmp/env_abba_python.yml
 RUN conda env update -n abba_python -f /tmp/env_abba_python.yml \
     && conda clean --all -f -y \
@@ -118,30 +100,31 @@ RUN wget https://zenodo.org/records/4173229/files/ccf2017-mod65000-border-center
 RUN chown -R biop:biop /opt/abba/cached_atlas/ \
     && chmod -R a+rwX /opt/abba/cached_atlas/
 
-
 # Make a desktop icon for ABBA
+# modified from : https://github.com/BIOP/abba-installer/blob/main/abba/start-abba.py
 COPY abba/abba_run.py /opt/abba/abba_run.py 
-COPY abba/logo256x256.png /opt/abba/logo256x256.png
-COPY abba/start_abba.sh /opt/abba/start_abba.sh
-
 # set permissions
 RUN chown biop:biop /opt/abba/abba_run.py \
     && chmod a+rwx /opt/abba/abba_run.py
-
-RUN chown biop:biop /opt/abba/start_abba.sh \
-    && chmod a+rwx /opt/abba/start_abba.sh
-
-RUN  printf '[Desktop Entry]\nVersion=0.8.0\nName=ABBA\nGenericName=ABBA\nX-GNOME-FullName=ABBA\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/abba/start_abba.sh\nTryExec=/opt/abba/start_abba.sh\nTerminal=true\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/abba/logo256x256.png\nStartupWMClass=ABBA\n' > /home/biop/Desktop/abba.desktop \
-    && chown -R biop:biop /home/biop \
-    && chmod +x /home/biop/Desktop/abba.desktop 
 
 # make Fiji not read only
 RUN  chown -R biop:biop /opt/Fiji.app/ \
     && chmod -R a+rwX /opt/Fiji.app/
 
 # install brainrender
+# TODO : update to the latest version 0.0.7
 COPY --from=brainrender-image /opt/conda/envs/brainrender /opt/conda/envs/brainrender
 
+# Make icons 
+COPY icons/* /opt/icons/
+
+#################################################################
+# Create shortcuts
+# to start ABBA
+RUN printf 'source activate abba_python\npython /opt/abba/abba_run.py\n\$ read -rsp \$"Press enter to continue..."\n"Press enter to continue..."' > /opt/icons/start_abba.sh \
+    && printf '[Desktop Entry]\nVersion=0.10.4\nName=ABBA\nGenericName=ABBA\nX-GNOME-FullName=ABBA\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_abba.sh\nTryExec=/opt/icons/start_abba.sh\nTerminal=true\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/icons/abba.png\nStartupWMClass=ABBA\n' > /home/biop/Desktop/abba.desktop \
+# to start fiji
+    && printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop
 
 USER biop
 
@@ -157,12 +140,15 @@ RUN source activate brainrender \
 
 USER root 
 
-RUN chmod -R a+rwX /home/biop/ \
-    && chown -R biop:biop /home/biop/
+RUN chown -R biop:biop /home/biop/ /opt/icons/  \
+    && chmod -R a+rwx /home/biop/  /opt/icons/ 
 
 #################################################################
 # Container start
 USER biop
+RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' \
+    && /opt/Fiji.app/ImageJ-linux64 --headless --run /home/biop/tmp/Fiji_setWrappersPaths.groovy \
+    && rm -rf /home/biop/tmp
 WORKDIR /home/biop
 ENTRYPOINT ["/usr/local/bin/jupyter"]
 #CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]

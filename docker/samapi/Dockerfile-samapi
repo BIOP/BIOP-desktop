@@ -1,8 +1,19 @@
-ARG BASE_IMAGE=0.0.3
+ARG BASE_IMAGE=0.2.0
+ARG QUPATH_VERSION=v0.5.1-04
 ARG ALIAS=biop/
+
+FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} AS qupath-image
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 USER root
+
+
+################################################################# 
+# Install QuPath 
+# 
+COPY --from=qupath-image /opt/QuPath /opt/QuPath
+COPY --from=qupath-image /home/biop/Desktop/QuPath.desktop  /home/biop/Desktop/QuPath.desktop
+COPY QuPath/prefs/* /home/biop/tmp/
 
 # install samapi
 COPY samapi/env_samapi.yml /tmp/env_samapi.yml
@@ -15,34 +26,35 @@ RUN conda env update -n samapi -f /tmp/env_samapi.yml \
 ENV LD_LIBRARY_PATH=/usr/lib/wsl/lib:$LD_LIBRARY_PATH
 
 # add models
-# COPY samapi/models.zip /home/biop/models.zip (https://github.com/ksugar/samapi)
 RUN mkdir -p /home/biop/.cache/torch/hub/checkpoints/
-# make a zip (for git lfs) and unzip in Dockerfile , nothing change for the multi-stage build as we copy the folder from this image.
-# RUN unzip /home/biop/models.zip -d /home/biop/.cache/torch/hub/checkpoints/ \
-#     && rm /home/biop/models.zip \
-#     && chown -R biop:biop /home/biop/.cache/torch/hub/checkpoints/ \
-#     && chmod -R a+rwX /home/biop/.cache/torch/hub/checkpoints/
 # download from repo
 RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth" -P /home/biop/.samapi/vit_h/
 RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth" -P /home/biop/.samapi/vit_l/
 RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth" -P /home/biop/.samapi/vit_b/
 RUN wget -q "https://github.com/ChaoningZhang/MobileSAM/raw/master/weights/mobile_sam.pt" -P /home/biop/.samapi/vit_t/
 
-#create shortcut to start SAMAPI 
-RUN mkdir -p /opt/samapi/
-COPY samapi/samapi.ico /opt/samapi/samapi.ico
-COPY samapi/start_samapi.sh /opt/samapi/start_samapi.sh
-RUN chmod +x /opt/samapi/start_samapi.sh \
-    && chown -R biop:biop /opt/samapi/
+RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_base_plus.pt" -P /home/biop/.samapi/sam2_bp/
+RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_small.pt" -P /home/biop/.samapi/sam2_s/
+RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_tiny.pt" -P /home/biop/.samapi/sam2_t/
+RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_large.pt" -P /home/biop/.samapi/sam2_l/
 
-RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
-    && printf '[Desktop Entry]\nVersion=0.3.0\nName=samapi\nGenericName=samapi\nX-GNOME-FullName=samapi\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/samapi/start_samapi.sh\nTryExec=/opt/samapi/start_samapi.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/samapi/samapi.ico\nStartupWMClass=samapi\n' > /home/biop/Desktop/samapi.desktop \
-    && chown -R biop:biop /home/biop \
-    && chmod +x /home/biop/Desktop/samapi.desktop 
+# All icons and *.sh file for the desktop will now be in /opt/icons (created in base.0.2.0)
+COPY icons/* /opt/icons/
+# create shortcuts
+RUN printf 'source activate samapi\npython -m uvicorn samapi.main:app --workers 2\n\$ read -rsp \$"Press enter to continue...' > /opt/icons/start_samapi.sh \
+    && printf '[Desktop Entry]\nVersion=0.6.1\nName=samapi\nGenericName=samapi\nX-GNOME-FullName=samapi\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_samapi.sh\nTryExec=/opt/icons/start_samapi.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/samapi.ico\nStartupWMClass=samapi\n' > /home/biop/Desktop/samapi.desktop \
+    && chown biop:biop /home/biop/Desktop/samapi.desktop \
+    && chmod a+rxx /opt/icons/start_samapi.sh
 
+
+RUN chown -R biop:biop /home/biop/ \
+    && chmod -R a+rwx /home/biop/   
 #################################################################
 # Container start
 USER biop
+# here we import prefs in QuPath so that we can use the extensions at the first start ! 
+RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' \
+    && rm -rf /home/biop/tmp
 WORKDIR /home/biop
 ENTRYPOINT ["/usr/local/bin/jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
