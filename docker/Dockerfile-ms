@@ -17,6 +17,7 @@ ARG CELLPROFILER_VERSION=4.2.6
 ARG INKSCAPE_VERSION=0.1.4
 ARG OMNI_VERSION=1.0.7-dev2
 ARG BRAINRENDER_VERSION=0.0.7
+ARG YOLO_VERSION=8.3.119
 
 FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} AS qupath-image
 FROM ${ALIAS}biop-ilastik:${ILASTIK_VERSION} AS ilastik-image
@@ -31,6 +32,7 @@ FROM ${ALIAS}biop-cellprofiler:${CELLPROFILER_VERSION} AS cellprofiler-image
 FROM ${ALIAS}biop-inkscape:${INKSCAPE_VERSION} AS inkscape-image
 FROM ${ALIAS}biop-omni:${OMNI_VERSION} AS omnipose-image
 FROM ${ALIAS}biop-brainrender:${BRAINRENDER_VERSION} AS brainrender-image
+FROM ${ALIAS}biop-yolo:${YOLO_VERSION} AS yolo-image
 
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE} AS base
 
@@ -114,6 +116,10 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/elastix/lib
 # add brainrender-napari env 
 COPY --from=brainrender-image /opt/conda/envs/brainrender /opt/conda/envs/brainrender
 COPY --from=brainrender-image /home/biop/.brainglobe/ /home/biop/.brainglobe/
+
+#################################################################
+# Install yolo
+COPY --from=yolo-image /opt/conda/envs/yolo /opt/conda/envs/yolo
 
 #################################################################
 # Jupyter kernels 
