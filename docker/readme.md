@@ -11,35 +11,35 @@ docker build -f Dockerfile-base  -t biop-vnc-base:0.2.2 . --no-cache
 ## build
 
 ```
-docker build -f Dockerfile-ms  -t biop-desktop:0.2.0 . 
+docker build -f Dockerfile-ms  -t biop-desktop:0.2.1 . 
 ```
 
 ## start to test (see below)
 
 ```
-docker run -it --rm -p 8888:8888 --gpus device=0  --mount src=D:/,target=/home/biop/local,type=bind biop-napari:0.5.6
+docker run -it --rm -p 8888:8888 --gpus device=0  --mount src=D:/,target=/home/biop/local,type=bind biop-desktop:0.2.1
 ```
 
 ## To test on RCP cluster
 ```
-docker tag biop-desktop:0.2.0  registry.rcp.epfl.ch/ptbiop/biop-desktop:0.2.0
+docker tag biop-desktop:0.2.1  registry.rcp.epfl.ch/ptbiop/biop-desktop:0.2.1
 ```
 
 ```
-docker push registry.rcp.epfl.ch/ptbiop/biop-desktop:0.2.0
+docker push registry.rcp.epfl.ch/ptbiop/biop-desktop:0.2.1
 ```
 
 ## after testing pass, tag 
 ```
-docker tag biop-desktop:0.2.0 biop/biop-desktop:0.2.0
+docker tag biop-desktop:0.2.1 biop/biop-desktop:0.2.1
 ```
 
 ## push on dockerhub
 ```
-docker push biop/biop-desktop:0.2.0
+docker push biop/biop-desktop:0.2.1
 ```
 
-# TEST 0.2.0
+# TEST 0.2.1
 [x] omero-insight
 [x] vscode
 [x] jupyterlab
@@ -59,3 +59,4 @@ docker push biop/biop-desktop:0.2.0
 [x] brainrender load mouse atlas
 [x] cellprofiler starts
 [x] ilastik starts
+[x] yolo prediction on blobs
