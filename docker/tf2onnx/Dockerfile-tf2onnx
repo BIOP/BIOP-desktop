@@ -1,0 +1,20 @@
+ARG ALIAS=biop/
+ARG STARDIST_VERSION=0.8.5
+FROM ${ALIAS}biop-stardist:${STARDIST_VERSION}
+
+USER root
+
+COPY tf2onnx/tf2onnx.txt /tmp/tf2onnx.txt
+RUN conda create -y -n tf2onnx python=3.7 \
+     && source activate tf2onnx \
+     && pip install -r /tmp/tf2onnx.txt
+
+RUN chmod -R a+rwX /home/biop/ \
+     && chown -R biop:biop /home/biop/
+ 
+ #################################################################
+ # Container start
+ USER biop
+ WORKDIR /home/biop
+ ENTRYPOINT ["/usr/local/bin/jupyter"]
+ CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
