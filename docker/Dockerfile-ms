@@ -18,6 +18,7 @@ ARG INKSCAPE_VERSION=0.1.4
 ARG OMNI_VERSION=1.0.7-dev2
 ARG BRAINRENDER_VERSION=0.0.7
 ARG YOLO_VERSION=8.3.119
+ARG TF2ONNX_VERSION=1.9.2
 
 FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} AS qupath-image
 FROM ${ALIAS}biop-ilastik:${ILASTIK_VERSION} AS ilastik-image
@@ -33,6 +34,7 @@ FROM ${ALIAS}biop-inkscape:${INKSCAPE_VERSION} AS inkscape-image
 FROM ${ALIAS}biop-omni:${OMNI_VERSION} AS omnipose-image
 FROM ${ALIAS}biop-brainrender:${BRAINRENDER_VERSION} AS brainrender-image
 FROM ${ALIAS}biop-yolo:${YOLO_VERSION} AS yolo-image
+FROM ${ALIAS}biop-tf2onnx:${TF2ONNX_VERSION} AS tf2onnx-image
 
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE} AS base
 
@@ -120,6 +122,10 @@ COPY --from=brainrender-image /home/biop/.brainglobe/ /home/biop/.brainglobe/
 #################################################################
 # Install yolo
 COPY --from=yolo-image /opt/conda/envs/yolo /opt/conda/envs/yolo
+
+##################################################################
+# Install tf2onnx
+COPY --from=tf2onnx-image /opt/conda/envs/tf2onnx /opt/conda/envs/tf2onnx
 
 #################################################################
 # Jupyter kernels 
