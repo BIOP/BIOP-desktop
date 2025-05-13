@@ -25,7 +25,7 @@ docker push biop/biop-tf2onnx:1.9.2
 ## tf2onnx on blob
 - train a stardist model
 - export using model.export_TF("model_name")
-- unzip the model_name.zip to a folder model_name (this folder will contained a "tensorflow_model.pb" file)
+- unzip the model_name.zip to a folder model_name (this folder will contain a "tensorflow_model.pb" file)
 
 - convert the model using tf2onnx, in the terminal :
 ```
