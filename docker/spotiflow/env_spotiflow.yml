@@ -1,0 +1,14 @@
+name: "spotiflow"
+channels:
+  - conda-forge
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - napari[all]
+      - spotiflow==v0.5.8
+      - napari-spotiflow==v0.4.3
+      - napari-ome-zarr
+prefix: "/opt/conda/envs/spotiflow"

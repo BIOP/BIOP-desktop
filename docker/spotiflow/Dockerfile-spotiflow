@@ -1,0 +1,32 @@
+ARG BASE_IMAGE=0.2.2
+
+ARG ALIAS=biop/
+
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
+
+USER root
+
+##############################################################################
+# install spotiflow-napari
+COPY spotiflow/env_spotiflow.yml /tmp/env_spotiflow.yml
+RUN  conda update -n base -c conda-forge conda \
+    && conda env update -n spotiflow -f /tmp/env_spotiflow.yml \
+    && conda clean --all -f -y \
+    && rm /tmp/env_spotiflow.yml
+
+ # TODO download models to shared space and make link it in entrypoint.sh
+RUN mkdir -p /home/biop/.spotiflow/models/ \ 
+   && wget https://drive.switch.ch/index.php/s/6AoTEgpIAeQMRvX/download -O /home/biop/.spotiflow/models/general.zip \
+   && unzip /home/biop/.spotiflow/models/general.zip -d /home/biop/.spotiflow/models/ \
+   && rm /home/biop/.spotiflow/models/general.zip
+
+RUN chown -R biop:biop /home/biop/ \
+    && chmod -R a+rwx /home/biop/   
+
+#################################################################
+# Container start
+USER biop
+WORKDIR /home/biop
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
+
