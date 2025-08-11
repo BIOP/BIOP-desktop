@@ -4,7 +4,7 @@ ARG ALIAS=biop/
 # because COPY --from= doesn't support build-arg (https://github.com/docker/for-mac/issues/2155)
 # we can still do a list of all sub-blocks here to be able to use them in the COPY --from=... below
 # base needs to be last, Don't Ask Wky !  (I don't know) ! and it seems it need to be named 'base' , D.A:W.2 ! but it works !
-ARG QUPATH_VERSION=v0.5.1-04
+ARG QUPATH_VERSION=v0.5.1-05
 ARG ILASTIK_VERSION=1.4.0-gpu
 ARG FIJI_VERSION=20250319
 ARG CELLPOSE_VERSION=3.1.1.1
@@ -19,6 +19,8 @@ ARG OMNI_VERSION=1.0.7-dev2
 ARG BRAINRENDER_VERSION=0.0.7
 ARG YOLO_VERSION=8.3.119
 ARG TF2ONNX_VERSION=1.9.2
+ARG CELLPOSESAM_VERSION=4.0.6
+ARG SPOTIFLOW_VERSION=v0.5.7
 
 FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} AS qupath-image
 FROM ${ALIAS}biop-ilastik:${ILASTIK_VERSION} AS ilastik-image
@@ -35,6 +37,8 @@ FROM ${ALIAS}biop-omni:${OMNI_VERSION} AS omnipose-image
 FROM ${ALIAS}biop-brainrender:${BRAINRENDER_VERSION} AS brainrender-image
 FROM ${ALIAS}biop-yolo:${YOLO_VERSION} AS yolo-image
 FROM ${ALIAS}biop-tf2onnx:${TF2ONNX_VERSION} AS tf2onnx-image
+FROM ${ALIAS}biop-cellpose:${CELLPOSESAM_VERSION} AS cellposesam-image
+FROM ${ALIAS}biop-spotiflow:${SPOTIFLOW_VERSION} AS spotiflow-image
 
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE} AS base
 
@@ -71,6 +75,15 @@ COPY --from=cellpose-image /home/biop/.cellpose/models/ /home/biop/.cellpose/mod
 #################################################################
 # Install omnipose
 COPY --from=omnipose-image /opt/conda/envs/omnipose/ /opt/conda/envs/omnipose/
+#################################################################
+# Install cellposesam
+COPY --from=cellposesam-image  /opt/conda/envs/cellpose /opt/conda/envs/cellposesam
+COPY --from=cellposesam-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
+
+#################################################################
+# Install spotiflow
+COPY --from=spotiflow-image /opt/conda/envs/spotiflow /opt/conda/envs/spotiflow
+COPY --from=spotiflow-image /home/biop/.spotiflow/models/ /home/biop/.spotiflow/models/
 
 #################################################################
 # Install devbio
@@ -175,6 +188,9 @@ RUN chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.5 \
     # samapi
     && chown -R biop:biop /home/biop/.samapi/ \
     && chmod -R a+rwx /home/biop/.samapi/ \
+    # spotiflow
+    && chown -R biop:biop /home/biop/.spotiflow/ \
+    && chmod -R a+rwx /home/biop/.spotiflow/ \
     # deepslice
     && chown biop:biop /opt/conda/envs/deepslice/ \
     && chmod a+rwx /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.1.py \

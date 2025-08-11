@@ -11,35 +11,35 @@ docker build -f Dockerfile-base  -t biop-vnc-base:0.2.2 . --no-cache
 ## build
 
 ```
-docker build -f Dockerfile-ms  -t biop-desktop:0.2.1 . 
+docker build -f Dockerfile-ms  -t biop-desktop:0.2.3 . 
 ```
 
 ## start to test (see below)
 
 ```
-docker run -it --rm -p 8888:8888 --gpus device=0  --mount src=D:/,target=/home/biop/local,type=bind biop-desktop:0.2.1
+docker run -it --rm -p 8888:8888 --gpus device=0  --mount src=D:/,target=/home/biop/local,type=bind biop-desktop:0.2.3
 ```
 
 ## To test on RCP cluster
 ```
-docker tag biop-desktop:0.2.1  registry.rcp.epfl.ch/ptbiop/biop-desktop:0.2.1
+docker tag biop-desktop:0.2.3  registry.rcp.epfl.ch/ptbiop/biop-desktop:0.2.3
 ```
 
 ```
-docker push registry.rcp.epfl.ch/ptbiop/biop-desktop:0.2.1
+docker push registry.rcp.epfl.ch/ptbiop/biop-desktop:0.2.3
 ```
 
 ## after testing pass, tag 
 ```
-docker tag biop-desktop:0.2.1 biop/biop-desktop:0.2.1
+docker tag biop-desktop:0.2.3 biop/biop-desktop:0.2.3
 ```
 
 ## push on dockerhub
 ```
-docker push biop/biop-desktop:0.2.1
+docker push biop/biop-desktop:0.2.3
 ```
 
-# TEST 0.2.1
+# TEST 0.2.3
 [x] omero-insight
 [x] vscode
 [x] jupyterlab
