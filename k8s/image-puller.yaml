@@ -37,7 +37,7 @@ spec:
                     topologyKey: kubernetes.io/hostname
           containers:
             - name: image-puller
-              image: registry.rcp.epfl.ch/ptbiop/biop-desktop:0.1.0  # Image que tu souhaites pull sur tous les serveurs du cluster
+              image: registry.rcp.epfl.ch/ptbiop/biop-desktop:0.2.3  # Image que tu souhaites pull sur tous les serveurs du cluster
               imagePullPolicy: Always              
               command: ["/bin/sh"]
               args: ["-c", "sleep 60"]
