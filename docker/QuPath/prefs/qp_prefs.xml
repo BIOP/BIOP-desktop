@@ -14,7 +14,7 @@
           <entry key="lastUpdateCheck" value="1754407176364"/>
           <entry key="omniposePythonPath" value="/opt/conda/envs/omnipose/bin/python"/>
           <entry key="scriptsPath" value="/opt/QuPath/QuPath_Common_Data_0.5/qupath-scripts"/>
-          <entry key="spotiflowPythonPath" value=" /opt/conda/envs/spotiflow/bin/python"/>
+          <entry key="spotiflowPythonPath" value="/opt/conda/envs/spotiflow/bin/python"/>
           <entry key="userPath" value="/opt/QuPath/QuPath_Common_Data_0.5"/>
         </map>
       </node>
