@@ -6,7 +6,7 @@ dependencies:
   - python=3.10
   - pip
   - pip:
-      - cellpose==3.1.1.1
+      - cellpose==4.0.6
       - scikit-image # for Quality check when training models
       - wget # for downloading models
 prefix: "/opt/conda/envs/cellpose"

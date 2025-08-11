@@ -2,21 +2,21 @@
 
 ## build
 ```
-docker build -f cellpose/Dockerfile-cellpose  -t biop-cellpose:3.1.1.1 . --no-cache
+docker build -f cellpose/Dockerfile-cellpose  -t biop-cellpose:4.0.6 . --no-cache
 ```
 ## start to test (see below)
 ```
-docker run -it --rm -p 8888:8888 --gpus device=0  --mount src=D:/,target=/home/biop/local,type=bind  biop-cellpose:3.1.1.1
+docker run -it --rm -p 8888:8888 --gpus device=0  --mount src=D:/,target=/home/biop/local,type=bind  biop-cellpose:4.0.6
 ```
 
 ## after testing pass, tag 
 ```
-docker tag  biop-cellpose:3.1.1.1 biop/biop-cellpose:3.1.1.1
+docker tag  biop-cellpose:4.0.6 biop/biop-cellpose:4.0.6
 ```
 
 ## push on dockerhub
 ```
-docker push biop/biop-cellpose:3.1.1.1
+docker push biop/biop-cellpose:4.0.6
 ```
 
 # Test(s)

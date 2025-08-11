@@ -1,9 +1,13 @@
 ARG BASE_IMAGE=0.2.2
 ARG ALIAS=biop/
 ARG CELLPOSE_VERSION=3.1.1.1
+ARG CELLPOSESAM_VERSION=4.0.6
+ARG SPOTIFLOW_VERSION=v0.5.7
 
 
 FROM ${ALIAS}biop-cellpose:${CELLPOSE_VERSION} AS cellpose-image
+FROM ${ALIAS}biop-cellpose:${CELLPOSESAM_VERSION} AS cellposesam-image
+FROM ${ALIAS}biop-spotiflow:${SPOTIFLOW_VERSION} AS spotiflow-image
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 ARG QP_VERSION=v0.5.1
@@ -39,10 +43,11 @@ RUN mkdir -p /opt/QuPath/QuPath_Common_Data_0.5 \
     && chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.5 \
     && chmod -R a+rwx /opt/QuPath/QuPath_Common_Data_0.5     
 
-RUN wget -q https://zenodo.org/records/15040056/files/QuPath_Common_Data_0.5.zip?download=1 -O ${TEMP_DIR}/QuPath_Common_Data_0.5.zip \
+RUN wget -q https://zenodo.org/records/16744574/files/QuPath_Common_Data_0.5.zip?download=1 -O ${TEMP_DIR}/QuPath_Common_Data_0.5.zip \
     && unzip ${TEMP_DIR}/QuPath_Common_Data_0.5.zip -d /opt/QuPath/QuPath_Common_Data_0.5 \
     && rm ${TEMP_DIR}/QuPath_Common_Data_0.5.zip 
 
+    
 # Prepare to set QP_prefs , see below `QuPath_setPaths.groovy`
 COPY QuPath/prefs/* /home/biop/tmp/
 
@@ -50,7 +55,14 @@ COPY QuPath/prefs/* /home/biop/tmp/
 # Install cellpose and models
 COPY --from=cellpose-image  /opt/conda/envs/cellpose /opt/conda/envs/cellpose
 COPY --from=cellpose-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
-#RUN chmod -R a+rwX /home/biop/.cellpose  
+
+COPY --from=cellposesam-image  /opt/conda/envs/cellpose /opt/conda/envs/cellposesam
+COPY --from=cellposesam-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
+
+#################################################################
+# Install spotiflow
+COPY --from=spotiflow-image /opt/conda/envs/spotiflow /opt/conda/envs/spotiflow
+COPY --from=spotiflow-image /home/biop/.spotiflow/models/ /home/biop/.spotiflow/models/
 
 RUN chown -R biop:biop /home/biop/ \
     && chmod -R a+rwx /home/biop/   
