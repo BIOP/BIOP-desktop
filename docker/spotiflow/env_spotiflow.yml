@@ -8,7 +8,7 @@ dependencies:
   - pip
   - pip:
       - napari[all]
-      - spotiflow==v0.5.8
+      - spotiflow==v0.5.7
       - napari-spotiflow==v0.4.3
       - napari-ome-zarr
 prefix: "/opt/conda/envs/spotiflow"
