@@ -10,7 +10,7 @@ FROM ${ALIAS}biop-cellpose:${CELLPOSESAM_VERSION} AS cellposesam-image
 FROM ${ALIAS}biop-spotiflow:${SPOTIFLOW_VERSION} AS spotiflow-image
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
-ARG QP_VERSION=v0.5.1
+ARG QP_VERSION=v0.6.0
 
 USER root
 #################################################################
@@ -21,7 +21,7 @@ USER root
 # https://qupath.readthedocs.io/en/stable/docs/reference/building.html
 # install OpenJDK > 17 https://www.linuxcapable.com/how-to-install-openjdk-17-on-ubuntu-linux/
 RUN apt-get update \
-    && apt install openjdk-17-jdk -y
+    && apt install openjdk-21-jdk -y
 
 # install GPU by adding -Pcuda-redist to gradle command
 RUN git clone  https://github.com/qupath/qupath.git --branch ${QP_VERSION} 
