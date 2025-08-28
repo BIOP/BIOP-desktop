@@ -1,23 +1,39 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE preferences SYSTEM "http://java.sun.com/dtd/preferences.dtd">
 <preferences EXTERNAL_XML_VERSION="1.0">
-  <root type="user">
-    <map/>
-    <node name="io.github.qupath">
-      <map/>
-      <node name="0.5">
-        <map>
-          <entry key="cellposePythonPath" value="/opt/conda/envs/cellpose/bin/python"/>
-          <entry key="cellposeSAMPythonPath" value="/opt/conda/envs/cellposesam/bin/python"/>
-          <entry key="defaultPathClasses" value="rO0ABXNyABNqYXZhLnV0aWwuQXJyYXlMaXN0eIHSHZnHYZ0DAAFJAARzaXpleHAAAAAKdwQAAAAKc3IAJHF1cGF0aC5saWIub2JqZWN0cy5jbGFzc2VzLlBhdGhDbGFzcwAAAAAAAAABAgADTAAIY29sb3JSR0J0ABNMamF2YS9sYW5nL0ludGVnZXI7TAAEbmFtZXQAEkxqYXZhL2xhbmcvU3RyaW5nO0wAC3BhcmVudENsYXNzdAAmTHF1cGF0aC9saWIvb2JqZWN0cy9jbGFzc2VzL1BhdGhDbGFzczt4cHBwcHNxAH4AAnNyABFqYXZhLmxhbmcuSW50ZWdlchLioKT3gYc4AgABSQAFdmFsdWV4cgAQamF2YS5sYW5nLk51bWJlcoaslR0LlOCLAgAAeHD/yAAAdAAFVHVtb3Jwc3EAfgACc3EAfgAI/5bIlnQABlN0cm9tYXBzcQB+AAJzcQB+AAj/oFqgdAAMSW1tdW5lIGNlbGxzcHNxAH4AAnNxAH4ACP8yMjJ0AAhOZWNyb3Npc3BzcQB+AAJzcQB+AAj//8gAdAAFT3RoZXJwc3EAfgACc3EAfgAI/wAAtHQAB1JlZ2lvbipwc3EAfgACc3EAfgAI/7S0tHQAB0lnbm9yZSpwc3EAfgACc3EAfgAI//o+PnQACFBvc2l0aXZlcHNxAH4AAnNxAH4ACP9wcOF0AAhOZWdhdGl2ZXB4"/>
-          <entry key="defaultUsername" value="guiet"/>
-          <entry key="lastUpdateCheck" value="1754407176364"/>
-          <entry key="omniposePythonPath" value="/opt/conda/envs/omnipose/bin/python"/>
-          <entry key="scriptsPath" value="/opt/QuPath/QuPath_Common_Data_0.5/qupath-scripts"/>
-          <entry key="spotiflowPythonPath" value="/opt/conda/envs/spotiflow/bin/python"/>
-          <entry key="userPath" value="/opt/QuPath/QuPath_Common_Data_0.5"/>
-        </map>
-      </node>
-    </node>
-  </root>
+<root type="user">
+<map/>
+<node name="io.github.qupath">
+<map/>
+<node name="0.6">
+<map>
+<entry key="cellposePythonPath" value="/opt/conda/envs/cellpose/bin/python"/>
+<entry key="cellposeSAMPythonPath" value="/opt/conda/envs/cellposesam/bin/python"/>
+<entry key="defaultPathClasses" value="rO0ABXNyABNqYXZhLnV0aWwuQXJyYXlMaXN0eIHSHZnHYZ0DAAFJAARzaXpleHAAAAAKdwQAAAAKc3IAJHF1cGF0aC5saWIub2JqZWN0cy5jbGFzc2VzLlBhdGhDbGFzcwAAAAAAAAABAgADTAAIY29sb3JSR0J0ABNMamF2YS9sYW5nL0ludGVnZXI7TAAEbmFtZXQAEkxqYXZhL2xhbmcvU3RyaW5nO0wAC3BhcmVudENsYXNzdAAmTHF1cGF0aC9saWIvb2JqZWN0cy9jbGFzc2VzL1BhdGhDbGFzczt4cHBwcHNxAH4AAnNyABFqYXZhLmxhbmcuSW50ZWdlchLioKT3gYc4AgABSQAFdmFsdWV4cgAQamF2YS5sYW5nLk51bWJlcoaslR0LlOCLAgAAeHD/yAAAdAAFVHVtb3Jwc3EAfgACc3EAfgAI/5bIlnQABlN0cm9tYXBzcQB+AAJzcQB+AAj/oFqgdAAMSW1tdW5lIGNlbGxzcHNxAH4AAnNxAH4ACP8yMjJ0AAhOZWNyb3Npc3BzcQB+AAJzcQB+AAj//8gAdAAFT3RoZXJwc3EAfgACc3EAfgAI/wAAtHQAB1JlZ2lvbipwc3EAfgACc3EAfgAI/7S0tHQAB0lnbm9yZSpwc3EAfgACc3EAfgAI//o+PnQACFBvc2l0aXZlcHNxAH4AAnNxAH4ACP9wcOF0AAhOZWdhdGl2ZXB4"/>
+<entry key="instanseg.download.models" value="YES"/>
+<entry key="instanseg.lastSelectModel" value="/opt/QuPath/QuPath_Common_Data_0.6/intantseg_models/downloaded/fluorescence_nuclei_and_cells-0.1.0"/>
+<entry key="instanseg.model.dir" value="/opt/QuPath/QuPath_Common_Data_0.6/intantseg_models"/>
+<entry key="omero_ext.servers-information" value="[{&quot;webServerUri&quot;:&quot;https://omero.epfl.ch&quot;,&quot;credentials&quot;:{&quot;userType&quot;:&quot;REGULAR_USER&quot;,&quot;username&quot;:&quot;guiet&quot;,&quot;password&quot;:[&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;]},&quot;webJpegQuality&quot;:0.0,&quot;iceAddress&quot;:&quot;&quot;,&quot;icePort&quot;:0,&quot;iceNumberOfReaders&quot;:10,&quot;msPixelBufferPort&quot;:0}]"/>
+<entry key="recentProject0" value="file:/home/biop/local/00000-BIOP-desktop/QP_test/project.qpproj"/>
+<entry key="recentProject1" value=""/>
+<entry key="recentProject2" value=""/>
+<entry key="recentProject3" value=""/>
+<entry key="recentProject4" value=""/>
+<entry key="recentProject5" value=""/>
+<entry key="recentProject6" value=""/>
+<entry key="recentProject7" value=""/>
+<entry key="recentScript0" value="file:/home/biop/local/00000-BIOP-desktop/QP_test/scripts/Detect_objects_with_Cellpose.groovy"/>
+<entry key="recentScript1" value=""/>
+<entry key="recentScript2" value=""/>
+<entry key="recentScript3" value=""/>
+<entry key="recentScript4" value=""/>
+<entry key="recentScript5" value=""/>
+<entry key="recentScript6" value=""/>
+<entry key="recentScript7" value=""/>
+<entry key="spotiflowPythonPath" value="/opt/conda/envs/spotiflow/bin/python"/>
+<entry key="userPath" value="/opt/QuPath/QuPath_Common_Data_0.6"/>
+</map>
+</node>
+</node>
+</root>
 </preferences>
