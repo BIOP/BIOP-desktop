@@ -48,6 +48,17 @@ RUN wget -q  https://zenodo.org/records/16911894/files/QuPath_Common_Data_0.6.zi
 RUN unzip ${TEMP_DIR}/QuPath_Common_Data_0.6.zip -d /opt/QuPath/QuPath_Common_Data_0.6 \
     && rm ${TEMP_DIR}/QuPath_Common_Data_0.6.zip 
 
+# To make InstanSeg and PyTorch via DJL working  
+# one needs to install a conda env with pytorch and download libdjl_torch.so 
+# and to make QuPath start via a bash script that exports some path before starting QuPath
+# see start_qp.sh in QuPath/prefs
+RUN conda create --name djl --clone base \
+    && source activate djl \
+    && conda install pytorch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 pytorch-cuda=12.1 -c pytorch -c nvidia 
+
+RUN mkdir -p /home/biop/.djl.ai/pytorch/2.5.1-cpu-linux-x86_64/ \
+    && wget https://publish.djl.ai/pytorch/2.5.1/jnilib/0.33.0/linux-x86_64/cpu/libdjl_torch.so  -O /home/biop/.djl.ai/pytorch/2.5.1-cpu-linux-x86_64/0.33.0-libdjl_torch.so 
+
 #################################################################
 # Install cellpose and models
 COPY --from=cellpose-image  /opt/conda/envs/cellpose /opt/conda/envs/cellpose
@@ -61,6 +72,10 @@ COPY --from=cellposesam-image /home/biop/.cellpose/models/ /home/biop/.cellpose/
 COPY --from=spotiflow-image /opt/conda/envs/spotiflow /opt/conda/envs/spotiflow
 COPY --from=spotiflow-image /home/biop/.spotiflow/models/ /home/biop/.spotiflow/models/
 
+# Prepare to set QP_prefs , see below `QuPath_setPaths.groovy`
+COPY QuPath/prefs/* /home/biop/tmp/ 
+# create icon on desktop
+RUN mv /home/biop/tmp/start_qp.sh /opt/icons/start_qp.sh \
 RUN chown -R biop:biop /home/biop/ \
     && chmod -R a+rwx /home/biop/   
 
