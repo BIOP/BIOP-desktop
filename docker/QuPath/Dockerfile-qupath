@@ -32,11 +32,6 @@ RUN mv /home/biop/qupath/build/dist/QuPath/ /opt/QuPath \
     && chmod u+x /opt/QuPath/bin/QuPath \        
     && rm -rf /home/biop/qupath
 
-# # create icon
-RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
-    && printf '[Desktop Entry]\nVersion=0.5.1\nName=qupath\nGenericName=QuPath\nX-GNOME-FullName=QuPath\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/QuPath/bin/QuPath\nTryExec=/opt/QuPath/bin/QuPath\nTerminal=false\nStartupNotify=true\nIcon=/opt/QuPath/lib/QuPath.png\nStartupWMClass=QuPath' > /home/biop/Desktop/QuPath.desktop \
-    && chown -R biop:biop /home/biop \
-    && chmod +x /home/biop/Desktop/QuPath.desktop
 # install Extensions
 #TODO : reaplace with a zip 
 RUN mkdir -p /opt/QuPath/QuPath_Common_Data_0.6 \
@@ -76,6 +71,11 @@ COPY --from=spotiflow-image /home/biop/.spotiflow/models/ /home/biop/.spotiflow/
 COPY QuPath/prefs/* /home/biop/tmp/ 
 # create icon on desktop
 RUN mv /home/biop/tmp/start_qp.sh /opt/icons/start_qp.sh \
+    && mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
+    && printf '[Desktop Entry]\nVersion=0.6.0\nName=qupath\nGenericName=QuPath\nX-GNOME-FullName=QuPath\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_qp.sh\nTryExec=/opt/icons/start_qp.sh\nTerminal=false\nStartupNotify=true\nIcon=/opt/QuPath/lib/QuPath.png\nStartupWMClass=QuPath' > /home/biop/Desktop/QuPath.desktop \
+    && chown -R biop:biop /home/biop \
+    && chmod +x /home/biop/Desktop/QuPath.desktop
+
 RUN chown -R biop:biop /home/biop/ \
     && chmod -R a+rwx /home/biop/   
 
