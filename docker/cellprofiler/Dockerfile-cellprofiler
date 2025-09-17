@@ -8,10 +8,11 @@ USER root
 ##############################################################################
 # install cellprofiler
 COPY cellprofiler/env_cellprofiler.yml /tmp/env_cellprofiler.yml
-RUN conda env update -n cellprofiler -f /tmp/env_cellprofiler.yml \
+RUN conda update -n base -c conda-forge conda \ 
+    && conda env update -n cellprofiler -f /tmp/env_cellprofiler.yml \
     && conda clean --all -f -y \
     && conda env export -n "biop" \
-     && rm /tmp/env_cellprofiler.yml
+    && rm /tmp/env_cellprofiler.yml
 
 # create shortcut to start cellprofiler
 RUN mkdir /opt/cellprofiler
