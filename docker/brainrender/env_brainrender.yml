@@ -3,10 +3,9 @@ channels:
   - conda-forge
 dependencies:
   - python=3.9 
-  - napari
-  - pyqt
   - pip
   - pip :
-    - brainrender-napari==0.0.3
+    - napari[all]
+    - brainrender-napari==0.1.3
     - bg-atlasapi
 prefix: "/opt/conda/envs/brainrender-napari"
