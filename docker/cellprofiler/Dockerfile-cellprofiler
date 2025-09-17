@@ -14,6 +14,16 @@ RUN conda update -n base -c conda-forge conda \
     && conda env export -n "biop" \
     && rm /tmp/env_cellprofiler.yml
 
+# install cellprofiler plugins
+RUN mkdir /opt/cellprofiler/ \
+    && cd /opt/cellprofiler/ \
+    && git clone https://github.com/CellProfiler/CellProfiler-plugins \
+    && cd CellProfiler-plugins \
+    && source activate cellprofiler \
+    && pip install .[stardist] \
+    && pip install .[cellpose] \
+    && mkdir -p /home/biop/.python3/plugins \
+    && mv /opt/cellprofiler/CellProfiler-plugins/active_plugins/* /home/biop/.python3/plugins/
 # create shortcut to start cellprofiler
 RUN mkdir /opt/cellprofiler
 COPY cellprofiler/start_cellprofiler.sh /opt/cellprofiler/start_cellprofiler.sh
