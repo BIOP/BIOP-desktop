@@ -1,5 +1,8 @@
 ARG ALIAS=biop/
 ARG BASE_IMAGE=0.2.2
+ARG CELLPOSESAM_VERSION=4.0.6
+
+FROM ${ALIAS}biop-cellpose:${CELLPOSESAM_VERSION} AS cellposesam-image
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 USER root
@@ -30,6 +33,8 @@ COPY cellprofiler/start_cellprofiler.sh /opt/cellprofiler/start_cellprofiler.sh
 COPY cellprofiler/CellProfiler.ico /opt/cellprofiler/CellProfiler.ico
 
 
+# add cellpose models
+COPY --from=cellposesam-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
 RUN chmod +x /opt/cellprofiler/start_cellprofiler.sh \
     && chown -R biop:biop /opt/cellprofiler/ 
 
