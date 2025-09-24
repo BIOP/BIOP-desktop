@@ -109,18 +109,7 @@ RUN  chown -R biop:biop /opt/Fiji.app/ \
 
 # install brainrender
 COPY --from=brainrender-image /opt/conda/envs/brainrender /opt/conda/envs/brainrender
-
-# Make icons 
-COPY icons/* /opt/icons/
-
-#################################################################
-# Create shortcuts
-# to start ABBA
-RUN printf 'source activate abba_python\npython /opt/abba/abba_run.py\n\$ read -rsp \$"Press enter to continue..."\n"Press enter to continue..."' > /opt/icons/start_abba.sh \
-    && printf '[Desktop Entry]\nVersion=0.10.4\nName=ABBA\nGenericName=ABBA\nX-GNOME-FullName=ABBA\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_abba.sh\nTryExec=/opt/icons/start_abba.sh\nTerminal=true\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/icons/abba.png\nStartupWMClass=ABBA\n' > /home/biop/Desktop/abba.desktop \
-# to start fiji
-    && printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop
-
+ 
 USER biop
 
 # adds brainrender kernel
@@ -133,8 +122,22 @@ RUN source activate brainrender \
     && brainglobe install -a allen_mouse_25um \
     && conda deactivate
 
+#set back root 
 USER root 
 
+# Make icons 
+COPY icons/* /opt/icons/
+#################################################################
+# Create shortcuts
+# to start ABBA
+RUN printf 'source activate abba_python\npython /opt/abba/abba_run.py\n\$ read -rsp \$"Press enter to continue..."\n"Press enter to continue..."' > /opt/icons/start_abba.sh \
+    && printf '[Desktop Entry]\nVersion=0.10.4\nName=ABBA\nGenericName=ABBA\nX-GNOME-FullName=ABBA\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_abba.sh\nTryExec=/opt/icons/start_abba.sh\nTerminal=true\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/icons/abba.png\nStartupWMClass=ABBA\n' > /home/biop/Desktop/abba.desktop \
+# to start fiji
+    && printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop \
+# to start napari with brainrender
+    && printf 'source activate brainrender\nnapari\n\$ read -rsp \$"Press enter to continue..."' > /opt/icons/start_brainrender.sh \
+    && printf '[Desktop Entry]\nVersion=0.0.7\nName=brainrender\nGenericName=brainrender\nX-GNOME-FullName=brainrender\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_brainrender.sh\nTryExec=/opt/icons/start_brainrender.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/brainglobe.png\nStartupWMClass=brainrender\n' > /home/biop/Desktop/brainrender.desktop
+  
 RUN chown -R biop:biop /home/biop/ /opt/icons/  \
     && chmod -R a+rwx /home/biop/  /opt/icons/ 
 
