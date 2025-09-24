@@ -43,6 +43,7 @@ RUN wget -q  https://zenodo.org/records/17121500/files/QuPath_Common_Data_0.6.zi
 RUN unzip ${TEMP_DIR}/QuPath_Common_Data_0.6.zip -d /opt/QuPath/QuPath_Common_Data_0.6 \
     && rm ${TEMP_DIR}/QuPath_Common_Data_0.6.zip 
 
+    
 # To make InstanSeg and PyTorch via DJL working  
 # one needs to install a conda env with pytorch and download libdjl_torch.so 
 # and to make QuPath start via a bash script that exports some path before starting QuPath
