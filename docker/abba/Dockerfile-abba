@@ -37,10 +37,8 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/elastix/lib
 # Install QuPath 
 # 
 COPY --from=qupath-image /opt/QuPath /opt/QuPath
-COPY --from=qupath-image /opt/QuPath /opt/QuPath
 COPY --from=qupath-image /home/biop/Desktop/QuPath.desktop  /home/biop/Desktop/QuPath.desktop
-COPY --from=qupath-image /opt/QuPath/QuPath_Common_Data_0.5 /opt/QuPath/QuPath_Common_Data_0.5/
-
+COPY --from=qupath-image /opt/icons/start_qp.sh /opt/icons/start_qp.sh
 # Prepare to set QP_prefs , see below `QuPath_setPaths.groovy`
 COPY QuPath/prefs/* /home/biop/tmp/
 
