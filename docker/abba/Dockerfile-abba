@@ -11,7 +11,7 @@ FROM ${ALIAS}biop-fiji:${FIJI_VERSION} AS fiji-image
 FROM ${ALIAS}biop-deepslice:${DEEPSLICE_VERSION} AS deepslice-image
 FROM ${ALIAS}biop-brainrender:${BRAINRENDER_VERSION} AS brainrender-image
 
-FROM ${ALIAS}biop-vnc-base:0.2.1 AS base
+FROM ${ALIAS}biop-vnc-base:0.2.2 AS base
 
 
 USER root
