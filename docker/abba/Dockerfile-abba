@@ -1,5 +1,3 @@
-# https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-23-07.html 
-#FROM superelastix/elastix:5.0.1 as elastix-image
 ARG QUPATH_VERSION=v0.5.1-04
 ARG FIJI_VERSION=20250319
 ARG DEEPSLICE_VERSION=1.1.5
