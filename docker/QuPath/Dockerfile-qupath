@@ -39,7 +39,7 @@ RUN mkdir -p /opt/QuPath/QuPath_Common_Data_0.6 \
     && chmod -R a+rwx /opt/QuPath/QuPath_Common_Data_0.6
 
 # # TODO : discuss if we prepare unzip from zenodo, or if we update when container start via a git pull ... (less good for reproducibility but better to keep scripts up-to-date)
-RUN wget -q  https://zenodo.org/records/16911894/files/QuPath_Common_Data_0.6.zip?download=1 -O ${TEMP_DIR}/QuPath_Common_Data_0.6.zip
+RUN wget -q  https://zenodo.org/records/17121500/files/QuPath_Common_Data_0.6.zip?download=1 -O ${TEMP_DIR}/QuPath_Common_Data_0.6.zip
 RUN unzip ${TEMP_DIR}/QuPath_Common_Data_0.6.zip -d /opt/QuPath/QuPath_Common_Data_0.6 \
     && rm ${TEMP_DIR}/QuPath_Common_Data_0.6.zip 
 
