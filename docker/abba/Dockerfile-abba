@@ -16,10 +16,8 @@ USER root
 
 RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop 
 
-
 # install elastix  
 #version 5.1.0 is not working with the current ABBA version, so we use 5.0.1 , is a zip on github
-
 # version 5.0.1 is tar.bz2 on github
 RUN wget https://github.com/SuperElastix/elastix/releases/download/5.0.1/elastix-5.0.1-linux.tar.bz2 
 RUN tar -xf elastix-5.0.1-linux.tar.bz2 \
@@ -55,7 +53,6 @@ COPY fiji/Fiji_setWrappersPaths.groovy /home/biop/tmp/Fiji_setWrappersPaths.groo
 #################################################################
 # install deepslice 
 COPY --from=deepslice-image /opt/conda/envs/deepslice /opt/conda/envs/deepslice
-
 
 #################################################################
 # install abba_python
@@ -111,12 +108,10 @@ RUN  chown -R biop:biop /opt/Fiji.app/ \
 COPY --from=brainrender-image /opt/conda/envs/brainrender /opt/conda/envs/brainrender
  
 USER biop
-
 # adds brainrender kernel
 RUN source activate brainrender \
     && python -m ipykernel install --user --name brainrender --display-name "Python (brainrender)" \
     && conda deactivate
-
 # download allen_mouse_25um atlas
 RUN source activate brainrender \
     && brainglobe install -a allen_mouse_25um \
@@ -149,5 +144,4 @@ RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' \
     && rm -rf /home/biop/tmp
 WORKDIR /home/biop
 ENTRYPOINT ["/usr/local/bin/jupyter"]
-#CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
-CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir="]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop/"]
