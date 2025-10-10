@@ -13,8 +13,10 @@
 <entry key="instanseg.download.models" value="YES"/>
 <entry key="instanseg.lastSelectModel" value="/opt/QuPath/QuPath_Common_Data_0.6/intantseg_models/downloaded/fluorescence_nuclei_and_cells-0.1.0"/>
 <entry key="instanseg.model.dir" value="/opt/QuPath/QuPath_Common_Data_0.6/intantseg_models"/>
-<entry key="omero_ext.servers-information" value="[{&quot;webServerUri&quot;:&quot;https://omero.epfl.ch&quot;,&quot;credentials&quot;:{&quot;userType&quot;:&quot;REGULAR_USER&quot;,&quot;username&quot;:&quot;guiet&quot;,&quot;password&quot;:[&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;]},&quot;webJpegQuality&quot;:0.0,&quot;iceAddress&quot;:&quot;&quot;,&quot;icePort&quot;:0,&quot;iceNumberOfReaders&quot;:10,&quot;msPixelBufferPort&quot;:0}]"/>
-<entry key="recentProject0" value="file:/home/biop/local/00000-BIOP-desktop/QP_test/project.qpproj"/>
+<entry key="instanseg.pref.device" value="gpu0"/>
+<entry key="omero_ext.servers-information" value="[{&quot;webServerUri&quot;:&quot;https://omero.epfl.ch&quot;,&quot;credentials&quot;:{&quot;userType&quot;:&quot;REGULAR_USER&quot;,&quot;username&quot;:&quot;guiet&quot;,&quot;password&quot;:[&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;,&quot;\u0000&quot;]},&quot;webJpegQuality&quot;:0.0,&quot;iceAddress&quot;:&quot;&quot;,&quot;icePort&quot;:0,&quot;iceNumberOfReaders&quot;:10,&quot;msPixelBufferPort&quot;:0},{&quot;webServerUri&quot;:&quot;https://omero-public.epfl.ch&quot;,&quot;credentials&quot;:{&quot;userType&quot;:&quot;PUBLIC_USER&quot;},&quot;webJpegQuality&quot;:0.9,&quot;icePort&quot;:0,&quot;iceNumberOfReaders&quot;:0,&quot;msPixelBufferPort&quot;:0}]"/>
+<entry key="omniposePythonPath" value="/opt/conda/envs/omnipose/bin/python"/>
+<entry key="recentProject0" value=""/>
 <entry key="recentProject1" value=""/>
 <entry key="recentProject2" value=""/>
 <entry key="recentProject3" value=""/>
@@ -22,7 +24,7 @@
 <entry key="recentProject5" value=""/>
 <entry key="recentProject6" value=""/>
 <entry key="recentProject7" value=""/>
-<entry key="recentScript0" value="file:/home/biop/local/00000-BIOP-desktop/QP_test/scripts/Detect_objects_with_Cellpose.groovy"/>
+<entry key="recentScript0" value=""/>
 <entry key="recentScript1" value=""/>
 <entry key="recentScript2" value=""/>
 <entry key="recentScript3" value=""/>
