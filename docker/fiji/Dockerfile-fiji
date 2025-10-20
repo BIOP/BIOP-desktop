@@ -51,6 +51,12 @@ RUN ${fiji} ${updateCommand} \
     && ${fiji} ${updateCommand} \
     && chmod -R a+rwX /opt/Fiji.app
 
+# TF1.15 GPU (current default download of TF 1.12 CPU)
+RUN wget -q https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow_jni-gpu-linux-x86_64-1.15.0.tar.gz    \
+    && tar -C /opt/Fiji.app/lib/linux64/ -xzf libtensorflow_jni-gpu-linux-x86_64-1.15.0.tar.gz \
+    && rm libtensorflow_jni-gpu-linux-x86_64-1.15.0.tar.gz 
+
+
 # Install omeroij
 RUN wget -q https://github.com/ome/omero-insight/releases/download/v${OMEROIJ_VERSION}/omero_ij-${OMEROIJ_VERSION}-all.jar -O /opt/Fiji.app/plugins/omero_ij-${OMEROIJ_VERSION}-all.jar \
 # ... simple-omero-client
