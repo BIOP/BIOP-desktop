@@ -23,10 +23,10 @@ RUN apt-get update -y \
 
 #################################################################
 # Install Fiji
-RUN wget -q https://downloads.imagej.net/fiji/latest/fiji-linux64.zip \
-      && unzip fiji-linux64.zip -d /opt/ \
-      && rm fiji-linux64.zip \
-      && chmod -R a+rwX /opt/Fiji.app
+RUN wget -q https://downloads.micron.ox.ac.uk/fiji_update/mirrors/fiji-stable/fiji-stable-linux64-jdk.zip \
+      && unzip -q fiji-stable-linux64-jdk.zip -d /opt/ \
+      && rm fiji-stable-linux64-jdk.zip \
+      && chmod -R a+rwX /opt/Fiji.app/
 
 # Install Fiji plugins via update sites
 ENV fiji=/opt/Fiji.app/ImageJ-linux64
