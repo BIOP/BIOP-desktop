@@ -1,8 +1,10 @@
 ARG BASE_IMAGE=0.2.2
 ARG CELLPOSE_VERSION=3.1.1.1
+ARG CELLPOSESAM_VERSION=4.0.6
 ARG ALIAS=biop/
 
 FROM ${ALIAS}biop-cellpose:${CELLPOSE_VERSION} AS cellpose-image
+FROM ${ALIAS}biop-cellpose:${CELLPOSESAM_VERSION} AS cellposesam-image
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 ENV OMEROIJ_VERSION=5.8.6
@@ -72,6 +74,9 @@ RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
 COPY --from=cellpose-image  /opt/conda/envs/cellpose /opt/conda/envs/cellpose
 COPY --from=cellpose-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
 RUN chmod -R a+rwX /home/biop/.cellpose  
+
+COPY --from=cellposesam-image  /opt/conda/envs/cellpose /opt/conda/envs/cellposesam
+COPY --from=cellposesam-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
 
 RUN chown -R biop:biop /home/biop/ \
     && chmod -R a+rwx /home/biop/   
