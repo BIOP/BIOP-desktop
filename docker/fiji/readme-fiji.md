@@ -46,7 +46,9 @@ docker tag  biop-fiji:20251020  registry.rcp.epfl.ch/ptbiop/biop-fiji:20251020
 docker push registry.rcp.epfl.ch/ptbiop/biop-fiji:20251020 
 ```
 
+## GPU deconvolution test on RCP cluster
 - Create a RUNAI env
 - Start a RUNAI workload
-- Look for "clij devon" in the search bar and RUN
+- Look for "clij deconv" in the search bar and RUN
+
 
