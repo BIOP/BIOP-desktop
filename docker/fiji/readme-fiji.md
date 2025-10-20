@@ -51,4 +51,8 @@ docker push registry.rcp.epfl.ch/ptbiop/biop-fiji:20251020
 - Start a RUNAI workload
 - Look for "clij deconv" in the search bar and RUN
 
+## 3D script
+- Open Fiji
+- Open sample "T1 Head"
+- Start plugins > 3D script > Interactive Animation
 
