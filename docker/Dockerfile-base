@@ -182,7 +182,7 @@ RUN printf 'jupyter lab\n\$ read -rsp \$"Press enter to continue..."\nPress ente
 # to start omero.insight 
     && printf '#!/bin/bash\n# Navigate to the directory containing the OMERO.insight binary\ncd /opt/OMERO.insight/OMERO.insight-5.8.6/bin\n# Execute the OMERO.insight application\n./omero-insight\n' > /opt/icons/start_omero.sh \
     && printf '[Desktop Entry]\nVersion=5.8.6\nName=OMERO Insight\nGenericName=OMERO Insight\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_omero.sh\nTryExec=/opt/icons/start_omero.sh\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/icons/omero.png\n' > /home/biop/Desktop/omero.desktop \
-# to start VScode
+# to start VScode : TODO : change to "DISPLAY=:1 code --no-sandbox"
     && printf 'yes | code' > /opt/icons/start_vscode.sh \
     && printf '[Desktop Entry]\nVersion=1.98.2\nName=VScode\nGenericName=VScode\nX-GNOME-FullName=VScode\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_vscode.sh\nTryExec=/opt/icons/start_vscode.sh\nTerminal=false\nStartupNotify=true\nIcon=/opt/icons/vscode.png\n' > /home/biop/Desktop/vscode.desktop
 
