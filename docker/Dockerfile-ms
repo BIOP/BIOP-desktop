@@ -98,6 +98,7 @@ COPY --from=devbio-image /opt/conda/envs/devbio /opt/conda/envs/devbio
 #################################################################
 # Install cellprofiler
 COPY --from=cellprofiler-image /opt/conda/envs/cellprofiler /opt/conda/envs/cellprofiler
+COPY --from=cellprofiler-image /home/biop/.python3/plugins/ /home/biop/.python3/plugins/
 
 #################################################################
 # Add the inkscape-imagej-panel extension for inskcape
