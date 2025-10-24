@@ -16,7 +16,7 @@ docker run -it --rm -p 8888:8888 --gpus device=0  --mount src=D:/,target=/home/b
 ## build
 
 ```
-docker build -f Dockerfile-ms  -t biop-desktop:0.2.4. 
+docker build -f Dockerfile-ms  -t biop-desktop:0.2.4 .
 ```
 
 ## start to test (see below)
