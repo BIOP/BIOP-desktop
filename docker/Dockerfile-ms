@@ -4,7 +4,7 @@ ARG ALIAS=biop/
 # because COPY --from= doesn't support build-arg (https://github.com/docker/for-mac/issues/2155)
 # we can still do a list of all sub-blocks here to be able to use them in the COPY --from=... below
 # base needs to be last, Don't Ask Wky !  (I don't know) ! and it seems it need to be named 'base' , D.A:W.2 ! but it works !
-ARG QUPATH_VERSION=v0.5.1-05
+ARG QUPATH_VERSION=v0.6.0-full
 ARG ILASTIK_VERSION=1.4.0-gpu
 ARG FIJI_VERSION=20250319
 ARG CELLPOSE_VERSION=3.1.1.1
@@ -51,7 +51,13 @@ RUN mkdir -p /home/biop/Desktop \
 
 ################################################################# 
 # Install QuPath 
+# 
 COPY --from=qupath-image /opt/QuPath /opt/QuPath
+COPY --from=qupath-image /opt/conda/envs/djl /opt/conda/envs/djl
+COPY --from=qupath-image /home/biop/.djl.ai/pytorch/2.5.1-cpu-linux-x86_64/ /home/biop/.djl.ai/pytorch/2.5.1-cpu-linux-x86_64/
+
+COPY --from=qupath-image /opt/icons/start_qp.sh /opt/icons/start_qp.sh
+# Prepare to set QP_prefs , see below `QuPath_setPaths.groovy`
 COPY QuPath/prefs/* /home/biop/tmp/
 
 #################################################################
@@ -151,7 +157,7 @@ COPY icons/* /opt/icons/
 # to start fiji
 RUN printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop \
 # to start QuPath
-    && printf '[Desktop Entry]\nVersion=0.5.1\nName=qupath\nGenericName=QuPath\nX-GNOME-FullName=QuPath\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/QuPath/bin/QuPath\nTryExec=/opt/QuPath/bin/QuPath\nTerminal=false\nStartupNotify=true\nIcon=/opt/QuPath/lib/QuPath.png\nStartupWMClass=QuPath' > /home/biop/Desktop/QuPath.desktop \
+    && printf '[Desktop Entry]\nVersion=0.6.0\nName=qupath\nGenericName=QuPath\nX-GNOME-FullName=QuPath\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_qp.sh\nTryExec=/opt/icons/start_qp.sh\nTerminal=false\nStartupNotify=true\nIcon=/opt/QuPath/lib/QuPath.png\nStartupWMClass=QuPath' > /home/biop/Desktop/QuPath.desktop \
 # to start ilastik
     && printf '[Desktop Entry]\nVersion=1.4.0\nName=ilastik\nGenericName=ilastik\nX-GNOME-FullName=ilastik\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/ilastik/run_ilastik.sh %F\nTryExec=/opt/ilastik/run_ilastik.sh\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/ilastik/lib/python3.7/site-packages/ilastik/shell/gui/icons/96x96/ilastik-icon.png\nStartupWMClass=ilastik\n' > /home/biop/Desktop/ilastik.desktop \
 # cellprofiler
@@ -180,8 +186,8 @@ RUN printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNO
 
 
 # set chown and chmod for all necessary folders
-RUN chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.5 \
-    && chmod -R a+rwx /opt/QuPath/QuPath_Common_Data_0.5 \
+RUN chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.6 \
+    && chmod -R a+rwx /opt/QuPath/QuPath_Common_Data_0.6 \
     && chmod a+rwx /opt/QuPath/bin/QuPath \
     # cellpose models
     && chmod -R a+rwx /home/biop/.cellpose \ 
