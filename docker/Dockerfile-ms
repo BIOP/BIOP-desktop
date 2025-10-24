@@ -5,7 +5,7 @@ ARG ALIAS=biop/
 # we can still do a list of all sub-blocks here to be able to use them in the COPY --from=... below
 # base needs to be last, Don't Ask Wky !  (I don't know) ! and it seems it need to be named 'base' , D.A:W.2 ! but it works !
 ARG QUPATH_VERSION=v0.6.0-full
-ARG ILASTIK_VERSION=1.4.0-gpu
+ARG ILASTIK_VERSION=1.4.1.post1-gpu
 ARG FIJI_VERSION=20250319
 ARG CELLPOSE_VERSION=3.1.1.1
 ARG DEVBIO_VERSION=0.11.0
