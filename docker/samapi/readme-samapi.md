@@ -19,7 +19,7 @@ docker tag  biop-samapi:0.6.1-02 biop/biop-samapi:0.6.1-02
 
 ## push on dockerhub
 ```
-docker push biop/biop-samapi:0.6.1-01
+docker push biop/biop-samapi:0.6.1-02
 ```
 
 # Test(s)
