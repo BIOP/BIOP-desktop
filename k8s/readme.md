@@ -55,3 +55,5 @@ kubectl delete runaijobs.run.ai -l app=biop-desktop
 
 # Pull image on nodes
 kubectl create -f image-puller.yaml 
+
+kubectl delete mpijobs.kubeflow.org image-puller
