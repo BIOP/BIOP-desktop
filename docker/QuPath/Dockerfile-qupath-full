@@ -136,7 +136,6 @@ COPY QuPath/prefs/* /home/biop/tmp/
 #################################################################
 # Create icon on desktop
 RUN mv /home/biop/tmp/start_qp.sh /opt/icons/start_qp.sh \
-    #&& mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
     && printf '[Desktop Entry]\nVersion=0.6.0\nName=qupath\nGenericName=QuPath\nX-GNOME-FullName=QuPath\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_qp.sh\nTryExec=/opt/icons/start_qp.sh\nTerminal=false\nStartupNotify=true\nIcon=/opt/QuPath/lib/QuPath.png\nStartupWMClass=QuPath' > /home/biop/Desktop/QuPath.desktop \
     # to start SAMAPI
     && printf 'source activate samapi\npython -m uvicorn samapi.main:app --workers 2\n\$ read -rsp \$"Press enter to continue..."' > /opt/icons/start_samapi.sh \
