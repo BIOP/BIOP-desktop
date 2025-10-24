@@ -1,16 +1,9 @@
 ARG BASE_IMAGE=0.2.2
 ARG ALIAS=biop/
-ARG CELLPOSE_VERSION=3.1.1.1
-ARG CELLPOSESAM_VERSION=4.0.6
-ARG SPOTIFLOW_VERSION=v0.5.7
 
-
-FROM ${ALIAS}biop-cellpose:${CELLPOSE_VERSION} AS cellpose-image
-FROM ${ALIAS}biop-cellpose:${CELLPOSESAM_VERSION} AS cellposesam-image
-FROM ${ALIAS}biop-spotiflow:${SPOTIFLOW_VERSION} AS spotiflow-image
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
-ARG QP_VERSION=v0.5.1
+ARG QP_VERSION=v0.6.0
 
 USER root
 #################################################################
@@ -21,9 +14,22 @@ USER root
 # https://qupath.readthedocs.io/en/stable/docs/reference/building.html
 # install OpenJDK > 17 https://www.linuxcapable.com/how-to-install-openjdk-17-on-ubuntu-linux/
 RUN apt-get update \
-    && apt install openjdk-17-jdk -y
+    && apt install openjdk-21-jdk -y 
 
-# install GPU by adding -Pcuda-redist to gradle command
+## v0.7.0-SNAPSHOT
+# RUN git clone  https://github.com/qupath/qupath.git 
+# RUN cd qupath \
+#     && ./gradlew clean -x jpackage -x javadoc -x jre
+#     #/usr/bin/java  , /usr/lib/jvm/java-21-openjdk-amd64/
+
+# RUN cd qupath && \
+#     ./gradlew clean installDist -x javadoc 
+
+# RUN mv /home/biop/qupath/build/install/QuPath/ /opt/QuPath \
+#     && chmod u+x /opt/QuPath/bin/QuPath \        
+#     && rm -rf /home/biop/qupath
+
+## v0.6.0
 RUN git clone  https://github.com/qupath/qupath.git --branch ${QP_VERSION} 
 RUN cd qupath \
     && ./gradlew clean jpackage
@@ -32,39 +38,22 @@ RUN mv /home/biop/qupath/build/dist/QuPath/ /opt/QuPath \
     && chmod u+x /opt/QuPath/bin/QuPath \        
     && rm -rf /home/biop/qupath
 
-# # create icon
-RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
-    && printf '[Desktop Entry]\nVersion=0.5.1\nName=qupath\nGenericName=QuPath\nX-GNOME-FullName=QuPath\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/QuPath/bin/QuPath\nTryExec=/opt/QuPath/bin/QuPath\nTerminal=false\nStartupNotify=true\nIcon=/opt/QuPath/lib/QuPath.png\nStartupWMClass=QuPath' > /home/biop/Desktop/QuPath.desktop \
-    && chown -R biop:biop /home/biop \
-    && chmod +x /home/biop/Desktop/QuPath.desktop
-
 # install Extensions
-RUN mkdir -p /opt/QuPath/QuPath_Common_Data_0.5 \
-    && chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.5 \
-    && chmod -R a+rwx /opt/QuPath/QuPath_Common_Data_0.5     
+#TODO : reaplace with a zip 
+RUN mkdir -p /opt/QuPath/QuPath_Common_Data_0.6 \
+    && chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.6 \
+    && chmod -R a+rwx /opt/QuPath/QuPath_Common_Data_0.6
 
-RUN wget -q https://zenodo.org/records/16744574/files/QuPath_Common_Data_0.5.zip?download=1 -O ${TEMP_DIR}/QuPath_Common_Data_0.5.zip \
-    && unzip ${TEMP_DIR}/QuPath_Common_Data_0.5.zip -d /opt/QuPath/QuPath_Common_Data_0.5 \
-    && rm ${TEMP_DIR}/QuPath_Common_Data_0.5.zip 
+# # TODO : discuss if we prepare unzip from zenodo, or if we update when container start via a git pull ... (less good for reproducibility but better to keep scripts up-to-date)
+RUN wget -q  https://zenodo.org/records/17121500/files/QuPath_Common_Data_0.6.zip?download=1 -O ${TEMP_DIR}/QuPath_Common_Data_0.6.zip
+RUN unzip ${TEMP_DIR}/QuPath_Common_Data_0.6.zip -d /opt/QuPath/QuPath_Common_Data_0.6 \
+    && rm ${TEMP_DIR}/QuPath_Common_Data_0.6.zip 
 
-    
-# Prepare to set QP_prefs , see below `QuPath_setPaths.groovy`
-COPY QuPath/prefs/* /home/biop/tmp/
 
-#################################################################
-# Install cellpose and models
-COPY --from=cellpose-image  /opt/conda/envs/cellpose /opt/conda/envs/cellpose
-COPY --from=cellpose-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
-
-COPY --from=cellposesam-image  /opt/conda/envs/cellpose /opt/conda/envs/cellposesam
-COPY --from=cellposesam-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
-
-#################################################################
-# Install spotiflow
-COPY --from=spotiflow-image /opt/conda/envs/spotiflow /opt/conda/envs/spotiflow
-COPY --from=spotiflow-image /home/biop/.spotiflow/models/ /home/biop/.spotiflow/models/
-
-RUN chown -R biop:biop /home/biop/ \
+COPY QuPath/prefs/* /home/biop/tmp/ 
+RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
+    && printf '[Desktop Entry]\nVersion=0.6.0\nName=qupath\nGenericName=QuPath\nX-GNOME-FullName=QuPath\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/QuPath/bin/QuPath\nTryExec=/opt/QuPath/bin/QuPath\nTerminal=false\nStartupNotify=true\nIcon=/opt/QuPath/lib/QuPath.png\nStartupWMClass=QuPath' > /home/biop/Desktop/QuPath.desktop \
+    && chown -R biop:biop /home/biop \
     && chmod -R a+rwx /home/biop/   
 
 #################################################################

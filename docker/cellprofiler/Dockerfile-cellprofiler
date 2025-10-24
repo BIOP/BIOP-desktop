@@ -1,5 +1,9 @@
-ARG BASE_IMAGE=0.0.2
-FROM biop-vnc-base:${BASE_IMAGE}
+ARG ALIAS=biop/
+ARG BASE_IMAGE=0.2.2
+ARG CELLPOSESAM_VERSION=4.0.6
+
+FROM ${ALIAS}biop-cellpose:${CELLPOSESAM_VERSION} AS cellposesam-image
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 USER root
 
@@ -7,22 +11,35 @@ USER root
 ##############################################################################
 # install cellprofiler
 COPY cellprofiler/env_cellprofiler.yml /tmp/env_cellprofiler.yml
-RUN conda env update -n cellprofiler -f /tmp/env_cellprofiler.yml \
+RUN conda update -n base -c conda-forge conda \ 
+    && conda env update -n cellprofiler -f /tmp/env_cellprofiler.yml \
     && conda clean --all -f -y \
     && conda env export -n "biop" \
-     && rm /tmp/env_cellprofiler.yml
+    && rm /tmp/env_cellprofiler.yml
+
+# install cellprofiler plugins
+RUN mkdir /opt/cellprofiler/ \
+    && cd /opt/cellprofiler/ \
+    && git clone https://github.com/CellProfiler/CellProfiler-plugins \
+    && cd CellProfiler-plugins \
+    && source activate cellprofiler \
+    && pip install .[stardist] \
+    && pip install .[cellpose] \
+    && mkdir -p /home/biop/.python3/plugins \
+    && mv /opt/cellprofiler/CellProfiler-plugins/active_plugins/* /home/biop/.python3/plugins/
+
+# add cellpose models
+COPY --from=cellposesam-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
 
 # create shortcut to start cellprofiler
-RUN mkdir /opt/cellprofiler
-COPY cellprofiler/start_cellprofiler.sh /opt/cellprofiler/start_cellprofiler.sh
-COPY cellprofiler/CellProfiler.ico /opt/cellprofiler/CellProfiler.ico
-
-
-RUN chmod +x /opt/cellprofiler/start_cellprofiler.sh \
-    && chown -R biop:biop /opt/cellprofiler/ 
-
-RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
-    && printf '[Desktop Entry]\nVersion=4.2.6\nName=cellprofiler\nGenericName=cellprofiler\nX-GNOME-FullName=cellprofiler\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/cellprofiler/start_cellprofiler.sh\nTryExec=/opt/cellprofiler/start_cellprofiler.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/cellprofiler/CellProfiler.ico\nStartupWMClass=cellprofiler\n' > /home/biop/Desktop/cellprofiler.desktop \
+COPY icons/CellProfiler.ico /opt/icons/CellProfiler.ico
+RUN mkdir -p /home/biop/Desktop \
+    # cellprofiler
+    && printf 'source activate cellprofiler\nexport "PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True" && cellprofiler\n\$ read -rsp \$"Press enter to continue..."\n' > /opt/icons/start_cellprofiler.sh \
+    && printf '[Desktop Entry]\nVersion=4.2.8\nName=cellprofiler\nGenericName=cellprofiler\nX-GNOME-FullName=cellprofiler\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_cellprofiler.sh\nTryExec=/opt/icons/start_cellprofiler.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/CellProfiler.ico\nStartupWMClass=cellprofiler\n' > /home/biop/Desktop/cellprofiler.desktop \
+    && chmod a+rwx /opt/icons/start_cellprofiler.sh \
+    && chown -R biop:biop /opt/icons/ \
+    && chmod +x /home/biop/Desktop/cellprofiler.desktop \
     && chown -R biop:biop /home/biop \
     && chmod -R a+rwx /home/biop/
 

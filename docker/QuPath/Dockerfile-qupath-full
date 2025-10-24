@@ -1,0 +1,157 @@
+ARG BASE_IMAGE=0.2.2
+ARG ALIAS=biop/
+
+ARG QUPATH_VERSION=v0.6.0-only
+ARG CELLPOSE_VERSION=3.1.1.1
+ARG CELLPOSESAM_VERSION=4.0.6
+ARG OMNI_VERSION=1.0.7-dev2
+ARG SPOTIFLOW_VERSION=v0.5.7
+ARG SAMAPI_VERSION=0.6.1-02 
+
+FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} AS qupath-image
+FROM ${ALIAS}biop-cellpose:${CELLPOSE_VERSION} AS cellpose-image
+FROM ${ALIAS}biop-cellpose:${CELLPOSESAM_VERSION} AS cellposesam-image
+FROM ${ALIAS}biop-omni:${OMNI_VERSION} AS omnipose-image
+FROM ${ALIAS}biop-spotiflow:${SPOTIFLOW_VERSION} AS spotiflow-image
+FROM ${ALIAS}biop-samapi:${SAMAPI_VERSION} AS samapi-image
+
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
+
+ARG QP_VERSION=v0.6.0
+
+USER root
+
+#################################################################
+# Install QuPath
+# QuPath on Ubuntu can't use cellpose extension, needs to build from source ! 
+
+# # QuPath from source :
+# # https://qupath.readthedocs.io/en/stable/docs/reference/building.html
+# # install OpenJDK > 17 https://www.linuxcapable.com/how-to-install-openjdk-17-on-ubuntu-linux/
+# RUN apt-get update \
+#     && apt install openjdk-21-jdk -y 
+
+# RUN git clone  https://github.com/qupath/qupath.git --branch ${QP_VERSION} 
+# RUN cd qupath \
+#     && ./gradlew clean jpackage
+
+# RUN mv /home/biop/qupath/build/dist/QuPath/ /opt/QuPath \
+#     && chmod u+x /opt/QuPath/bin/QuPath \        
+#     && rm -rf /home/biop/qupath
+
+# #################################################################
+# # Install Extensions
+# #TODO : reaplace with a zip 
+# RUN mkdir -p /opt/QuPath/QuPath_Common_Data_0.6 \
+#     && chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.6 \
+#     && chmod -R a+rwx /opt/QuPath/QuPath_Common_Data_0.6
+
+# # # TODO : discuss if we prepare unzip from zenodo, or if we update when container start via a git pull ... (less good for reproducibility but better to keep scripts up-to-date)
+# RUN wget -q  https://zenodo.org/records/17121500/files/QuPath_Common_Data_0.6.zip?download=1 -O ${TEMP_DIR}/QuPath_Common_Data_0.6.zip
+# RUN unzip ${TEMP_DIR}/QuPath_Common_Data_0.6.zip -d /opt/QuPath/QuPath_Common_Data_0.6 \
+#     && rm ${TEMP_DIR}/QuPath_Common_Data_0.6.zip 
+
+
+# #################################################################
+# # Install samapi
+# COPY samapi/env_samapi.yml /tmp/env_samapi.yml
+# RUN conda env update -n samapi -f /tmp/env_samapi.yml \
+#     && conda clean --all -f -y \
+#     && conda env export -n "biop" \ 
+#     && rm /tmp/env_samapi.yml 
+
+# # add lib for wsl 
+# ENV LD_LIBRARY_PATH=/usr/lib/wsl/lib:$LD_LIBRARY_PATH
+
+# # add models
+# RUN mkdir -p /home/biop/.cache/torch/hub/checkpoints/
+# # download from repo
+# RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth" -P /home/biop/.samapi/vit_h/
+# RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth" -P /home/biop/.samapi/vit_l/
+# RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth" -P /home/biop/.samapi/vit_b/
+# RUN wget -q "https://github.com/ChaoningZhang/MobileSAM/raw/master/weights/mobile_sam.pt" -P /home/biop/.samapi/vit_t/
+
+# RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_base_plus.pt" -P /home/biop/.samapi/sam2_bp/
+# RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_small.pt" -P /home/biop/.samapi/sam2_s/
+# RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_tiny.pt" -P /home/biop/.samapi/sam2_t/
+# RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_large.pt" -P /home/biop/.samapi/sam2_l/
+
+################################################################# 
+# Install QuPath 
+# 
+COPY --from=qupath-image /opt/QuPath /opt/QuPath
+
+#################################################################
+# Install samapi
+#
+# add lib for wsl 
+ENV LD_LIBRARY_PATH=/usr/lib/wsl/lib:$LD_LIBRARY_PATH
+# add samapi env 
+COPY --from=samapi-image /opt/conda/envs/samapi /opt/conda/envs/samapi
+# add models for samapi
+COPY --from=samapi-image /home/biop/.samapi/ /home/biop/.samapi/
+
+#################################################################
+# InstanSeg
+# 
+# To make InstanSeg and PyTorch via DJL working  
+# one needs to install a conda env with pytorch and download libdjl_torch.so 
+# and to make QuPath start via a bash script that exports some path before starting QuPath
+# see start_qp.sh in QuPath/prefs
+
+## https://djl.ai/engines/pytorch/pytorch-engine/
+RUN conda create --name djl --clone base \
+    && source activate djl \
+    && mamba install pytorch==2.5.1 torchvision torchaudio pytorch-cuda==12.1 -c pytorch -c nvidia -y 
+
+# cf https://forum.image.sc/t/trouble-getting-gpu-to-work-with-instanseg-qupath/102042/64?
+RUN wget https://repo1.maven.org/maven2/ai/djl/pytorch/pytorch-jni/2.5.1-0.33.0/pytorch-jni-2.5.1-0.33.0.jar -O /home/biop/pytorch-jni-2.5.1-0.33.0.jar \
+    && unzip /home/biop/pytorch-jni-2.5.1-0.33.0.jar -d /home/biop/djl \
+    && mkdir -p /home/biop/.djl.ai/pytorch/2.5.1-cpu-linux-x86_64/ \
+    && mv /home/biop/djl/jnilib/linux-x86_64/cu124-precxx11/libdjl_torch.so /home/biop/.djl.ai/pytorch/2.5.1-cpu-linux-x86_64/0.33.0-libdjl_torch.so \
+    && rm -rf /home/biop/djl \
+    && rm /home/biop/pytorch-jni-2.5.1-0.33.0.jar
+
+#################################################################
+# Install cellpose and models
+COPY --from=cellpose-image  /opt/conda/envs/cellpose /opt/conda/envs/cellpose
+COPY --from=cellpose-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
+
+COPY --from=cellposesam-image  /opt/conda/envs/cellpose /opt/conda/envs/cellposesam
+COPY --from=cellposesam-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
+
+#################################################################
+# Install spotiflow
+COPY --from=spotiflow-image /opt/conda/envs/spotiflow /opt/conda/envs/spotiflow
+COPY --from=spotiflow-image /home/biop/.spotiflow/models/ /home/biop/.spotiflow/models/
+
+#################################################################
+# Install omnipose
+COPY --from=omnipose-image /opt/conda/envs/omnipose /opt/conda/envs/omnipose
+
+#################################################################
+# Prepare to set QP_prefs , see below `QuPath_setPaths.groovy`
+COPY QuPath/prefs/* /home/biop/tmp/ 
+
+#################################################################
+# Create icon on desktop
+RUN mv /home/biop/tmp/start_qp.sh /opt/icons/start_qp.sh \
+    && printf '[Desktop Entry]\nVersion=0.6.0\nName=qupath\nGenericName=QuPath\nX-GNOME-FullName=QuPath\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_qp.sh\nTryExec=/opt/icons/start_qp.sh\nTerminal=false\nStartupNotify=true\nIcon=/opt/QuPath/lib/QuPath.png\nStartupWMClass=QuPath' > /home/biop/Desktop/QuPath.desktop \
+    # to start SAMAPI
+    && printf 'source activate samapi\npython -m uvicorn samapi.main:app --workers 2\n\$ read -rsp \$"Press enter to continue..."' > /opt/icons/start_samapi.sh \
+    && printf '[Desktop Entry]\nVersion=0.6.1\nName=samapi\nGenericName=samapi\nX-GNOME-FullName=samapi\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_samapi.sh\nTryExec=/opt/icons/start_samapi.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/samapi.ico\nStartupWMClass=samapi\n' > /home/biop/Desktop/samapi.desktop\
+    && chown -R biop:biop /opt/icons/ \
+    && chmod -R a+rwx /opt/icons/ 
+
+RUN chown -R biop:biop /home/biop \
+    && chmod -R a+rwx /home/biop/   
+
+#################################################################
+# Container start
+USER biop
+# here we import prefs in QuPath so that we can use the extensions at the first start ! 
+RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' \
+    && rm -rf /home/biop/tmp
+WORKDIR /home/biop
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]

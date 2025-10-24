@@ -1,12 +1,11 @@
-ARG BASE_IMAGE=0.2.0
-ARG QUPATH_VERSION=v0.5.1-04
+ARG BASE_IMAGE=0.2.2
+ARG QUPATH_VERSION=v0.6.0-only
 ARG ALIAS=biop/
 
 FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} AS qupath-image
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 USER root
-
 
 ################################################################# 
 # Install QuPath 
@@ -44,8 +43,7 @@ COPY icons/* /opt/icons/
 RUN printf 'source activate samapi\npython -m uvicorn samapi.main:app --workers 2\n\$ read -rsp \$"Press enter to continue...' > /opt/icons/start_samapi.sh \
     && printf '[Desktop Entry]\nVersion=0.6.1\nName=samapi\nGenericName=samapi\nX-GNOME-FullName=samapi\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_samapi.sh\nTryExec=/opt/icons/start_samapi.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/samapi.ico\nStartupWMClass=samapi\n' > /home/biop/Desktop/samapi.desktop \
     && chown biop:biop /home/biop/Desktop/samapi.desktop \
-    && chmod a+rxx /opt/icons/start_samapi.sh
-
+    && chmod a+rxx /opt/icons/start_samapi.sh 
 
 RUN chown -R biop:biop /home/biop/ \
     && chmod -R a+rwx /home/biop/   

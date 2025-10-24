@@ -6,7 +6,8 @@ dependencies:
   - python=3.12.4
   - pip=24.0
   - pyimagej=1.5.0
-  - brainglobe-atlasapi=2.0.11
+  - jpype1=1.5.2
+  - brainglobe-atlasapi=2.1.0
   - openjdk=8 # enforce jdk8 for imagej
   - maven
   - pip:
