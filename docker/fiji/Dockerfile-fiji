@@ -72,8 +72,9 @@ RUN wget -q https://repo1.maven.org/maven2/colt/colt/1.2.0/colt-1.2.0.jar -O /op
     && chmod -R a+rwX /opt/Fiji.app/jars
 
 # create icon
+# modify Fiji desktop file to disable update check at startup using recommandation from https://github.com/imagej/imagej-updater/issues/7#issuecomment-970554378
 RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
-    && printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop
+    && printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 -Dimagej.updater.disableAutocheck=true\nTryExec=/opt/Fiji.app/ImageJ-linux64 -Dimagej.updater.disableAutocheck=true\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop
 
 #################################################################
 # Install cellpose and models
