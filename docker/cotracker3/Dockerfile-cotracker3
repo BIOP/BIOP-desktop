@@ -1,0 +1,40 @@
+ARG ALIAS=biop/
+ARG BASE_IMAGE=0.2.2
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
+
+USER root
+
+#############################################################################
+# install napari
+RUN mamba create --name cotcotcot python=3.10 -y \
+    && source activate cotcotcot \
+    && mamba install pytorch torchvision pytorch-cuda=11.8 -c pytorch -c nvidia -y \
+    && mamba install -c conda-forge ipykernel -y \
+    && pip install napari[all] tifffile git+https://github.com/facebookresearch/co-tracker.git git+https://github.com/BIOP/napari-cotcotcot.git  \
+    && conda clean --all -f -y 
+
+
+USER biop
+RUN source activate cotcotcot \
+    && python -m ipykernel install --user --name cotcotcot --display-name "CotCotCot"
+USER root  
+
+
+# Create shortcut to start napari
+# COPY icons/* /opt/icons/
+RUN wget -O /opt/icons/cotcotcot_icon.ico https://raw.githubusercontent.com/BIOP/napari-cotcotcot/refs/heads/main/resources/logo/cotcotcot_icon.ico \
+    &&printf 'source activate cotcotcot\nnaparicot\n\$ read -rsp \$"Press enter to continue..."' > /opt/icons/start_naparicot.sh \
+    && printf '[Desktop Entry]\nVersion=0.1.0\nName=cotcotcot\nGenericName=napari-cotcotcot\nX-GNOME-FullName=napari-cotcotcot\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_naparicot.sh\nTryExec=/opt/icons/start_naparicot.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/cotcotcot_icon.ico\nStartupWMClass=napari\n' > /home/biop/Desktop/napari.desktop \
+    && chown -R biop:biop /home/biop /opt/icons/ \
+    && chmod -R +rwx /home/biop/Desktop/napari.desktop /opt/icons/
+
+#################################################################
+RUN chown -R biop:biop /home/biop/ \
+&& chmod -R a+rwx /home/biop/ 
+
+#################################################################
+# Container start
+USER biop
+WORKDIR /home/biop
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
