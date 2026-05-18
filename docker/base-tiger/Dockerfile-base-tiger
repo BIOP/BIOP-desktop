@@ -1,0 +1,279 @@
+
+# ------------------------------------------------------------------
+# Base image – NVIDIA PyTorch (includes CUDA, cuDNN, etc.)
+# https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-25-02.html 
+# ------------------------------------------------------------------
+FROM nvcr.io/nvidia/pytorch:25.02-py3 AS base
+ENV DEBIAN_FRONTEND=noninteractive
+
+# ------------------------------------------------------------------
+# System packages
+# ------------------------------------------------------------------
+
+RUN apt update && apt install -y \
+    wget \
+    unzip \
+    rsync \
+    sudo \
+    vim \
+    htop \
+    zsh \
+    git \
+    ffmpeg \
+    ldap-utils \
+    websockify \
+    novnc \       
+    p7zip-full \    
+    bzip2 \
+    xterm \
+    # Dependencies for vscode 
+    xdg-utils \
+    # Dependencies for turbovnc 
+    dbus-x11 \
+    xfce4 \
+    xfce4-panel \
+    xfce4-session \ 
+    xfce4-settings \
+    xfce4-xkb-plugin \
+    xorg \
+    xubuntu-icon-theme \
+    tigervnc-standalone-server \
+    # install jdk (for OMERO.insight)
+    openjdk-11-jdk \
+    # napari necessary dependencies
+    libegl1 libdbus-1-3 libxkbcommon-x11-0 \
+    libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+    libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0 \
+    x11-utils libxcb-cursor0 libopengl0 \  
+    # cleaning up 
+    && apt-get autoremove --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && find /var/log -type f -exec cp /dev/null \{\} \;
+
+# Disable the automatic screenlock since the account password is unknown
+RUN apt-get -y remove xfce4-screensaver
+
+# ------------------------------------------------------------------
+# Python packages (Jupyter, remote‑desktop proxy, …)
+# ------------------------------------------------------------------
+RUN pip install --no-cache-dir \
+    jupyter-server-proxy \
+    jupyterlab-drawio \
+    jupyter-archive \
+    jupyterlab \
+    jupyter-remote-desktop-proxy
+
+# ------------------------------------------------------------------
+# Create the 'biop' user (no password, sudo allowed)
+# ------------------------------------------------------------------
+RUN echo "biop ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/biop
+RUN useradd -m biop -G root
+
+# ------------------------------------------------------------------
+# Firefox (latest) + required lib
+# ------------------------------------------------------------------
+RUN wget -q 'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64' -O /tmp/firefox.tar.xz \
+    && tar -xJf /tmp/firefox.tar.xz -C /opt/ \
+    && rm -rf /tmp/firefox.tar.xz \
+    && ln -sf /opt/firefox/firefox /usr/bin/firefox \
+    && apt update \
+    && apt install libdbus-glib-1-2 -y \
+    && apt-get autoremove --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && find /var/log -type f -exec cp /dev/null \{\} \;
+ENV BROWSER=firefox
+
+#################################################################
+# Install latest Inkscape stable version
+RUN sudo apt-get update -y \
+    && sudo apt-get install software-properties-common -y \
+    && sudo apt-get update -y \
+    && sudo add-apt-repository ppa:inkscape.dev/stable -y \
+    && sudo apt-get update -y \
+    && sudo apt-get install inkscape -y 
+
+################################################################# 
+# Install OMERO.insight standalone
+RUN wget -q https://github.com/ome/omero-insight/releases/download/v5.8.6/OMERO.insight-5.8.6.zip \
+    && unzip OMERO.insight-5.8.6.zip -d /opt/OMERO.insight \
+    && rm OMERO.insight-5.8.6.zip
+# to have OMERO EPFL pre-configured
+COPY omero-insight/container.xml /opt/OMERO.insight/OMERO.insight-5.8.6/config/container.xml
+
+#################################################################
+# Insatll conda/mamba
+ENV PATH=$PATH:/opt/conda/bin
+RUN wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh \
+    && bash Miniforge3-Linux-x86_64.sh -b -p /opt/conda \
+    && rm Miniforge3-Linux-x86_64.sh \
+    && conda init 
+
+################################################################# 
+# Install VScode
+RUN wget https://go.microsoft.com/fwlink/?LinkID=760868 -O /tmp/vscode.deb \
+    && apt install -y /tmp/vscode.deb \
+    && rm /tmp/vscode.deb
+
+################################################################# 
+# OpenCL for clij ...
+RUN apt-get update \
+    && apt-get install -y nvidia-opencl-dev \
+    && apt remove -y libnvidia-compute-*-server \
+    && apt-get autoremove --purge -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && find /var/log -type f -exec cp /dev/null \{\} \;
+
+
+#################################################################
+# All icons and *.sh file for the desktop will now be in /opt/icons
+RUN mkdir -p /opt/icons
+COPY icons/* /opt/icons/
+
+# ------------------------------------------------------------------
+# Create a user‑local applications directory (trusted) 
+# Ensure the hidden .local tree exists and is owned by biop
+# ------------------------------------------------------------------
+RUN mkdir -p /home/biop/.local/share/jupyter \
+    mkdir -p /home/biop/.local/share/applications \
+    && chown -R biop:biop /home/biop/.local
+
+# ------------------------------------------------------------------
+# Tighten permissions (no more a+rwx everywhere)
+# ------------------------------------------------------------------
+RUN chmod -R u+rwX,g+rX,o-rwx /home/biop /opt/icons /opt/OMERO.insight /usr/lib/jvm/java-11-openjdk-amd64
+
+
+# ------------------------------------------------------------------
+# Personalization of desktop environment for the biop user (launchers, autostart, …)
+# ------------------------------------------------------------------
+# 
+COPY base-tiger/xfce/xfce-applications.menu /etc/xdg/menus/xfce-applications.menu
+RUN rm /usr/share/applications/xfce4-mail-reader.desktop
+
+# Install image for desktop background
+COPY base-tiger/bkgd/ /usr/share/backgrounds/
+
+# Define desktop and icons
+COPY base-tiger/xfce/xfce4-desktop.xml /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml
+COPY base-tiger/xfce/xfce4-panel.xml /etc/xdg/xfce4/panel/default.xml
+ENV XDG_CONFIG_DIRS=/etc/xdg
+
+
+# ------------------------------------------------------------------
+# Switch to the normal user for the container runtime
+# ------------------------------------------------------------------
+USER biop
+ENV HOME=/home/biop
+WORKDIR $HOME
+RUN conda init
+
+# --------------------------------------------------------------
+# Create a trusted location for launchers and scripts
+# --------------------------------------------------------------
+RUN mkdir -p \
+        $HOME/.local/bin \
+        $HOME/.local/share/applications \
+        $HOME/Desktop && \
+    chmod 755 $HOME/Desktop && \
+    chown -R biop:biop $HOME
+
+# ------------------------------------------------------------------
+# Create desktop entries for Jupyter Lab and OMERO.insight (for the biop user)
+# ------------------------------------------------------------------
+# ---- Jupyter Lab launcher script ----
+RUN printf '#!/usr/bin/env bash\ncd "$HOME"\njupyter lab --no-browser --ip=0.0.0.0 --port=8888\n' \
+        > $HOME/.local/bin/start_jupyter.sh \
+    && chmod 755 $HOME/.local/bin/start_jupyter.sh
+
+# ---- Jupyter Lab .desktop file ----
+RUN printf '[Desktop Entry]\n\
+Version=1.0\n\
+Name=Jupyter Lab\n\
+Comment=Start Jupyter Lab inside the container\n\
+Exec=%s/.local/bin/start_jupyter.sh\n\
+Terminal=false\n\
+Icon=/opt/icons/jupyter.png\n\
+Type=Application\n\
+Categories=Education;Science;Development;\n' "$HOME" \
+    > $HOME/Desktop/jupyter.desktop \
+   && chmod 755 $HOME/Desktop/jupyter.desktop
+
+# ---- OMERO Insight launcher script ----
+RUN printf '#!/usr/bin/env bash\ncd /opt/OMERO.insight/OMERO.insight-5.8.6/bin\n./omero-insight\n' > $HOME/.local/bin/start_omero.sh  \
+    && chmod 755 $HOME/.local/bin/start_omero.sh
+
+# ---- OMERO Insight .desktop file ----
+RUN printf '[Desktop Entry]\n\
+Version=5.8.6\n\
+Name=OMERO Insight\n\
+Comment=OMERO Insight client\n\
+Exec=%s/.local/bin/start_omero.sh\n\
+Terminal=false\n\
+Icon=/opt/icons/omero.png\n\
+Type=Application\n\
+Categories=Education;Science;ImageProcessing;\n' "$HOME" \
+    > $HOME/Desktop/omero.desktop  \
+    && chmod 755 $HOME/Desktop/omero.desktop
+
+# ---- VSCode launcher script ----
+RUN printf '#!/usr/bin/env bash\n yes | DISPLAY=:1 code --no-sandbox'  > $HOME/.local/bin/start_vscode.sh  \
+   && chmod 755 $HOME/.local/bin/start_vscode.sh
+
+# --- VSCode .desktop file ---
+RUN printf '[Desktop Entry]\n\
+Version=1.0\n\
+Name=VSCode\n\
+Comment=Visual Studio Code\n\
+Exec=%s/.local/bin/start_vscode.sh\n\
+Terminal=false\n\
+Icon=/opt/icons/vscode.png\n\
+Type=Application\n\
+Categories=Development;\n' "$HOME" > $HOME/Desktop/vscode.desktop \
+    && chmod 755 $HOME/Desktop/vscode.desktop
+
+# ------------------------------------------------------------------
+# AUTOSTART: trust all .desktop files once the session has D-Bus
+# ------------------------------------------------------------------
+# 1) The trust-helper script
+RUN printf '#!/bin/bash\n\
+# Wait briefly for gvfsd-metadata to be ready\n\
+sleep 2\n\
+for f in ~/Desktop/*.desktop; do\n\
+    [ -f "$f" ] || continue\n\
+    # Skip if already trusted\n\
+    if gio info "$f" 2>/dev/null | grep -q metadata::xfce-exe-checksum; then\n\
+        continue\n\
+    fi\n\
+    chmod +x "$f"\n\
+    gio set -t string "$f" metadata::xfce-exe-checksum \\\n\
+        "$(sha256sum "$f" | awk '"'"'{print $1}'"'"')"\n\
+done\n' \
+    > $HOME/.local/bin/trust-desktop-icons.sh && \
+    chmod 755 $HOME/.local/bin/trust-desktop-icons.sh
+
+# 2) XDG autostart entry so it runs every time the XFCE session starts
+USER root
+RUN printf '[Desktop Entry]\n\
+Type=Application\n\
+Name=Trust Desktop Icons\n\
+Exec=/home/biop/.local/bin/trust-desktop-icons.sh\n\
+OnlyShowIn=XFCE;\n\
+StartupNotify=false\n\
+Terminal=false\n\
+Hidden=false\n' \
+    > /etc/xdg/autostart/trust-desktop-icons.desktop && \
+    chmod 644 /etc/xdg/autostart/trust-desktop-icons.desktop
+
+USER biop
+
+# ------------------------------------------------------------------
+# Jupyter entrypoint 
+# ------------------------------------------------------------------
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
