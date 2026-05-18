@@ -1,0 +1,75 @@
+ARG BASE_IMAGE=0.3.0
+ARG ALIAS=biop/
+
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
+
+USER root
+
+RUN apt-get update -y \
+    && apt upgrade -y \
+    && apt-get install -y wget git unzip \
+    && apt-get autoremove --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && find /var/log -type f -exec cp /dev/null \{\} \;
+
+#################################################################
+# Install Fiji
+RUN wget -q https://mirrors.pasteur.fr/fiji/downloads/latest/fiji-latest-linux64-jdk.zip \
+      && unzip -q fiji-latest-linux64-jdk.zip -d /opt/ \
+      && rm fiji-latest-linux64-jdk.zip \
+      && chmod -R a+rwX /opt/Fiji/
+
+# Install Fiji plugins via update sites
+ENV fiji=/opt/Fiji/fiji-linux-x64
+ENV updateCommand="--update update"
+ENV addCommand="--update add-update-sites" 
+RUN ${fiji} ${updateCommand} \
+    && ${fiji} ${addCommand}    "clij" "https://sites.imagej.net/clij/" \
+                                "clij2" "https://sites.imagej.net/clij2/" \
+                                "PTBIOP" "https://biop.epfl.ch/Fiji-Update" \ 
+                                "IBMP-CNRS" "https://sites.imagej.net/Mutterer/" \
+                                "3D ImageJ Suite" "https://sites.imagej.net/Tboudier/" \
+                                "IJPB-plugins" "https://sites.imagej.net/IJPB-plugins/" \
+                                "ilastik" "https://sites.imagej.net/Ilastik/" \
+                                #"ImageScience" "https://sites.imagej.net/ImageScience/" \ 
+                                "CSBDeep" "https://sites.imagej.net/CSBDeep/" \
+                                "StarDist" "https://sites.imagej.net/StarDist/" \
+                                "TrackMate-StarDist" "https://sites.imagej.net/TrackMate-StarDist/" \    
+                                "TrackMate-TrackAstra" "https://sites.imagej.net/TrackMate-Trackastra/" \ 
+                                "TrackMate-Cellpose" "https://sites.imagej.net/TrackMate-Cellpose/" \
+                                "TensorFlow" "https://sites.imagej.net/TensorFlow/" \
+                                "OMERO 5.5-5.6" "https://sites.imagej.net/OMERO-5.5-5.6/" \
+                                "MiC mask comparator" "https://sites.imagej.net/MiC-mask-comparator/" \
+                                "Fiji-Deconv" "https://sites.imagej.net/clijx-deconvolution/" \
+                                "3Dscript" "https://romulus.oice.uni-erlangen.de/updatesite/" \
+    && ${fiji} ${updateCommand} \
+    && chmod -R a+rwX /opt/Fiji/
+
+
+USER biop
+
+# ---- Fiji .desktop file ----
+ RUN printf '[Desktop Entry]\n\
+    Version=latest\n\
+    Name=Fiji\n\
+    GenericName=Fiji\n\
+    X-GNOME-FullName=Fiji\n\
+    Comment=Scientific Image Analysis\n\
+    Type=Application\n\
+    Categories=Education;Science;ImageProcessing;\n\
+    Exec=/opt/Fiji/fiji-linux-x64 -Dimagej.updater.disableAutocheck=true\n\
+    TryExec=/opt/Fiji/fiji-linux-x64 -Dimagej.updater.disableAutocheck=true\n\
+    Terminal=false\n\
+    StartupNotify=true\n\
+    MimeType=image/*;\n\
+    Icon=/opt/Fiji/images/icon.png\n\
+    StartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop \
+    && chmod 755 /home/biop/Desktop/Fiji.desktop
+
+#################################################################
+# Container start
+WORKDIR /home/biop
+ENTRYPOINT ["/usr/local/bin/jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
