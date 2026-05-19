@@ -1,0 +1,106 @@
+FROM debian:latest AS base
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt update && apt install -y \
+    wget \
+    unzip \
+    rsync \
+    sudo \
+    vim \
+    htop \
+    zsh \
+    git \
+    ffmpeg \    
+# Desktop environment + VNC server
+    xfce4 \
+    xfce4-panel \
+    xfce4-session \
+    xfce4-settings \
+    xfce4-terminal \
+    xorg \
+    dbus-x11 \
+    tigervnc-standalone-server \
+# cleaning up
+    && apt-get autoremove --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* \
+    && find /var/log -type f -exec cp /dev/null \{\} \;
+
+
+# Disable the automatic screenlock since the account password is unknown
+RUN apt-get -y remove xfce4-screensaver
+
+# Dependencies for python
+RUN apt-get update && apt-get install -y \
+    python3.13-venv 
+    
+RUN python3 -m venv /opt/default_venv
+
+# ------------------------------------------------------------------
+# Python packages (Jupyter, remote‑desktop proxy, …)
+# ------------------------------------------------------------------
+RUN /opt/default_venv/bin/pip install \
+    jupyter \
+    jupyterlab \
+    jupyter-archive \
+    jupyter-server-proxy  \
+    jupyter-remote-desktop-proxy
+
+ENV PATH=/opt/default_venv/bin:$PATH
+
+# ------------------------------------------------------------------
+# Create the 'biop' user (no password, sudo allowed)
+# ------------------------------------------------------------------
+RUN echo "biop ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/biop
+RUN useradd -m biop -G root
+
+# ------------------------------------------------------------------
+# Firefox (latest) + required lib
+# ------------------------------------------------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # needed for tar -J
+    xz-utils \   
+    # needed for firefox to run at all
+    libdbus-glib-1-2 \
+    && wget -q 'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64' -O /tmp/firefox.tar.xz \
+    && tar -xJf /tmp/firefox.tar.xz -C /opt/ \
+    && rm -rf /tmp/firefox.tar.xz \
+    && ln -sf /opt/firefox/firefox /usr/bin/firefox \
+    && apt update \
+    && apt-get autoremove --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* \
+    && find /var/log -type f -exec cp /dev/null \{\} \;
+ENV BROWSER=firefox
+
+# ------------------------------------------------------------------
+# OpenGL dependencies (for software rendering fallback)
+# dekstop can NOT connect on the cluster
+# ------------------------------------------------------------------
+RUN apt-get update && apt-get install -y libgl1-mesa-dri libglx-mesa0 && \
+    rm -rf /var/lib/apt/lists/*
+ENV __GLX_VENDOR_LIBRARY_NAME=mesa
+ENV LIBGL_ALWAYS_SOFTWARE=1
+# Force Mesa EGL only – prevents NVIDIA EGL libs from crashing Xtigervnc
+ENV __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
+
+
+# ------------------------------------------------------------------
+# Permissions 
+# ------------------------------------------------------------------
+#RUN chmod -R u+rwX,g+rX,o-rwx /home/biop /opt/icons /opt/OMERO.insight /usr/lib/jvm/java-11-openjdk-amd64
+RUN chmod -R u+rwX,g+rX,o-rwx /home/biop 
+
+#-------------------------------------------------------------------
+# Switch to the normal user for the container runtime
+# ------------------------------------------------------------------
+USER biop
+ENV HOME=/home/biop
+WORKDIR $HOME
+
+# ------------------------------------------------------------------
+# Jupyter entrypoint 
+# ------------------------------------------------------------------
+ENTRYPOINT ["jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
