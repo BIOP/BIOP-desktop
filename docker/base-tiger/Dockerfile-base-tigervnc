@@ -1,0 +1,274 @@
+FROM debian:latest AS base
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV SHELL=/bin/bash
+SHELL ["/bin/bash", "-c"]
+
+RUN apt update && apt install -y \
+    wget \
+    unzip \
+    rsync \
+    sudo \
+    vim \
+    htop \
+    zsh \
+    git \
+    ffmpeg \    
+# Desktop environment + VNC server
+    xfce4 \
+    xfce4-panel \
+    xfce4-session \
+    xfce4-settings \
+    xfce4-terminal \
+    xorg \
+    dbus-x11 \
+    tigervnc-standalone-server \
+# napari necessary dependencies
+    libegl1 \
+    libdbus-1-3 \ 
+    libxkbcommon-x11-0 \
+    libxcb-icccm4 \ 
+    libxcb-image0 \ 
+    libxcb-keysyms1 \ 
+    libxcb-randr0 \
+    libxcb-render-util0 \
+    libxcb-xinerama0 \
+    libxcb-xinput0 \
+    libxcb-xfixes0 \
+    libxcb-cursor0 \
+    libopengl0 \  
+    libgl1 \
+    libgl1-mesa-dri \
+    libglx-mesa0 \
+    libegl-mesa0 \
+    libxcb-glx0 \
+    x11-utils \
+# cleaning up 
+    && apt-get autoremove --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && find /var/log -type f -exec cp /dev/null \{\} \;   
+
+# Disable the automatic screenlock since the account password is unknown
+RUN apt-get -y remove xfce4-screensaver
+
+# Dependencies for python
+RUN apt-get update && apt-get install -y python3.13-venv \
+    && python3 -m venv /opt/default_venv
+
+# ------------------------------------------------------------------
+# Python packages (Jupyter, remote‑desktop proxy, …)
+# ------------------------------------------------------------------
+RUN /opt/default_venv/bin/pip install \
+    jupyter \
+    jupyterlab \
+    jupyter-archive \
+    jupyter-server-proxy  \
+    jupyter-remote-desktop-proxy
+
+ENV PATH=/opt/default_venv/bin:$PATH
+
+# ------------------------------------------------------------------
+# Create the 'biop' user (no password, sudo allowed)
+# ------------------------------------------------------------------
+RUN echo "biop ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/biop
+RUN useradd -m biop -G root --shell /bin/bash
+
+# ------------------------------------------------------------------
+# OpenGL dependencies (for software rendering fallback)
+# Desktop can NOT connect on the cluster
+# ------------------------------------------------------------------
+RUN apt-get update && apt-get install -y libgl1-mesa-dri libglx-mesa0 && \
+    rm -rf /var/lib/apt/lists/*
+ENV __GLX_VENDOR_LIBRARY_NAME=mesa
+ENV LIBGL_ALWAYS_SOFTWARE=1
+# Force Mesa EGL only – prevents NVIDIA EGL libs from crashing Xtigervnc
+ENV __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
+
+#-------------------------------------------------------------------
+# Enable non-free for NVIDIA OpenCL ICD (for clij, 3dScript, …) 
+# ------------------------------------------------------------------
+RUN sed -i 's/Components: main/Components: main contrib non-free non-free-firmware/' /etc/apt/sources.list.d/debian.sources \
+    && apt-get update -y \
+    && apt-get install -y --no-install-recommends \
+        ocl-icd-opencl-dev \
+        ocl-icd-libopencl1 \
+        clinfo \
+        nvidia-opencl-icd \
+    && apt-get autoremove --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && find /var/log -type f -exec cp /dev/null \{\} \;
+
+# ------------------------------------------------------------------
+# Miniforge (Mamba) installation
+# ------------------------------------------------------------------
+#################################################################
+# Insatll conda/mamba
+ENV PATH=$PATH:/opt/conda/bin
+RUN wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh \
+    && bash Miniforge3-Linux-x86_64.sh -b -p /opt/conda \
+    && rm Miniforge3-Linux-x86_64.sh \
+    && conda init bash \
+    && conda init zsh \
+    && conda clean -a -y
+
+# Fix terminal arrow keys for both desktop and JupyterLab
+RUN echo "export TERM=xterm-256color" >> ~/.bashrc && \
+    echo "set editing-mode emacs" >> ~/.inputrc && \
+    echo "set show-all-if-ambiguous on" >> ~/.inputrc && \
+    echo "set completion-ignore-case on" >> ~/.inputrc && \
+    echo 'TAB: menu-complete' >> ~/.inputrc && \
+    echo '"\e[A": history-search-backward' >> ~/.inputrc && \
+    echo '"\e[B": history-search-forward' >> ~/.inputrc
+
+# ==================================================================
+# Visual Studio Code (latest stable, standalone archive)
+# ==================================================================
+RUN wget -q "https://code.visualstudio.com/sha/download?build=stable&os=linux-x64" -O /tmp/vscode.tar.gz \
+    && mkdir -p /opt/vscode \
+    && tar -xzf /tmp/vscode.tar.gz -C /opt/vscode --strip-components=1 \
+    && ln -sf /opt/vscode/bin/code /usr/local/bin/code \
+    && rm -rf /tmp/vscode.tar.gz
+
+#------------------------------------------------------------------- 
+# Install OMERO.insight standalone
+#-------------------------------------------------------------------
+RUN apt update && apt install -y --no-install-recommends \
+    # install jdk (for OMERO.insight)
+    openjdk-21-jdk \
+    # download and unzip OMERO.insight
+    && wget -q https://github.com/ome/omero-insight/releases/download/v5.8.6/OMERO.insight-5.8.6.zip \
+    && unzip OMERO.insight-5.8.6.zip -d /opt/OMERO.insight \
+    && rm OMERO.insight-5.8.6.zip
+# to have OMERO EPFL pre-configured with epfl server connection
+COPY omero-insight/container.xml /opt/OMERO.insight/OMERO.insight-5.8.6/config/container.xml
+
+# ==================================================================
+# Inkscape
+# ==================================================================
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    inkscape \
+    && apt-get autoremove --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/*
+
+# ------------------------------------------------------------------
+# All icons for the desktop will be in /opt/icons
+#  - scripts folder contains start_3.sh files to launch applications  (called by the .desktop files)
+#  - desktop-files folder contains :
+#       - *.desktop for the base are in the "base" folder
+#       - *.desktop for specific applications are in the "specific" folder
+#       - 2 helpers files to trust the .desktop files once the session has D-Bus 
+#       are in the "trust" folder
+# ------------------------------------------------------------------
+RUN mkdir -p /opt/icons
+COPY icons/ /opt/icons/
+# Move the .desktop files to launch applications from the desktop 
+RUN mkdir -p /home/biop/Desktop \ 
+    && chown -R biop:biop /home/biop/Desktop \ 
+    && mv /opt/icons/desktop-files/base/*.desktop /home/biop/Desktop/ \
+    && chmod +x /home/biop/Desktop/*.desktop \
+    && chown -R biop:biop /home/biop/Desktop \
+    # Move the scripts to launch applications from the desktop icons
+    && mv /opt/icons/scripts/* /usr/local/bin/ \
+    && chmod 755 /usr/local/bin/* 
+
+# ------------------------------------------------------------------
+# AUTOSTART: trust all .desktop files once the session has D-Bus
+# ------------------------------------------------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libglib2.0-bin \ 
+    dbus-user-session \
+    && rm -rf /var/lib/apt/lists/* \
+# trust-desktop-files.sh
+    && mv /opt/icons/desktop-files/trust/trust-desktop-files.sh /usr/local/bin/ \
+    && chmod +x /usr/local/bin/trust-desktop-files.sh \
+# autostart entry
+    && mv /opt/icons/desktop-files/trust/trust-desktop-files.desktop /etc/xdg/autostart/
+
+# ------------------------------------------------------------------
+# Firefox (latest) + required lib
+# ------------------------------------------------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # needed for tar -J
+    xz-utils \   
+    # needed for firefox to run at all
+    libdbus-glib-1-2 \
+    && wget -q 'https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64' -O /tmp/firefox.tar.xz \
+    && tar -xJf /tmp/firefox.tar.xz -C /opt/ \
+    && rm -rf /tmp/firefox.tar.xz \
+    && ln -sf /opt/firefox/firefox /usr/bin/firefox \
+    && apt update \
+    && apt-get autoremove --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* \
+    && find /var/log -type f -exec cp /dev/null \{\} \;
+
+# ------------------------------------------------------------------
+# Register Firefox as default browser
+# ------------------------------------------------------------------
+COPY firefox/ /tmp/firefox/
+RUN mv /home/biop/Desktop/firefox.desktop /usr/share/applications/firefox.desktop \
+    && mv /tmp/firefox/mimeapps.list /etc/xdg/mimeapps.list \
+    && mv /tmp/firefox/policies.json /opt/firefox/distribution/policies.json \
+    && mkdir -p /home/biop/.config/xfce4/ \
+    && mv /tmp/firefox/helpers.rc /home/biop/.config/xfce4/helpers.rc \
+    && mkdir -p /home/biop/.local/share/xfce4/helpers \
+    && chown -R biop:biop /home/biop/.config /home/biop/.local
+ENV BROWSER=firefox
+ENV DEFAULT_BROWSER=/opt/firefox/firefox
+
+#-------------------------------------------------------------------
+# Install seaborn in an environment
+#-------------------------------------------------------------------
+RUN mamba create -n seaborn -y python=3.10 \ 
+    && mamba run -n seaborn  pip install "seaborn[stats]" ipykernel \
+    && mamba clean -a -y
+
+
+# Customized background
+# /usr/share/backgrounds/xfce/
+# xfce-blue.jpg  xfce-cp-dark.svg  xfce-flower.svg  xfce-leaves.svg  xfce-light.svg  xfce-mouserace.svg  xfce-shapes.svg  xfce-stripes.svg  xfce-teal.svg  xfce-verticals.svg  xfce-x.svg
+
+COPY base-tiger/bkgd/ /usr/share/backgrounds/
+COPY base-tiger/xfce/xfce4-desktop.xml /etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml
+ENV XDG_CONFIG_DIRS=/etc/xdg
+RUN rm /usr/share/applications/xfce4-mail-reader.desktop \
+    && chown -R biop:biop /usr/share/backgrounds/ \
+    && chown -R biop:biop /etc/xdg/ \
+    && chown -R biop:biop /usr/share/applications/ \
+    && chown -R biop:biop /opt/firefox/ \
+    && chown -R biop:biop /home/biop/.config/ \
+    && chown -R biop:biop /home/biop/.local
+
+# ------------------------------------------------------------------
+# Permissions 
+# ------------------------------------------------------------------
+RUN chown -R biop:biop /home/biop \
+    && chmod -R u+rwX,g+rX,o-rwx  \ 
+    /home/biop \
+    /opt/icons \
+    /opt/OMERO.insight \
+    /opt/conda \
+    /opt/vscode \
+    /usr/local/bin/ \
+    /usr/lib/jvm/java-21-openjdk-amd64
+
+#-------------------------------------------------------------------
+# Switch to the biop user for the container runtime
+# ------------------------------------------------------------------
+USER biop
+ENV HOME=/home/biop
+WORKDIR $HOME
+ENV MAMBA_ROOT_PREFIX=/opt/conda
+RUN conda init bash && echo "conda activate base" >> ~/.bashrc
+RUN /opt/conda/envs/seaborn/bin/python -m ipykernel install --user --name=seaborn --display-name "Python (seaborn)"
+
+# ------------------------------------------------------------------
+# Jupyter entrypoint 
+# ------------------------------------------------------------------
+ENTRYPOINT ["jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
