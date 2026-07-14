@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=napari
+GenericName=Image Viewer
+Comment=Scientific Image Analysis
+Categories=Education;Science;ImageProcessing;
+Exec=xfce4-terminal --title=napari --hold --command="/usr/local/bin/start_napari.sh"
+Terminal=false
+StartupNotify=true
+Icon=/opt/icons/napari-icon.ico
+StartupWMClass=napari

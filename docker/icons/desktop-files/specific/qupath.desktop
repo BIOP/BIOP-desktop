@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=0.6.0
+Name=qupath
+GenericName=QuPath
+X-GNOME-FullName=QuPath
+Comment=Scientific Image Analysis
+Type=Application
+Categories=Education;Science;ImageProcessing;
+Exec=/opt/icons/start_qp.sh
+TryExec=/opt/icons/start_qp.sh
+Terminal=false
+StartupNotify=true
+Icon=/opt/QuPath/lib/QuPath.png
+StartupWMClass=QuPath

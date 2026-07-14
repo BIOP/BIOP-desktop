@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=OMERO.insight
+Comment=OMERO Image Data Manager
+Exec=/usr/local/bin/start_insight.sh
+TryExec=/usr/local/bin/start_insight.sh
+Icon=/opt/icons/omero.png
+Terminal=false
+Categories=Science;Biology;
+StartupNotify=true

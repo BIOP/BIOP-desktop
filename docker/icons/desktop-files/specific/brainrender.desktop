@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=0.0.7
+Name=brainrender
+GenericName=brainrender
+X-GNOME-FullName=brainrender
+Comment=Scientific Image Analysis
+Type=Application
+Categories=Education;Science;ImageProcessing;
+Exec=/usr/local/bin/start_brainrender.sh
+TryExec=/usr/local/bin/start_brainrender.sh
+Terminal=true
+StartupNotify=true
+Icon=/opt/icons/brainglobe.png
+StartupWMClass=brainrender

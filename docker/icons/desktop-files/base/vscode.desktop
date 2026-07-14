@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Visual Studio Code
+Comment=Code Editor
+Exec=/usr/local/bin/start_vscode.sh
+Icon=/opt/icons/vscode.png
+Terminal=false
+Categories=Development;IDE;
+StartupNotify=true
