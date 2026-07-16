@@ -1,0 +1,44 @@
+ARG BASE_IMAGE=0.3.0
+
+ARG ALIAS=biop/
+
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
+
+USER root
+
+##############################################################################
+RUN conda create -n trackastra python=3.10 --no-default-packages -y \
+        && conda run -n trackastra pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu126 \
+        && conda run -n trackastra pip install "trackastra[etultra]" "napari[all]" napari-trackastra==v0.2.2  \
+        && conda clean -a -y
+
+ # download model
+RUN mkdir -p /home/biop/.spotiflow/models/ \ 
+   && wget https://drive.switch.ch/index.php/s/6AoTEgpIAeQMRvX/download -O /home/biop/.spotiflow/models/general.zip \
+   && unzip /home/biop/.spotiflow/models/general.zip -d /home/biop/.spotiflow/models/ \
+   && rm /home/biop/.spotiflow/models/general.zip
+
+ # download a test dataset
+RUN mkdir -p /home/biop/.spotiflow/test_trackastra/ \
+    && cd /home/biop/.spotiflow/test_trackastra/ \
+    && wget http://data.celltrackingchallenge.net/training-datasets/Fluo-N2DL-HeLa.zip \
+    && unzip Fluo-N2DL-HeLa.zip -d /home/biop/.spotiflow/test_trackastra/ \
+    && chmod -R u+w /home/biop/.spotiflow/test_trackastra/
+
+RUN chown -R biop:biop /home/biop/ /home/biop/.cache    \
+    && chmod -R u+rwX,g+rX,o-rwx /home/biop
+
+# fix napari plugin issue , napari crashes if triton is installed 
+# didn't look for a better solution as triton is not necessary for traskastra
+# TODO find a better way ...
+RUN conda run -n trackastra pip uninstall -y triton 
+
+#################################################################
+# Container start
+USER biop
+WORKDIR /home/biop
+RUN /opt/conda/envs/trackastra/bin/python -m ipykernel install --user --name=trackastra --display-name "Python (trackastra)"
+
+ENTRYPOINT ["jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
+
