@@ -14,14 +14,12 @@ docker run -it --rm -p 8888:8888 --gpus device=0  --mount src=D:/,target=/home/b
 ```
 
 docker tag biop-vnc-base:0.3.0 biop/biop-vnc-base:0.3.0 
-
+docker push biop/biop-vnc-base:0.3.0
 
 ## To test on RCP cluster
-```
-docker tag biop-vnc-base:0.3.0-minimal registry.rcp.epfl.ch/ptbiop/biop-vnc-base:0.3.0-minimal
-```
 
 ```
+docker tag biop-vnc-base:0.3.0 registry.rcp.epfl.ch/ptbiop/biop-vnc-base:0.3.0
 docker push registry.rcp.epfl.ch/ptbiop/biop-vnc-base:0.3.0
 ```
 
