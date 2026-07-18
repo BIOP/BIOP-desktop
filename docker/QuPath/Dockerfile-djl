@@ -1,0 +1,154 @@
+# ==================================================================
+# Global build args (declared BEFORE any FROM so they're visible
+# to every FROM line in the file).
+# ==================================================================
+ARG BASE_IMAGE=0.3.0
+ARG ALIAS=biop/
+ARG QUPATH_VERSION=v0.7.0-only
+ARG DJL_VERSION=0.36.0
+ARG PYTORCH_VERSION=2.7.1
+ARG CUDA_FLAVOR=cu128
+
+
+# ==================================================================
+# Stage 1: Build libdjl_torch.so with sm_70 (V100) + sm_75 + sm_80 (A100)
+#                                  + sm_86 + sm_89 + sm_90 (H100)
+# ==================================================================
+FROM nvidia/cuda:12.8.1-devel-ubuntu22.04 AS djl-builder
+
+# Re-declare the ARGs we need inside this stage
+ARG DJL_VERSION
+ARG PYTORCH_VERSION
+ARG CUDA_FLAVOR
+
+ENV DEBIAN_FRONTEND=noninteractive
+# Volta(V100)=7.0, Turing=7.5, Ampere(A100)=8.0, RTX30=8.6, Ada=8.9, Hopper(H100)=9.0
+ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git wget curl unzip ca-certificates \
+        build-essential cmake ninja-build \
+        openjdk-17-jdk-headless \
+        python3 python3-pip \
+        libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH=$CUDA_HOME/bin:$JAVA_HOME/bin:$PATH
+ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+
+# Clone DJL at the exact release tag
+RUN git clone --depth 1 --branch v${DJL_VERSION} \
+      https://github.com/deepjavalibrary/djl.git /djl
+
+# Pre-download libtorch ourselves.
+# DJL's build.sh uses `curl -s | jar xv` without -L, which silently fails
+# on the HTTP redirect from download.pytorch.org and leaves libtorch/ empty.
+# If libtorch/ already exists, build.sh skips its own broken download.
+WORKDIR /djl/engines/pytorch/pytorch-native
+RUN curl -fL --retry 3 -o libtorch.zip \
+      "https://download.pytorch.org/libtorch/${CUDA_FLAVOR}/libtorch-cxx11-abi-shared-with-deps-${PYTORCH_VERSION}%2B${CUDA_FLAVOR}.zip" \
+    && unzip -q libtorch.zip \
+    && rm libtorch.zip \
+    && test -f libtorch/share/cmake/Torch/TorchConfig.cmake \
+    && echo "libtorch extracted OK"
+
+# Build the JNI. Gradle drives cmake + nvcc for all the SMs listed above.
+WORKDIR /djl
+RUN ./gradlew :engines:pytorch:pytorch-native:compileJNI \
+        -Pcuda=${CUDA_FLAVOR} \
+        -Ppt_version=${PYTORCH_VERSION} \
+        --no-daemon
+
+# Sanity check: fail here (not two stages later) if the .so wasn't produced.
+RUN SO=/djl/engines/pytorch/pytorch-native/jnilib/${DJL_VERSION}/linux-x86_64/${CUDA_FLAVOR}/libdjl_torch.so \
+    && test -f "$SO" \
+    && ls -lh "$SO"
+
+
+# ==================================================================
+# Stage 2: pull QuPath from your existing image
+# ==================================================================
+FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} AS qupath-image
+
+
+# ==================================================================
+# Stage 3: final image (your VNC base + QuPath + InstanSeg/DJL)
+# ==================================================================
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
+
+# Re-declare the ARGs we need inside this stage
+ARG DJL_VERSION
+ARG PYTORCH_VERSION
+ARG CUDA_FLAVOR
+
+USER root
+
+#################################################################
+# InstanSeg / DJL setup
+#
+# To make InstanSeg + PyTorch via DJL work, we need:
+#   1. A conda env with matching pytorch (used at runtime via PYTORCH_LIBRARY_PATH)
+#   2. The libdjl_torch.so JNI built for our target GPU compute capabilities
+#   3. QuPath launched via start_qp.sh which exports PYTORCH_LIBRARY_PATH,
+#      PYTORCH_VERSION and PYTORCH_FLAVOR=cu128 before starting.
+#
+# https://djl.ai/engines/pytorch/pytorch-engine/
+#################################################################
+
+# 1. Conda env with matching PyTorch (cu128 wheels include sm_70..sm_90)
+RUN conda create --name djl python=3.12 -y \
+    && conda run -n djl pip install \
+         torch==${PYTORCH_VERSION} torchvision==0.22.1 torchaudio==${PYTORCH_VERSION} \
+         --index-url https://download.pytorch.org/whl/${CUDA_FLAVOR} \
+    && conda install -n djl -c nvidia/label/cuda-12.8.1 cuda-cudart -y \
+    && conda clean -a -y
+
+# 2. Bring in the JNI we just built (broad SM coverage, incl. V100 sm_70)
+RUN mkdir -p /home/biop/.djl.ai/pytorch/${PYTORCH_VERSION}-${CUDA_FLAVOR}-linux-x86_64/
+COPY --from=djl-builder --chown=biop:biop \
+    /djl/engines/pytorch/pytorch-native/jnilib/${DJL_VERSION}/linux-x86_64/${CUDA_FLAVOR}/libdjl_torch.so \
+    /home/biop/.djl.ai/pytorch/${PYTORCH_VERSION}-${CUDA_FLAVOR}-linux-x86_64/${DJL_VERSION}-libdjl_torch.so
+
+#################################################################
+# Install QuPath (copied from qupath-image stage)
+#################################################################
+COPY --from=qupath-image /opt/QuPath /opt/QuPath
+
+#################################################################
+# Desktop icon + launcher scripts
+# (COPY icons folder here because it may have been updated since
+#  the base image was built)
+#################################################################
+COPY icons/ /opt/icons/
+RUN mv /opt/icons/desktop-files/specific/qupath.desktop /home/biop/Desktop/ \
+    && chmod 755 /home/biop/Desktop/qupath.desktop \
+    && chown biop:biop /home/biop/Desktop/qupath.desktop \
+    && mv /opt/icons/scripts/* /usr/local/bin/ \
+    && chmod 755 /usr/local/bin/*
+
+#################################################################
+# Prepare QuPath prefs (see QuPath_setPaths.groovy)
+# NOTE: make sure your start_qp.sh in QuPath/prefs/ contains:
+#   export PYTORCH_LIBRARY_PATH=/opt/conda/envs/djl/lib/python3.12/site-packages/torch/lib/
+#   export PYTORCH_VERSION=2.7.1
+#   export PYTORCH_FLAVOR=cu128
+#   /opt/QuPath/bin/QuPath -q
+#################################################################
+COPY QuPath/prefs/* /home/biop/tmp/
+RUN chown -R biop:biop /home/biop \
+    && chmod -R a+rwx /home/biop/
+
+#################################################################
+# Switch to unprivileged user and finalize QuPath prefs
+#################################################################
+USER biop
+RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' \
+    && rm -rf /home/biop/tmp
+
+WORKDIR /home/biop
+ENTRYPOINT ["jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", \
+     "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", \
+     "--notebook-dir=/home/biop"]
