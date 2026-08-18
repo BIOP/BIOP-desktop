@@ -1,28 +1,37 @@
 # ==================================================================
 # Global build args (declared BEFORE any FROM so they're visible
 # to every FROM line in the file).
+#
+# NOTE ON CUDA_FLAVOR:
+#   - cu126 wheels ship kernels for sm_50, sm_60, sm_70, sm_75,
+#     sm_80, sm_86, sm_90  → works on V100, RTX 20/30/40, A100, H100
+#   - cu128 wheels DROP sm_70 (V100). Do NOT use cu128 if you need
+#     to run on Volta GPUs.
 # ==================================================================
 ARG BASE_IMAGE=0.3.0
 ARG ALIAS=biop/
 ARG QUPATH_VERSION=v0.7.0-only
 ARG DJL_VERSION=0.36.0
 ARG PYTORCH_VERSION=2.7.1
-ARG CUDA_FLAVOR=cu128
+ARG CUDA_FLAVOR=cu126
+ARG CUDA_CUDART_LABEL=cuda-12.6.3
 
 
 # ==================================================================
-# Stage 1: Build libdjl_torch.so with sm_70 (V100) + sm_75 + sm_80 (A100)
-#                                  + sm_86 + sm_89 + sm_90 (H100)
+# Stage 1: Build libdjl_torch.so with sm_70 (V100) + sm_75 (RTX20xx)
+#                                  + sm_80 (A100) + sm_86 (RTX30xx)
+#                                  + sm_89 (RTX40xx) + sm_90 (H100)
 # ==================================================================
-FROM nvidia/cuda:12.8.1-devel-ubuntu22.04 AS djl-builder
+FROM nvidia/cuda:12.6.3-devel-ubuntu22.04 AS djl-builder
 
 # Re-declare the ARGs we need inside this stage
 ARG DJL_VERSION
 ARG PYTORCH_VERSION
 ARG CUDA_FLAVOR
 
+
 ENV DEBIAN_FRONTEND=noninteractive
-# Volta(V100)=7.0, Turing=7.5, Ampere(A100)=8.0, RTX30=8.6, Ada=8.9, Hopper(H100)=9.0
+# Volta(V100)=7.0, Turing(2080Ti)=7.5, Ampere(A100)=8.0, RTX30=8.6, Ada=8.9, Hopper(H100)=9.0
 ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.9 9.0"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -74,7 +83,7 @@ FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} AS qupath-image
 
 
 # ==================================================================
-# Stage 3: final image (your VNC base + QuPath + InstanSeg/DJL)
+# Stage 3: final image (VNC base + QuPath + InstanSeg/DJL)
 # ==================================================================
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
@@ -82,6 +91,7 @@ FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 ARG DJL_VERSION
 ARG PYTORCH_VERSION
 ARG CUDA_FLAVOR
+ARG CUDA_CUDART_LABEL
 
 USER root
 
@@ -89,21 +99,61 @@ USER root
 # InstanSeg / DJL setup
 #
 # To make InstanSeg + PyTorch via DJL work, we need:
-#   1. A conda env with matching pytorch (used at runtime via PYTORCH_LIBRARY_PATH)
-#   2. The libdjl_torch.so JNI built for our target GPU compute capabilities
-#   3. QuPath launched via start_qp.sh which exports PYTORCH_LIBRARY_PATH,
-#      PYTORCH_VERSION and PYTORCH_FLAVOR=cu128 before starting.
+#   1. A conda env with matching PyTorch (used at runtime via
+#      PYTORCH_LIBRARY_PATH)
+#   2. cuda-cudart from conda so libcudart.so exists with a plain
+#      unversioned name that JNA can dlopen (DJL's CudaUtils probe)
+#   3. The libdjl_torch.so JNI built for our target GPU compute
+#      capabilities (sm_70..sm_90)
+#   4. QuPath launched via start_qp.sh which exports
+#      PYTORCH_LIBRARY_PATH, PYTORCH_VERSION, PYTORCH_FLAVOR=cu126
+#      and passes -Djna.library.path=/opt/conda/envs/djl/lib
 #
 # https://djl.ai/engines/pytorch/pytorch-engine/
 #################################################################
 
-# 1. Conda env with matching PyTorch (cu128 wheels include sm_70..sm_90)
+# 1. Conda env with matching PyTorch (cu126 wheels include sm_50..sm_90).
+#    Adding cuda-cudart 12.6 from NVIDIA channel guarantees an
+#    unversioned libcudart.so in /opt/conda/envs/djl/lib for JNA.
 RUN conda create --name djl python=3.12 -y \
     && conda run -n djl pip install \
          torch==${PYTORCH_VERSION} torchvision==0.22.1 torchaudio==${PYTORCH_VERSION} \
          --index-url https://download.pytorch.org/whl/${CUDA_FLAVOR} \
-    && conda install -n djl -c nvidia/label/cuda-12.8.1 cuda-cudart -y \
+    && conda install -n djl -c nvidia/label/${CUDA_CUDART_LABEL} cuda-cudart -y \
     && conda clean -a -y
+
+# 1b. Sanity-check that the installed torch wheel actually contains
+#     kernels for sm_70 (Volta / V100). Fails the build early if not.
+RUN /opt/conda/envs/djl/bin/python - <<'PY'
+import torch
+arches = torch.cuda.get_arch_list()
+print("torch:", torch.__version__, "arch list:", arches)
+required = {'sm_70', 'sm_75', 'sm_80', 'sm_86', 'sm_90'}
+missing = required - set(arches)
+assert not missing, f"FATAL: wheel is missing {missing}. Wrong CUDA_FLAVOR?"
+print("OK: all required SMs present:", required)
+PY
+
+# 1c. Belt-and-suspenders: ensure libcudart.so (unversioned) exists
+#     in both places JNA might search. Conda usually creates these,
+#     but being explicit protects against packaging changes.
+RUN set -e; \
+    SP=/opt/conda/envs/djl/lib/python3.12/site-packages; \
+    CONDA_LIB=/opt/conda/envs/djl/lib; \
+    # In conda's own lib dir
+    if [ -f "$CONDA_LIB/libcudart.so.12" ] && [ ! -e "$CONDA_LIB/libcudart.so" ]; then \
+        ln -sf libcudart.so.12 "$CONDA_LIB/libcudart.so"; \
+    fi; \
+    # In the pip-installed nvidia/cuda_runtime dir (if present)
+    if [ -d "$SP/nvidia/cuda_runtime/lib" ]; then \
+        CUDART=$(ls $SP/nvidia/cuda_runtime/lib/libcudart.so.12* 2>/dev/null | head -n1); \
+        if [ -n "$CUDART" ] && [ ! -e "$SP/nvidia/cuda_runtime/lib/libcudart.so" ]; then \
+            ln -sf "$(basename $CUDART)" "$SP/nvidia/cuda_runtime/lib/libcudart.so"; \
+        fi; \
+    fi; \
+    echo "--- conda lib libcudart ---"; ls -l $CONDA_LIB/libcudart* 2>/dev/null || true; \
+    echo "--- torch/lib libcudart ---"; ls -l $SP/torch/lib/libcudart* 2>/dev/null || true; \
+    echo "--- nvidia/cuda_runtime/lib libcudart ---"; ls -l $SP/nvidia/cuda_runtime/lib/libcudart* 2>/dev/null || true
 
 # 2. Bring in the JNI we just built (broad SM coverage, incl. V100 sm_70)
 RUN mkdir -p /home/biop/.djl.ai/pytorch/${PYTORCH_VERSION}-${CUDA_FLAVOR}-linux-x86_64/
@@ -130,11 +180,6 @@ RUN mv /opt/icons/desktop-files/specific/qupath.desktop /home/biop/Desktop/ \
 
 #################################################################
 # Prepare QuPath prefs (see QuPath_setPaths.groovy)
-# NOTE: make sure your start_qp.sh in QuPath/prefs/ contains:
-#   export PYTORCH_LIBRARY_PATH=/opt/conda/envs/djl/lib/python3.12/site-packages/torch/lib/
-#   export PYTORCH_VERSION=2.7.1
-#   export PYTORCH_FLAVOR=cu128
-#   /opt/QuPath/bin/QuPath -q
 #################################################################
 COPY QuPath/prefs/* /home/biop/tmp/
 RUN chown -R biop:biop /home/biop \
