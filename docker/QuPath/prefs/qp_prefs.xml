@@ -8,7 +8,7 @@
 <node name="0.7">
 <map>
 <entry key="cellposePythonPath" value="/opt/conda/envs/cellpose/bin/python"/>
-<entry key="cellposeSAMPythonPath" value="/opt/conda/envs/cellpose-sam/bin/python"/>
+<entry key="cellposeSAMPythonPath" value="/opt/conda/envs/cellposesam/bin/python"/>
 <entry key="ext.SAM.verifySSL" value="true"/>
 <entry key="instanseg.download.models" value="YES"/>
 <entry key="instanseg.lastSelectModel" value="/opt/QuPath/QuPath_Common_Data_0.7/intantseg_models/downloaded/fluorescence_nuclei_and_cells-0.1.0"/>
