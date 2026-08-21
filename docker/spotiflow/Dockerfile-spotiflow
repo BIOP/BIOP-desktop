@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=0.2.2
+ARG BASE_IMAGE=0.3.0
 
 ARG ALIAS=biop/
 
@@ -8,11 +8,16 @@ USER root
 
 ##############################################################################
 # install spotiflow-napari
-COPY spotiflow/env_spotiflow.yml /tmp/env_spotiflow.yml
-RUN  conda update -n base -c conda-forge conda \
-    && conda env update -n spotiflow -f /tmp/env_spotiflow.yml \
-    && conda clean --all -f -y \
-    && rm /tmp/env_spotiflow.yml
+# COPY spotiflow/env_spotiflow.yml /tmp/env_spotiflow.yml
+# RUN  conda update -n base -c conda-forge conda \
+#     && conda env update -n spotiflow -f /tmp/env_spotiflow.yml \
+#     && conda clean --all -f -y \
+#     && rm /tmp/env_spotiflow.yml
+
+RUN conda create -n spotiflow python=3.12 -y \
+        && conda run -n spotiflow pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu126 \
+        && conda run -n spotiflow pip install spotiflow==v0.6.4 napari-spotiflow==v0.4.5 "napari[all]" napari-ome-zarr \
+        && conda clean -a -y
 
  # TODO download models to shared space and make link it in entrypoint.sh
 RUN mkdir -p /home/biop/.spotiflow/models/ \ 
@@ -27,6 +32,8 @@ RUN chown -R biop:biop /home/biop/ \
 # Container start
 USER biop
 WORKDIR /home/biop
-ENTRYPOINT ["/usr/local/bin/jupyter"]
+RUN /opt/conda/envs/spotiflow/bin/python -m ipykernel install --user --name=spotiflow --display-name "Python (spotiflow)"
+
+ENTRYPOINT ["jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
 
