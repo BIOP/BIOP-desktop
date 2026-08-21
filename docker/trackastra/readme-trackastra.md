@@ -5,25 +5,23 @@
 ## build
 
 ```
-docker build -f trackastra/Dockerfile-trackastra  -t biop-trackastra:v0.5.2 . --no-cache
+docker build -f trackastra/Dockerfile-trackastra  -t biop-trackastra:v0.5.5 . --no-cache
 ```
 
 ## start to test (see below)
 
 ```
-docker run -it --rm -p 8888:8888 --gpus device=0  --mount src=D:/,target=/home/biop/local,type=bind  biop-trackastra:v0.5.2
+docker run -it --rm -p 8888:8888 --gpus device=0  --mount src=D:/,target=/home/biop/local,type=bind  biop-trackastra:v0.5.5
 ```
 
 ## after testing pass, tag 
 ```
-docker tag  biop-trackastra:v0.5.2  biop/biop-trackastra:v0.5.2 
-
-docker tag  biop-trackastra:v0.5.2 registry.rcp.epfl.ch/ptbiop/biop-trackastra:v0.5.2
+docker tag  biop-trackastra:v0.5.5  biop/biop-trackastra:v0.5.5 
 ```
 
 ## push on dockerhub
 ```
-docker push biop/biop-trackastra:v0.5.2
+docker push biop/biop-trackastra:v0.5.5
 ```
 
 # TESTs
