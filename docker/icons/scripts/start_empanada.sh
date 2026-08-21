@@ -1,4 +1,7 @@
 #!/bin/bash
-source activate empanada
+set -e
+source /opt/conda/etc/profile.d/conda.sh
+conda activate empanada
 napari
-read -rsp $"Press enter to continue..."
+echo
+read -rsp "Press enter to close..."

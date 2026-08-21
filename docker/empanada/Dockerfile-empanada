@@ -1,33 +1,58 @@
+ARG BASE_IMAGE=0.3.0
 ARG ALIAS=biop/
-ARG BASE_IMAGE=0.2.2
+
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 USER root
 
-##############################################################################
-# install leonardo-napari
-RUN  conda update -n base -c conda-forge conda  \
-    && conda create --name empanada python=3.9\
-    && source activate empanada \
-    && pip install --upgrade pip \ 
-    && pip install napari[all] empanada-napari==1.1.1 napari-omero
+# ------------------------------------------------------------------
+# Build tools required by empanada-napari (git, gcc, g++)
+# ------------------------------------------------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    build-essential \
+    && apt-get autoremove --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/*
 
-# create desktop shortcut the new way 
+# ------------------------------------------------------------------
+# Dedicated conda env for empanada-napari
+# python 3.10–3.13 and napari<=0.6.6 are required
+# ------------------------------------------------------------------
+RUN conda create -n empanada -y python=3.10 \
+    && conda run -n empanada pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126 \
+    && conda run -n empanada pip install "napari[all]<=0.6.6" \
+    && conda run -n empanada pip install empanada-napari ipykernel \
+    && conda clean -a -y
+
+# RUN chown -R biop:biop /opt/conda/envs/empanada && chmod -R u+rwX /opt/conda/envs/empanada
+
 RUN mkdir /home/biop/.empanada/ \
     && wget "https://zenodo.org/record/6861565/files/MitoNet_v1_mini.pth?download=1" -O /home/biop/.empanada/MitoNet_v1_mini.pth \
-    && wget "https://zenodo.org/record/6861565/files/MitoNet_v1.pth?download=1" -O /home/biop/.empanada/MitoNet_v1.pth
+    && wget "https://zenodo.org/record/6861565/files/MitoNet_v1.pth?download=1" -O /home/biop/.empanada/MitoNet_v1.pth   \
+    && wget "https://zenodo.org/records/15298854/files/PanopticDeepLabPR_b0d99498-6c99-4b45-844e-2b4dca58f24a_panoptic_deeplab_pointrend.pth?download=1" -O /home/biop/.empanada/PanopticDeepLabPR_b0d99498-6c99-4b45-844e-2b4dca58f24a_panoptic_deeplab_pointrend.pth \
+    && wget "https://zenodo.org/records/18142651/files/PanopticDeepLabPR_5f023685-7433-404c-9f3d-692898aff9ab_panoptic_deeplab_pointrend.pth?download=1" -O /home/biop/.empanada/PanopticDeepLabPR_5f023685-7433-404c-9f3d-692898aff9ab_panoptic_deeplab_pointrend.pth
 
-# Create shortcut to start napari
-COPY icons/* /opt/icons/
-RUN printf 'source activate empanada\nnapari\n\$ read -rsp \$"Press enter to continue..."' > /opt/icons/start_empanada.sh \
-    && printf '[Desktop Entry]\nVersion=1.1.1\nName=empanada\nGenericName=empanada\nX-GNOME-FullName=empanada\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_empanada.sh\nTryExec=/opt/icons/start_empanada.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/empanada_icon.png\nStartupWMClass=empanada\n' > /home/biop/Desktop/empanada.desktop \
-    && chown -R biop:biop /home/biop /opt/icons/ \
-    && chmod -R +rwx /home/biop/Desktop/empanada.desktop /opt/icons/
+# COPY icons folder because of updates since base image was created
+COPY icons/ /opt/icons/
 
+# move icon to the desktop (reuses the napari launcher, since empanada
+# is a napari plugin and is launched from within napari)
+RUN mv /opt/icons/desktop-files/specific/empanada.desktop /home/biop/Desktop/empanada-napari.desktop \
+    && chmod 755 /home/biop/Desktop/empanada-napari.desktop \
+    && chown biop:biop /home/biop/Desktop/empanada-napari.desktop \
+    && mv /opt/icons/scripts/* /usr/local/bin/ \
+    && chmod 755 /usr/local/bin/*
+
+RUN chown -R biop:biop /home/biop/ /home/biop/.cache \
+    && chmod -R u+rwX,g+rX,o-rwx /home/biop
 
 #################################################################
 # Container start
 USER biop
 WORKDIR /home/biop
-ENTRYPOINT ["/usr/local/bin/jupyter"]
+RUN /opt/conda/envs/empanada/bin/python -m ipykernel install --user --name=empanada --display-name "Python (empanada)"
+
+#RUN conda init bash && echo "conda activate empanada" >> ~/.bashrc
+ENTRYPOINT ["jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
