@@ -1,18 +1,9 @@
-ARG BASE_IMAGE=0.3.0
+ARG BASE_IMAGE=0.3.1
 ARG ALIAS=biop/
 
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 USER root
-
-RUN apt-get update -y \
-    && apt upgrade -y \
-    && apt-get install -y wget git unzip \
-    && apt-get autoremove --purge \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /tmp/* \
-    && find /var/log -type f -exec cp /dev/null \{\} \;
 
 #################################################################
 # Install Fiji
@@ -48,28 +39,14 @@ RUN ${fiji} ${updateCommand} \
     && chmod -R a+rwX /opt/Fiji/
 
 
-USER biop
+RUN mv /opt/icons/desktop-files/specific/fiji.desktop /home/biop/Desktop/ \
+    && chmod 755 /home/biop/Desktop/fiji.desktop \
+    && chown biop:biop /home/biop/Desktop/fiji.desktop
 
-# ---- Fiji .desktop file ----
- RUN printf '[Desktop Entry]\n\
-    Version=latest\n\
-    Name=Fiji\n\
-    GenericName=Fiji\n\
-    X-GNOME-FullName=Fiji\n\
-    Comment=Scientific Image Analysis\n\
-    Type=Application\n\
-    Categories=Education;Science;ImageProcessing;\n\
-    Exec=/opt/Fiji/fiji-linux-x64 -Dimagej.updater.disableAutocheck=true\n\
-    TryExec=/opt/Fiji/fiji-linux-x64 -Dimagej.updater.disableAutocheck=true\n\
-    Terminal=false\n\
-    StartupNotify=true\n\
-    MimeType=image/*;\n\
-    Icon=/opt/Fiji/images/icon.png\n\
-    StartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop \
-    && chmod 755 /home/biop/Desktop/Fiji.desktop
 
 #################################################################
 # Container start
+USER biop
 WORKDIR /home/biop
-ENTRYPOINT ["/usr/local/bin/jupyter"]
+ENTRYPOINT ["jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]

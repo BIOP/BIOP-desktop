@@ -95,11 +95,11 @@ RUN sed -i 's/Components: main/Components: main contrib non-free non-free-firmwa
         ocl-icd-opencl-dev \
         ocl-icd-libopencl1 \
         clinfo \
-        nvidia-opencl-icd \
+    && mkdir -p /etc/OpenCL/vendors \
+    && echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd \
     && apt-get autoremove --purge \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /tmp/* \
+    && rm -rf /var/lib/apt/lists/* /tmp/* \
     && find /var/log -type f -exec cp /dev/null \{\} \;
 
 # ------------------------------------------------------------------
