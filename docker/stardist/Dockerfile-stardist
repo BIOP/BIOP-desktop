@@ -10,7 +10,7 @@ USER root
 # ------------------------------------------------------------------
 RUN mamba create -n stardist -y python=3.10 \
     && mamba run -n stardist pip install --upgrade pip \
-    && mamba run -n stardist pip install "tensorflow[and-cuda]==2.20.*" \
+    && mamba run -n stardist pip install "tensorflow[and-cuda]==2.15.*" \
     && mamba run -n stardist pip install stardist ipykernel \
     && mamba clean -a -y
 
