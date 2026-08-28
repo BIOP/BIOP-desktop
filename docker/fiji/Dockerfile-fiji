@@ -1,10 +1,15 @@
-ARG BASE_IMAGE=0.2.2
+ARG BASE_IMAGE=0.3.1
 ARG CELLPOSE_VERSION=3.1.1.1
-ARG CELLPOSESAM_VERSION=4.0.6
+ARG CELLPOSESAM_VERSION=4.2.1.1
+ARG STARDIST_VERSION=0.9.2
+ARG TRASCKASTRA_VERSION=v0.5.5
 ARG ALIAS=biop/
 
 FROM ${ALIAS}biop-cellpose:${CELLPOSE_VERSION} AS cellpose-image
 FROM ${ALIAS}biop-cellpose:${CELLPOSESAM_VERSION} AS cellposesam-image
+FROM ${ALIAS}biop-stardist:${STARDIST_VERSION} AS stardist-image
+FROM ${ALIAS}biop-trackastra:${TRASCKASTRA_VERSION} AS trackastra-image
+
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 ENV OMEROIJ_VERSION=5.8.6
@@ -12,24 +17,15 @@ ENV SOC_VERSION=5.19.0
 
 USER root
 
-RUN apt-get update -y \
-    && apt upgrade -y \
-    && apt-get install -y wget git unzip \
-    && apt-get autoremove --purge \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /tmp/* \
-    && find /var/log -type f -exec cp /dev/null \{\} \;
-
 #################################################################
 # Install Fiji
-RUN wget -q https://downloads.micron.ox.ac.uk/fiji_update/mirrors/fiji-stable/fiji-stable-linux64-jdk.zip \
-      && unzip -q fiji-stable-linux64-jdk.zip -d /opt/ \
-      && rm fiji-stable-linux64-jdk.zip \
-      && chmod -R a+rwX /opt/Fiji.app/
+RUN wget -q https://mirrors.pasteur.fr/fiji/downloads/latest/fiji-latest-linux64-jdk.zip \
+      && unzip -q fiji-latest-linux64-jdk.zip -d /opt/ \
+      && rm fiji-latest-linux64-jdk.zip \
+      && chmod -R a+rwX /opt/Fiji/
 
 # Install Fiji plugins via update sites
-ENV fiji=/opt/Fiji.app/ImageJ-linux64
+ENV fiji=/opt/Fiji/fiji-linux-x64
 ENV updateCommand="--update update"
 ENV addCommand="--update add-update-sites" 
 RUN ${fiji} ${updateCommand} \
@@ -43,54 +39,73 @@ RUN ${fiji} ${updateCommand} \
                                 #"ImageScience" "https://sites.imagej.net/ImageScience/" \ 
                                 "CSBDeep" "https://sites.imagej.net/CSBDeep/" \
                                 "StarDist" "https://sites.imagej.net/StarDist/" \
+                                "TrackMate-StarDist" "https://sites.imagej.net/TrackMate-StarDist/" \    
+                                "TrackMate-TrackAstra" "https://sites.imagej.net/TrackMate-Trackastra/" \ 
+                                "TrackMate-Cellpose" "https://sites.imagej.net/TrackMate-Cellpose/" \
                                 "TensorFlow" "https://sites.imagej.net/TensorFlow/" \
                                 "OMERO 5.5-5.6" "https://sites.imagej.net/OMERO-5.5-5.6/" \
                                 "MiC mask comparator" "https://sites.imagej.net/MiC-mask-comparator/" \
-                                "Fiji-Deconv" " https://sites.imagej.net/clijx-deconvolution/" \
+                                "Fiji-Deconv" "https://sites.imagej.net/clijx-deconvolution/" \
                                 "3Dscript" "https://romulus.oice.uni-erlangen.de/updatesite/" \
     && ${fiji} ${updateCommand} \
-    && chmod -R a+rwX /opt/Fiji.app
+    && chmod -R a+rwX /opt/Fiji/
 
-# TF1.15 GPU (current default download of TF 1.12 CPU)
-RUN wget -q https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow_jni-gpu-linux-x86_64-1.15.0.tar.gz    \
-    && tar -C /opt/Fiji.app/lib/linux64/ -xzf libtensorflow_jni-gpu-linux-x86_64-1.15.0.tar.gz \
-    && rm libtensorflow_jni-gpu-linux-x86_64-1.15.0.tar.gz 
+RUN mv /opt/icons/desktop-files/specific/fiji.desktop /home/biop/Desktop/ \
+    && chmod 755 /home/biop/Desktop/fiji.desktop \
+    && chown biop:biop /home/biop/Desktop/fiji.desktop
 
+# # TF1.15 GPU (current default download of TF 1.12 CPU)
+# RUN wget -q https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow_jni-gpu-linux-x86_64-1.15.0.tar.gz    \
+#     && tar -C /opt/Fiji/lib/linux64/ -xzf libtensorflow_jni-gpu-linux-x86_64-1.15.0.tar.gz \
+#     && rm libtensorflow_jni-gpu-linux-x86_64-1.15.0.tar.gz 
 
 # Install omeroij
-RUN wget -q https://github.com/ome/omero-insight/releases/download/v${OMEROIJ_VERSION}/omero_ij-${OMEROIJ_VERSION}-all.jar -O /opt/Fiji.app/plugins/omero_ij-${OMEROIJ_VERSION}-all.jar \
+RUN wget -q https://github.com/ome/omero-insight/releases/download/v${OMEROIJ_VERSION}/omero_ij-${OMEROIJ_VERSION}-all.jar -O /opt/Fiji/plugins/omero_ij-${OMEROIJ_VERSION}-all.jar \
 # ... simple-omero-client
-    && wget -q https://github.com/GReD-Clermont/simple-omero-client/releases/download/${SOC_VERSION}/simple-omero-client-${SOC_VERSION}.jar -O /opt/Fiji.app/plugins/simple-omero-client-${SOC_VERSION}.jar \
+    && wget -q https://github.com/GReD-Clermont/simple-omero-client/releases/download/${SOC_VERSION}/simple-omero-client-${SOC_VERSION}.jar -O /opt/Fiji/plugins/simple-omero-client-${SOC_VERSION}.jar \
 # ... ThunderSTORM
-    && wget -q https://github.com/zitmen/thunderstorm/releases/download/v1.3/Thunder_STORM.jar -O /opt/Fiji.app/plugins/Thunder_STORM.jar \
-    && chmod -R a+rwX /opt/Fiji.app/plugins
+    && wget -q https://github.com/zitmen/thunderstorm/releases/download/v1.3/Thunder_STORM.jar -O /opt/Fiji/plugins/Thunder_STORM.jar 
 
 #ij2-LocalizeJ (depends from)
-RUN wget -q https://repo1.maven.org/maven2/colt/colt/1.2.0/colt-1.2.0.jar -O /opt/Fiji.app/jars/colt-1.2.0.jar \
-    && wget -q https://maven.imagej.net/content/repositories/releases/sc/fiji/imagescience/3.0.0/imagescience-3.0.0.jar -O /opt/Fiji.app/jars/imagescience-3.0.0.jar \
-    && wget -q  https://github.com/ArneS70/ij2-LocalizeJ/raw/main/target/LocalizeJ-0.1.0-SNAPSHOT.jar -O /opt/Fiji.app/jars/LocalizeJ-0.1.0-SNAPSHOT.jar \
-    && chmod -R a+rwX /opt/Fiji.app/jars
+RUN wget -q https://repo1.maven.org/maven2/colt/colt/1.2.0/colt-1.2.0.jar -O /opt/Fiji/jars/colt-1.2.0.jar \
+    && wget -q https://maven.imagej.net/content/repositories/releases/sc/fiji/imagescience/3.0.0/imagescience-3.0.0.jar -O /opt/Fiji/jars/imagescience-3.0.0.jar \
+    && wget -q  https://github.com/ArneS70/ij2-LocalizeJ/raw/main/target/LocalizeJ-0.1.0-SNAPSHOT.jar -O /opt/Fiji/jars/LocalizeJ-0.1.0-SNAPSHOT.jar 
 
-# create icon
-# modify Fiji desktop file to disable update check at startup using recommandation from https://github.com/imagej/imagej-updater/issues/7#issuecomment-970554378
-RUN mkdir -p /home/biop/Desktop && chown -R biop:biop /home/biop/Desktop \
-    && printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 -Dimagej.updater.disableAutocheck=true\nTryExec=/opt/Fiji.app/ImageJ-linux64 -Dimagej.updater.disableAutocheck=true\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop
+# DiAna plugin
+RUN wget -q https://drive.google.com/file/d/1hkmM6kHMnPvwya26ogQsNaLI2AMVq_zN -O /opt/Fiji/plugins/DiAna_1.54.jar 
+
+# MicrobeJ plugin (site down for maintenance)
+# RUN wget -q http://www.microbej.com/version/13/p/1/MicrobeJ_.jar -O /opt/Fiji/plugins/MicrobeJ_.jar
 
 #################################################################
-# Install cellpose and models
+# Install python envs
+#
+# cellpose and models
 COPY --from=cellpose-image  /opt/conda/envs/cellpose /opt/conda/envs/cellpose
 COPY --from=cellpose-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
-RUN chmod -R a+rwX /home/biop/.cellpose  
-
 COPY --from=cellposesam-image  /opt/conda/envs/cellpose /opt/conda/envs/cellposesam
 COPY --from=cellposesam-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
+#
+RUN chmod -R a+rwX /home/biop/.cellpose  
+
+# Install trackastra
+COPY --from=trackastra-image  /opt/conda/envs/trackastra /opt/conda/envs/trackastra
+
+# Install stardist 
+COPY --from=stardist-image  /opt/conda/envs/stardist /opt/conda/envs/stardist
+
+# to set prefs
+COPY fiji/Fiji_setWrappersPaths.groovy /home/biop/tmp/Fiji_setWrappersPaths.groovy
 
 RUN chown -R biop:biop /home/biop/ \
-    && chmod -R a+rwx /home/biop/   
+    && chmod -R a+rwx /home/biop/  
 
 #################################################################
 # Container start
 USER biop
 WORKDIR /home/biop
-ENTRYPOINT ["/usr/local/bin/jupyter"]
+#RUN /opt/Fiji.app/ImageJ-linux64 --headless --run /home/biop/tmp/Fiji_setWrappersPaths.groovy \
+#   && rm -rf /home/biop/tmp
+
+ENTRYPOINT ["jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
