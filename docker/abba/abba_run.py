@@ -17,7 +17,7 @@ if __name__ == '__main__':
     scyjava.config.add_option('-Xmx8g') # 5 Gb
 
     # You can swap the lines below if you want to use a  Fiji instead of the maven downloaded one
-    ij = imagej.init("/opt/Fiji.app/", mode="interactive")
+    ij = imagej.init("/opt/Fiji/", mode="interactive")
 
     print('ImageJ/Fiji successfully initialized.')
 
