@@ -1,12 +1,12 @@
 ARG ALIAS=biop/
-ARG BASE_IMAGE=0.2.1
+ARG BASE_IMAGE=0.3.1
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 USER root
 
-RUN conda create -n yolo python=3.10 \
-    && source activate yolo \
-    && pip install ultralytics opencv-python numpy   \
+RUN conda create -n yolo python=3.10 -y \
+    && conda run -n yolo pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu126 \
+    && conda run -n yolo pip install ultralytics ipykernel  \
     && conda clean --all -f -y \
     && conda env export -n "biop" 
 
@@ -17,5 +17,7 @@ RUN chmod -R a+rwX /home/biop/ \
 # Container start
 USER biop
 WORKDIR /home/biop
-ENTRYPOINT ["/usr/local/bin/jupyter"]
+RUN /opt/conda/envs/yolo/bin/python -m ipykernel install --user --name=yolo --display-name "Python (yolo)"
+ 
+ENTRYPOINT ["jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
