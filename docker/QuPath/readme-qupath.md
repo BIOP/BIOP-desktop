@@ -81,7 +81,7 @@ docker push biop/biop-qupath:v0.7.0-full
 
 # Test(s)
 
-## biop-qupath:v0.6.0-only
+## biop-qupath:v0.7.0-only
 
 ### QuPath - OMERO 
 
@@ -98,7 +98,7 @@ docker push biop/biop-qupath:v0.7.0-full
 - Import an image
 - Make an annotation and run InstanSeg (GPU)  on it using GUI
 
-## biop-qupath:v0.6.0-full
+## biop-qupath:v0.7.0-full
 
 - Make an annotation and run : 
     - [x] cellpose, template script , with 'cyto3' and 'cpsam'
