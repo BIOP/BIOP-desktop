@@ -1,0 +1,123 @@
+ARG BASE_IMAGE=0.3.1
+ARG ALIAS=biop/
+
+ARG QUPATH_VERSION=v0.7.0-full
+ARG FIJI_VERSION=20260826
+ARG ABBA_VERSION=0.10.7
+ARG BRAINRENDER_VERSION=0.0.7
+
+FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} AS qupath-image
+FROM ${ALIAS}biop-fiji:${FIJI_VERSION} AS fiji-image
+FROM ${ALIAS}biop-abba:${ABBA_VERSION} AS abba-image
+FROM ${ALIAS}biop-brainrender:${BRAINRENDER_VERSION} AS brainrender-image
+
+FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE} AS base
+
+USER root
+
+################################################################# 
+# Install QuPath 
+# 
+COPY --from=qupath-image /opt/QuPath /opt/QuPath
+COPY --from=qupath-image /opt/conda/envs/djl /opt/conda/envs/djl
+COPY --from=qupath-image /home/biop/.djl.ai/ /home/biop/.djl.ai/
+# Prepare to set QP_prefs , see below `QuPath_setPaths.groovy`
+COPY QuPath/prefs/* /home/biop/tmp/
+
+#################################################################
+# Install Fiji
+COPY --from=fiji-image /opt/Fiji /opt/Fiji
+COPY fiji/Fiji_setWrappersPaths.groovy /home/biop/tmp/Fiji_setWrappersPaths.groovy
+
+#################################################################
+# Install abba
+# a text file to specify where the atlases are
+COPY --from=abba-image /opt/Fiji.app/plugins/BIOP/ABBA_Atlas_folder.txt /opt/Fiji.app/plugins/BIOP/ABBA_Atlas_folder.txt
+COPY --from=abba-image /opt/abba/ /opt/abba/
+# install abba_python env
+COPY --from=abba-image /opt/conda/envs/abba_python/ /opt/conda/envs/abba_python/
+# instal deepslice env
+COPY --from=abba-image /opt/conda/envs/deepslice/  /opt/conda/envs/deepslice/
+# add elastix
+COPY --from=abba-image /opt/elastix /opt/elastix
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/elastix/lib
+# add brainrender-napari env 
+COPY --from=brainrender-image /opt/conda/envs/brainrender /opt/conda/envs/brainrender
+COPY --from=brainrender-image /home/biop/.brainglobe/ /home/biop/.brainglobe/
+
+
+#################################################################
+# Desktop icon + launcher scripts
+# (COPY icons folder here because it may have been updated since
+#  the base image was built)
+RUN mkdir -p /opt/icons
+COPY icons/ /opt/icons/
+RUN mv /opt/icons/desktop-files/specific/qupath.desktop /home/biop/Desktop/ \
+    && chmod 755 /home/biop/Desktop/qupath.desktop \
+    && chown biop:biop /home/biop/Desktop/qupath.desktop \
+    # && mv /opt/icons/desktop-files/specific/samapi.desktop /home/biop/Desktop/ \
+    # && chmod 755 /home/biop/Desktop/qupath.desktop /home/biop/Desktop/samapi.desktop  \
+    # && chown biop:biop /home/biop/Desktop/qupath.desktop /home/biop/Desktop/samapi.desktop \
+    # Fiji
+    && mv /opt/icons/desktop-files/specific/fiji.desktop /home/biop/Desktop/ \
+    && chmod 755 /home/biop/Desktop/fiji.desktop \  
+    && chown biop:biop /home/biop/Desktop/fiji.desktop \
+    # abba
+    && mv /opt/icons/desktop-files/specific/abba.desktop /home/biop/Desktop/ \
+    && chmod 755 /home/biop/Desktop/abba.desktop \
+    && chown biop:biop /home/biop/Desktop/abba.desktop \
+    # brainrender
+    && mv /opt/icons/desktop-files/specific/brainrender.desktop /home/biop/Desktop/ \
+    && chmod 755 /home/biop/Desktop/brainrender.desktop \
+    && chown biop:biop /home/biop/Desktop/brainrender.desktop \
+    # moves scripts to /usr/local/bin and set permissions
+    && mv /opt/icons/scripts/* /usr/local/bin/ \
+    && chmod 755 /usr/local/bin/*
+
+COPY base-tiger/bkgd/ /usr/share/backgrounds/
+
+# set chown and chmod for all necessary folders
+RUN chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.7 \
+    && chmod -R a+rwx /opt/QuPath/QuPath_Common_Data_0.7 \
+    && chmod a+rwx /opt/QuPath/bin/QuPath \
+    # # cellpose models
+    # && chmod -R a+rwx /home/biop/.cellpose \ 
+    # # samapi
+    # && chown -R biop:biop /home/biop/.samapi/ \
+    # && chmod -R a+rwx /home/biop/.samapi/ \
+    # # spotiflow
+    # && chown -R biop:biop /home/biop/.spotiflow/ \
+    # && chmod -R a+rwx /home/biop/.spotiflow/ \
+    # deepslice
+    && chown biop:biop /opt/conda/envs/deepslice/ \
+    && chmod a+rwx /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.1.py \
+    && chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/xception_weights_tf_dim_ordering_tf_kernels.h5 \
+    && chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/Allen_Mixed_Best.h5 \
+    && chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/Synthetic_data_final.hdf5 \
+    # elastix
+    && chown -R biop:biop /opt/elastix \
+    && chmod  a+rwx /opt/elastix/bin/elastix \
+    && chmod  a+rwx /opt/elastix/bin/transformix  \
+    # abba
+    && chown -R biop:biop /opt/abba/ \
+    && chmod -R a+rwX /opt/abba/ \
+    # fiji
+    && chown biop:biop /opt/Fiji/ \
+    && chmod -R a+rwx /opt/Fiji/ \
+    # home
+    && chown biop:biop /home/biop/ \
+    && chmod -R a+rwx /home/biop/    
+
+#Fiji path has changed from /opt/Fiji.app to /opt/Fiji, so we need to update the path in the abba_run.py script
+#COPY --from=abba-image /opt/abba/ /opt/abba/
+COPY abba/abba_run.py /opt/abba/abba_run.py
+
+#################################################################
+# Switch to end-user and finalize QuPath prefs
+USER biop
+RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' \
+    && rm -rf /home/biop/tmp
+
+WORKDIR /home/biop
+ENTRYPOINT ["jupyter"]
+CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
