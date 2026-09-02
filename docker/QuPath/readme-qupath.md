@@ -56,27 +56,27 @@ docker push biop/biop-djl:036-cu126
 ## build
 
 ```
-docker build -f QuPath/Dockerfile-qupath-full  -t biop-qupath:v0.7.0-full . --no-cache
+docker build -f QuPath/Dockerfile-qupath-full  -t biop-qupath:v0.7.0-01-full . --no-cache
 ```
 
 ## start to test (see below)
 
 ```
-docker run -it --rm -p 8888:8888 --gpus device=0  --mount src=D:/,target=/home/biop/local,type=bind  biop-qupath:v0.7.0-full
+docker run -it --rm -p 8888:8888 --gpus device=0  --mount src=D:/,target=/home/biop/local,type=bind  biop-qupath:v0.7.0-01-full
 ```
 
 ## after testing pass, tag 
 
 ## test on cluster 
 ```
-docker tag biop-qupath:v0.7.0-full registry.rcp.epfl.ch/ptbiop/biop-qupath:v0.7.0-full
-docker push registry.rcp.epfl.ch/ptbiop/biop-qupath:v0.7.0-full
+docker tag biop-qupath:v0.7.0-01-full registry.rcp.epfl.ch/ptbiop/biop-qupath:v0.7.0-01-full
+docker push registry.rcp.epfl.ch/ptbiop/biop-qupath:v0.7.0-01-full
 ```
 
 ## push on dockerhub
 ```
-docker tag  biop-qupath:v0.7.0-full biop/biop-qupath:v0.7.0-full
-docker push biop/biop-qupath:v0.7.0-full
+docker tag  biop-qupath:v0.7.0-01-full biop/biop-qupath:v0.7.0-01-full
+docker push biop/biop-qupath:v0.7.0-01-full
 ```
 
 # Test(s)
