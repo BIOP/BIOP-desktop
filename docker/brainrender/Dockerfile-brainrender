@@ -1,37 +1,27 @@
 ARG ALIAS=biop/
-ARG BASE_IMAGE=0.2.2
+ARG BASE_IMAGE=0.3.1
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 USER root
 
 ##############################################################################
 # install leonardo-napari
-RUN  conda update -n base -c conda-forge conda  \
-    && conda create --name brainrender python=3.9\
-    && source activate brainrender \
-    && pip install --upgrade pip \ 
-    && pip3 install napari[all] brainrender-napari bg-atlasapi
-
-USER biop
-
-# adds brainrender kernel
-RUN source activate brainrender \
-    && python -m ipykernel install --user --name brainrender --display-name "Python (brainrender)" \
-    && conda deactivate
-
-# download allen_mouse_25um atlas
-RUN source activate brainrender \
-    && brainglobe install -a allen_mouse_25um \
-    && conda deactivate
+RUN  conda create --name brainrender python=3.11\
+    && conda run -n brainrender pip install brainrender\
+    && conda run -n brainrender pip3 install napari[all] brainrender-napari bg-atlasapi \
+    && conda clean -a -y
 
 USER root 
 
 # Make icon on desktop
-COPY icons/* /opt/icons/
-RUN printf 'source activate brainrender\nnapari\n\$ read -rsp \$"Press enter to continue..."' > /opt/icons/start_brainrender.sh \
-    && printf '[Desktop Entry]\nVersion=0.0.7\nName=brainrender\nGenericName=brainrender\nX-GNOME-FullName=brainrender\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_brainrender.sh\nTryExec=/opt/icons/start_brainrender.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/brainglobe.png\nStartupWMClass=brainrender\n' > /home/biop/Desktop/brainrender.desktop \
-    && chown -R biop:biop /home/biop /opt/icons/ \
-    && chmod -R +rwx /home/biop/Desktop/brainrender.desktop /opt/icons/
+COPY icons/ /opt/icons/
+RUN mv /opt/icons/desktop-files/specific/brainrender.desktop /home/biop/Desktop/ \
+    && chmod 755 /home/biop/Desktop/brainrender.desktop \
+    && chown biop:biop /home/biop/Desktop/brainrender.desktop \
+    && mv /opt/icons/scripts/* /usr/local/bin/ \
+    # make sure the scripts are executable and have the correct line endings (remove Windows carriage returns)
+    && sed -i 's/\r$//' /usr/local/bin/*.sh \ 
+    && chmod 755 /usr/local/bin/*
 
 RUN chmod -R a+rwX /home/biop/ \
     && chown -R biop:biop /home/biop/
@@ -40,5 +30,12 @@ RUN chmod -R a+rwX /home/biop/ \
 # Container start
 USER biop
 WORKDIR /home/biop
-ENTRYPOINT ["/usr/local/bin/jupyter"]
+
+# download allen_mouse_25um atlas , brainrender seems to use another mechanism and does not use the brainglobe installed atlas
+# RUN conda run -n brainrender brainglobe install -a allen_mouse_25um
+
+# add kernel for brainrender
+RUN /opt/conda/envs/brainrender/bin/python -m ipykernel install --user --name=brainrender --display-name "Python (brainrender)"
+
+ENTRYPOINT ["jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
