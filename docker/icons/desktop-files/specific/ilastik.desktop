@@ -1,0 +1,17 @@
+[Desktop Entry]
+Version=1.4.2
+Name=ilastik
+GenericName=ilastik
+X-GNOME-FullName=ilastik
+Comment=Scientific Image Analysis
+Type=Application
+Categories=Education;Science;ImageProcessing;
+Exec=/opt/ilastik/run_ilastik.sh %F
+TryExec=/opt/ilastik/run_ilastik.sh
+Terminal=false
+StartupNotify=true
+MimeType=image/*;
+Icon=/opt/ilastik/lib/python3.11/site-packages/ilastik/shell/gui/icons/96x96/ilastik-icon.png
+StartupWMClass=ilastik
+
+   
