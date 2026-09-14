@@ -225,6 +225,7 @@ USER biop
 RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' \
     && /opt/Fiji.app/ImageJ-linux64 --headless --run /home/biop/tmp/Fiji_setWrappersPaths.groovy \
     && rm -rf /home/biop/tmp
+
 WORKDIR /home/biop
-ENTRYPOINT ["/usr/local/bin/jupyter"]
+ENTRYPOINT ["jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
