@@ -49,10 +49,6 @@ FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE} AS base
 
 USER root
 
-RUN mkdir -p /home/biop/Desktop \
-    && chown -R biop:biop /home/biop/Desktop \ 
-    && mkdir  /home/biop/tmp/ \
-    && chown -R biop:biop /home/biop/tmp/
 
 ################################################################# 
 # Install QuPath 
