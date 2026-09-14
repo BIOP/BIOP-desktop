@@ -133,21 +133,23 @@ COPY --from=samapi-image /home/biop/.samapi/ /home/biop/.samapi/
 COPY --from=empanada-image /opt/conda/envs/empanada /opt/conda/envs/empanada
 COPY --from=empanada-image /home/biop/.empanada/ /home/biop/.empanada/
 
-#################################################################
-# Install abba
-# a text file to specify where the atlases are
-COPY --from=abba-image /opt/Fiji.app/plugins/BIOP/ABBA_Atlas_folder.txt /opt/Fiji.app/plugins/BIOP/ABBA_Atlas_folder.txt
-COPY --from=abba-image /opt/abba/ /opt/abba/
-# install abba_python env
-COPY --from=abba-image /opt/conda/envs/abba_python/ /opt/conda/envs/abba_python/
-# instal deepslice env
-COPY --from=abba-image /opt/conda/envs/deepslice/  /opt/conda/envs/deepslice/
-# add elastix
-COPY --from=abba-image /opt/elastix /opt/elastix
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/elastix/lib
-# add brainrender-napari env 
-COPY --from=brainrender-image /opt/conda/envs/brainrender /opt/conda/envs/brainrender
-COPY --from=brainrender-image /home/biop/.brainglobe/ /home/biop/.brainglobe/
+# #################################################################
+# # Install abba
+# # a text file to specify where the atlases are
+# ISSUES with abba for now, we don't include it in the docker image.
+# 
+# COPY --from=abba-image /opt/Fiji.app/plugins/BIOP/ABBA_Atlas_folder.txt /opt/Fiji.app/plugins/BIOP/ABBA_Atlas_folder.txt
+# COPY --from=abba-image /opt/abba/ /opt/abba/
+# # install abba_python env
+# COPY --from=abba-image /opt/conda/envs/abba_python/ /opt/conda/envs/abba_python/
+# # instal deepslice env
+# COPY --from=abba-image /opt/conda/envs/deepslice/  /opt/conda/envs/deepslice/
+# # add elastix
+# COPY --from=abba-image /opt/elastix /opt/elastix
+# ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/elastix/lib
+# # add brainrender-napari env 
+# COPY --from=brainrender-image /opt/conda/envs/brainrender /opt/conda/envs/brainrender
+# COPY --from=brainrender-image /home/biop/.brainglobe/ /home/biop/.brainglobe/
 
 #################################################################
 # Install yolo
