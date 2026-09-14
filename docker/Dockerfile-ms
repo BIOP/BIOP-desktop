@@ -70,8 +70,8 @@ COPY --from=ilastik-image /opt/ilastik /opt/ilastik
 
 #################################################################
 # Install Fiji
-COPY --from=fiji-image /opt/Fiji.app /opt/Fiji.app
-COPY fiji/Fiji_setWrappersPaths.groovy /home/biop/tmp/Fiji_setWrappersPaths.groovy
+COPY --from=fiji-image /opt/Fiji /opt/Fiji
+# COPY fiji/Fiji_setWrappersPaths.groovy /home/biop/tmp/Fiji_setWrappersPaths.groovy
 
 #################################################################
 # From here, we'll install different conda envs
