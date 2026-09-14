@@ -163,7 +163,7 @@ COPY --from=tf2onnx-image /opt/conda/envs/tf2onnx /opt/conda/envs/tf2onnx
 # Jupyter kernels 
 # 
 # To make the different conda env available in jupyter
-COPY jupyter/kernels/ /home/biop/.local/share/jupyter/kernels/
+#COPY jupyter/kernels/ /home/biop/.local/share/jupyter/kernels/
 
 # Make icons on desktop
 COPY icons/* /opt/icons/
