@@ -201,34 +201,22 @@ RUN mv /opt/icons/desktop-files/specific/fiji.desktop /home/biop/Desktop/ \
     && sed -i 's/\r$//' /usr/local/bin/*.sh \ 
     && chmod 755 /usr/local/bin/*
 
+
+# update the background images for the desktop
+COPY base-tiger/bkgd/ /usr/share/backgrounds/
+
 # set chown and chmod for all necessary folders
-RUN chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.6 \
-    && chmod -R a+rwx /opt/QuPath/QuPath_Common_Data_0.6 \
-    && chmod a+rwx /opt/QuPath/bin/QuPath \
+RUN mkdir -p /home/biop/.cache \
+    && chown -R biop:biop /home/biop/ /opt/icons/  \
+    && chmod -R u+rwX,g+rX,o-rwx /home/biop/  /opt/icons/  \
     # cellpose models
-    && chmod -R a+rwx /home/biop/.cellpose \ 
+     /home/biop/.cellpose/ \ 
     # samapi
-    && chown -R biop:biop /home/biop/.samapi/ \
-    && chmod -R a+rwx /home/biop/.samapi/ \
+     /home/biop/.samapi/ \
     # spotiflow
-    && chown -R biop:biop /home/biop/.spotiflow/ \
-    && chmod -R a+rwx /home/biop/.spotiflow/ \
-    # deepslice
-    && chown biop:biop /opt/conda/envs/deepslice/ \
-    && chmod a+rwx /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.1.py \
-    && chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/xception_weights_tf_dim_ordering_tf_kernels.h5 \
-    && chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/Allen_Mixed_Best.h5 \
-    && chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/Synthetic_data_final.hdf5 \
-    # elastix
-    && chown -R biop:biop /opt/elastix \
-    && chmod  a+rwx /opt/elastix/bin/elastix \
-    && chmod  a+rwx /opt/elastix/bin/transformix  \
-    # abba
-    && chown -R biop:biop /opt/abba/ \
-    && chmod -R a+rwX /opt/abba/ \
+     /home/biop/.spotiflow/ \
     # fiji
-    && chown biop:biop /opt/Fiji.app/ \
-    && chmod -R a+rwx /opt/Fiji.app/
+     /opt/Fiji/
 
 
 #################################################################
