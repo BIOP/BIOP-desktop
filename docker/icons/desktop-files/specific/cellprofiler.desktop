@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=4.2.8
+Name=cellprofiler
+GenericName=cellprofiler
+X-GNOME-FullName=cellprofiler
+Comment=Scientific Image Analysis
+Type=Application
+Categories=Education;Science;ImageProcessing;
+Exec=xfce4-terminal --title=cellprofiler --hold --command="/usr/local/bin/start_cellprofiler.sh"
+Terminal=true
+StartupNotify=true
+Icon=/opt/icons/CellProfiler.ico
+StartupWMClass=cellprofiler
