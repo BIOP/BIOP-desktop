@@ -166,40 +166,40 @@ COPY --from=tf2onnx-image /opt/conda/envs/tf2onnx /opt/conda/envs/tf2onnx
 #COPY jupyter/kernels/ /home/biop/.local/share/jupyter/kernels/
 
 # Make icons on desktop
-COPY icons/* /opt/icons/
+COPY icons/ /opt/icons/
 # to start fiji
-RUN printf '[Desktop Entry]\nVersion=1.0\nName=ImageJ\nGenericName=ImageJ\nX-GNOME-FullName=ImageJ\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/Fiji.app/ImageJ-linux64 %F\nTryExec=/opt/Fiji.app/ImageJ-linux64\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/Fiji.app/images/icon.png\nStartupWMClass=net-imagej-launcher-ClassLauncher\n' > /home/biop/Desktop/Fiji.desktop \
-# to start QuPath
-    && printf '[Desktop Entry]\nVersion=0.6.0\nName=qupath\nGenericName=QuPath\nX-GNOME-FullName=QuPath\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_qp.sh\nTryExec=/opt/icons/start_qp.sh\nTerminal=false\nStartupNotify=true\nIcon=/opt/QuPath/lib/QuPath.png\nStartupWMClass=QuPath' > /home/biop/Desktop/QuPath.desktop \
-# to start ilastik
-    && printf '[Desktop Entry]\nVersion=1.4.0\nName=ilastik\nGenericName=ilastik\nX-GNOME-FullName=ilastik\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/ilastik/run_ilastik.sh %F\nTryExec=/opt/ilastik/run_ilastik.sh\nTerminal=false\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/ilastik/lib/python3.9/site-packages/ilastik/shell/gui/icons/96x96/ilastik-icon.png\nStartupWMClass=ilastik\n' > /home/biop/Desktop/ilastik.desktop \
-# cellprofiler
-    && printf 'source activate cellprofiler\nexport "PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True" && cellprofiler\n\$ read -rsp \$"Press enter to continue..."\n' > /opt/icons/start_cellprofiler.sh \
-    && printf '[Desktop Entry]\nVersion=4.2.8\nName=cellprofiler\nGenericName=cellprofiler\nX-GNOME-FullName=cellprofiler\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_cellprofiler.sh\nTryExec=/opt/icons/start_cellprofiler.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/CellProfiler.ico\nStartupWMClass=cellprofiler\n' > /home/biop/Desktop/cellprofiler.desktop \
-# to start abba
-    && printf 'source activate abba_python\npython /opt/abba/abba_run.py\n\$ read -rsp \$"Press enter to continue..."' > /opt/icons/start_abba.sh \
-    && printf '[Desktop Entry]\nVersion=0.10.6\nName=ABBA\nGenericName=ABBA\nX-GNOME-FullName=ABBA\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_abba.sh\nTryExec=/opt/icons/start_abba.sh\nTerminal=true\nStartupNotify=true\nMimeType=image/*;\nIcon=/opt/icons/abba.png\nStartupWMClass=ABBA\n' > /home/biop/Desktop/abba.desktop \
-# to start SAMAPI
-    && printf 'source activate samapi\npython -m uvicorn samapi.main:app --workers 2\n\$ read -rsp \$"Press enter to continue..."' > /opt/icons/start_samapi.sh \
-    && printf '[Desktop Entry]\nVersion=0.6.1\nName=samapi\nGenericName=samapi\nX-GNOME-FullName=samapi\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_samapi.sh\nTryExec=/opt/icons/start_samapi.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/samapi.ico\nStartupWMClass=samapi\n' > /home/biop/Desktop/samapi.desktop \
-# devbio
-    && printf 'source activate devbio\nnaparia\n\$ read -rsp \$"Press enter to continue..."\n' > /opt/icons/start_devbio.sh \
-    && printf '[Desktop Entry]\nVersion=0.11.0\nName=devbio-napari\nGenericName=devbio-napari\nX-GNOME-FullName=devbio-napari\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_devbio.sh\nTryExec=/opt/icons/start_devbio.sh\nTerminal=false\nStartupNotify=true\nIcon=/opt/icons/napari-icon.ico\nStartupWMClass=devbio-napari\n' > /home/biop/Desktop/devbio-napari.desktop \
-# empanada
-    && printf 'source activate empanada\nnapari\n\$ read -rsp \$"Press enter to continue..."\n' > /opt/icons/start_empanada.sh \
-    && printf '[Desktop Entry]\nVersion=1.1.1\nName=empanada\nGenericName=empanada\nX-GNOME-FullName=empanada\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_empanada.sh\nTryExec=/opt/icons/start_empanada.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/empanada_icon.png\nStartupWMClass=empanada\n' > /home/biop/Desktop/empanada.desktop \
-# brainrender
-    && printf 'source activate brainrender\nnapari\n\$ read -rsp \$"Press enter to continue..."' > /opt/icons/start_brainrender.sh \
-    && printf '[Desktop Entry]\nVersion=0.0.7\nName=brainrender\nGenericName=brainrender\nX-GNOME-FullName=brainrender\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_brainrender.sh\nTryExec=/opt/icons/start_brainrender.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/brainglobe.png\nStartupWMClass=brainrender\n' > /home/biop/Desktop/brainrender.desktop \
-# to start VScode (patch vscode start)
-    && printf 'DISPLAY=:1 code --no-sandbox' > /opt/icons/start_vscode.sh \
-    && printf '[Desktop Entry]\nVersion=1.98.2\nName=VScode\nGenericName=VScode\nX-GNOME-FullName=VScode\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_vscode.sh\nTryExec=/opt/icons/start_vscode.sh\nTerminal=false\nStartupNotify=true\nIcon=/opt/icons/vscode.png\n' > /home/biop/Desktop/vscode.desktop \
-# set permissions
-    && chown -R biop:biop   /home/biop/             /opt/icons/ \
-    && chmod -R a+rwx       /home/biop/Desktop/     /opt/icons/ \
- # waiting for RunAI patch
-    && ln -s /usr/lib/x86_64-linux-gnu/libcuda.so.1 /usr/lib/x86_64-linux-gnu/libcuda.so
-
+RUN mv /opt/icons/desktop-files/specific/fiji.desktop /home/biop/Desktop/ \
+    && chmod 755 /home/biop/Desktop/fiji.desktop \
+    && chown biop:biop /home/biop/Desktop/fiji.desktop \
+    # empanada
+    && mv /opt/icons/desktop-files/specific/empanada.desktop /home/biop/Desktop/ \
+    && chmod 755 /home/biop/Desktop/empanada.desktop \  
+    && chown biop:biop /home/biop/Desktop/empanada.desktop \
+    #quPath
+    && mv /opt/icons/desktop-files/specific/qupath.desktop /home/biop/Desktop/ \
+    && chmod 755 /home/biop/Desktop/qupath.desktop \
+    && chown biop:biop /home/biop/Desktop/qupath.desktop \
+    # ilastik
+    && mv /opt/icons/desktop-files/specific/ilastik.desktop /home/biop/Desktop/ \
+    && chmod 755 /home/biop/Desktop/ilastik.desktop \   
+    && chown biop:biop /home/biop/Desktop/ilastik.desktop \
+    # cellprofiler
+    && mv /opt/icons/desktop-files/specific/cellprofiler.desktop /home/biop/Desktop/ \
+    && chmod 755 /home/biop/Desktop/cellprofiler.desktop \
+    && chown biop:biop /home/biop/Desktop/cellprofiler.desktop \
+    # samapi
+    && mv /opt/icons/desktop-files/specific/samapi.desktop /home/biop/Desktop/ \
+    && chmod 755 /home/biop/Desktop/qupath.desktop /home/biop/Desktop/samapi.desktop  \
+    && chown biop:biop /home/biop/Desktop/qupath.desktop /home/biop/Desktop/samapi.desktop \
+    # devbio
+    && mv /opt/icons/desktop-files/specific/devbio.desktop /home/biop/Desktop/ \
+    && chmod 755 /home/biop/Desktop/devbio.desktop \
+    && chown biop:biop /home/biop/Desktop/devbio.desktop \
+    # move scripts to /usr/local/bin/ and make sure they are executable
+    && mv /opt/icons/scripts/* /usr/local/bin/ \
+    # make sure the scripts are executable and have the correct line endings (remove Windows carriage returns)
+    && sed -i 's/\r$//' /usr/local/bin/*.sh \ 
+    && chmod 755 /usr/local/bin/*
 
 # set chown and chmod for all necessary folders
 RUN chown -R biop:biop /opt/QuPath/QuPath_Common_Data_0.6 \
