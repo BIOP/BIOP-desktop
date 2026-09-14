@@ -1,52 +1,81 @@
 ARG ALIAS=biop/
-ARG BASE_IMAGE=0.2.2
-ARG CELLPOSESAM_VERSION=4.0.6
+ARG BASE_IMAGE=0.3.1
+ARG CELLPOSESAM_VERSION=4.2.1.1
 
 FROM ${ALIAS}biop-cellpose:${CELLPOSESAM_VERSION} AS cellposesam-image
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 USER root
 
+# --- system build deps for mysqlclient / python-javabridge C extensions ---
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    pkg-config \
+    python3-dev \
+    default-libmysqlclient-dev \
+    libmariadb-dev-compat \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # https://github.com/CellProfiler/CellProfiler/wiki/Conda-Installation
 ##############################################################################
 # install cellprofiler
-COPY cellprofiler/env_cellprofiler.yml /tmp/env_cellprofiler.yml
-RUN conda update -n base -c conda-forge conda \ 
-    && conda env update -n cellprofiler -f /tmp/env_cellprofiler.yml \
-    && conda clean --all -f -y \
-    && conda env export -n "biop" \
-    && rm /tmp/env_cellprofiler.yml
+RUN conda create -n cellprofiler python=3.8 -y \
+    && conda install -n cellprofiler -c conda-forge -c anaconda -c bioconda -c defaults \
+    pip numpy matplotlib pandas mysqlclient openjdk scikit-learn mahotas gtk2 \
+    Jinja2=3.0.1 inflect=5.3.0 wxpython=4.1.0 mysqlclient=1.4.4 sentry-sdk=0.18.0 libtiff=4.1.0 \
+    && conda run -n cellprofiler pip install cellprofiler==4.2.8 \
+    && conda clean --all -f -y
 
-# install cellprofiler plugins
+
 RUN mkdir /opt/cellprofiler/ \
     && cd /opt/cellprofiler/ \
     && git clone https://github.com/CellProfiler/CellProfiler-plugins \
     && cd CellProfiler-plugins \
-    && source activate cellprofiler \
-    && pip install .[stardist] \
-    && pip install .[cellpose] \
+    # pin to a known commit/tag instead of floating HEAD, for reproducibility
+    && conda run -n cellprofiler pip install .[stardist] \
+    && conda run -n cellprofiler pip install .[cellpose] --no-deps \
+    # force the SAME cellpose version that produced the models you copy below
+    && conda run -n cellprofiler pip install "cellpose==4.0.6" \
+    # build-time smoke test: fail the build now, not at runtime
+    && conda run -n cellprofiler python -c "import cellpose, inspect; from cellpose import models; print(cellpose.version); print(inspect.signature(models.CellposeModel.eval))" \
     && mkdir -p /home/biop/.python3/plugins \
     && mv /opt/cellprofiler/CellProfiler-plugins/active_plugins/* /home/biop/.python3/plugins/
+
+# RUN mkdir /opt/cellprofiler/ \
+#     && cd /opt/cellprofiler/ \
+#     && git clone https://github.com/CellProfiler/CellProfiler-plugins \
+#     && cd CellProfiler-plugins \
+#     && conda run -n cellprofiler pip install .[stardist] \
+#     && conda run -n cellprofiler pip install .[cellpose] \
+#     && mkdir -p /home/biop/.python3/plugins \
+#     && mv /opt/cellprofiler/CellProfiler-plugins/active_plugins/* /home/biop/.python3/plugins/
 
 # add cellpose models
 COPY --from=cellposesam-image /home/biop/.cellpose/models/ /home/biop/.cellpose/models/
 
-# create shortcut to start cellprofiler
-COPY icons/CellProfiler.ico /opt/icons/CellProfiler.ico
-RUN mkdir -p /home/biop/Desktop \
-    # cellprofiler
-    && printf 'source activate cellprofiler\nexport "PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True" && cellprofiler\n\$ read -rsp \$"Press enter to continue..."\n' > /opt/icons/start_cellprofiler.sh \
-    && printf '[Desktop Entry]\nVersion=4.2.8\nName=cellprofiler\nGenericName=cellprofiler\nX-GNOME-FullName=cellprofiler\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_cellprofiler.sh\nTryExec=/opt/icons/start_cellprofiler.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/CellProfiler.ico\nStartupWMClass=cellprofiler\n' > /home/biop/Desktop/cellprofiler.desktop \
-    && chmod a+rwx /opt/icons/start_cellprofiler.sh \
-    && chown -R biop:biop /opt/icons/ \
-    && chmod +x /home/biop/Desktop/cellprofiler.desktop \
-    && chown -R biop:biop /home/biop \
-    && chmod -R a+rwx /home/biop/
+# Make icons on desktop
+COPY icons/ /opt/icons/
+RUN mv /opt/icons/desktop-files/specific/cellprofiler.desktop /home/biop/Desktop/ \
+    && chmod 755 /home/biop/Desktop/cellprofiler.desktop \
+    && chown biop:biop /home/biop/Desktop/cellprofiler.desktop \
+    # move scripts to /usr/local/bin/ and make sure they are executable
+    && mv /opt/icons/scripts/* /usr/local/bin/ \
+    # make sure the scripts are executable and have the correct line endings (remove Windows carriage returns)
+    && sed -i 's/\r$//' /usr/local/bin/*.sh \ 
+    && chmod 755 /usr/local/bin/*
 
+RUN wget https://huggingface.co/mouseland/cellpose-sam/resolve/main/cpsam?download=true -O /home/biop/.cellpose/models/cpsam \
+    && wget https://huggingface.co/mouseland/cellpose-sam/resolve/main/cpsam_v2?download=true -O /home/biop/.cellpose/models/cpsam_v2
 
+# --- after all root-owned installs/copies, before switching user ---
+RUN mkdir -p /home/biop/.cache /home/biop/.python3/plugins \
+    && chown -R biop:biop /home/biop /opt/cellprofiler
+    
 #################################################################
 # Container start
 USER biop
 WORKDIR /home/biop
-ENTRYPOINT ["/usr/local/bin/jupyter"]
+ENTRYPOINT ["jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
