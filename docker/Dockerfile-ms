@@ -98,6 +98,10 @@ COPY --from=spotiflow-image /opt/conda/envs/spotiflow /opt/conda/envs/spotiflow
 COPY --from=spotiflow-image /home/biop/.spotiflow/models/ /home/biop/.spotiflow/models/
 
 #################################################################
+# Install stardist
+COPY --from=stardist-image /opt/conda/envs/stardist /opt/conda/envs/stardist
+
+#################################################################
 # Install trackastra
 COPY --from=trackastra-image  /opt/conda/envs/trackastra /opt/conda/envs/trackastra
 
@@ -128,10 +132,6 @@ COPY --from=samapi-image /home/biop/.samapi/ /home/biop/.samapi/
 # Install empanada
 COPY --from=empanada-image /opt/conda/envs/empanada /opt/conda/envs/empanada
 COPY --from=empanada-image /home/biop/.empanada/ /home/biop/.empanada/
-
-#################################################################
-# Install stardist
-COPY --from=stardist-image /opt/conda/envs/stardist /opt/conda/envs/stardist
 
 #################################################################
 # Install abba
