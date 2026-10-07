@@ -20,8 +20,8 @@ docker push biop/biop-vnc-base:0.3.1
 ## To test on RCP cluster
 
 ```
-docker tag biop-vnc-base:0.3.0 registry.rcp.epfl.ch/ptbiop/biop-vnc-base:0.3.0
-docker push registry.rcp.epfl.ch/ptbiop/biop-vnc-base:0.3.0
+docker tag biop-vnc-base:0.3.1 registry.rcp.epfl.ch/ptbiop/biop-vnc-base:0.3.1
+docker push registry.rcp.epfl.ch/ptbiop/biop-vnc-base:0.3.1
 ```
 
 
