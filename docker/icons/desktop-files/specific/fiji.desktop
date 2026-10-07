@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=Fiji
+GenericName=Fiji
+X-GNOME-FullName=Fiji
+Comment=Scientific Image Analysis
+Type=Application
+Categories=Education;Science;ImageProcessing;
+Exec=/opt/Fiji/fiji-linux-x64 -Dimagej.updater.disableAutocheck=true
+TryExec=/opt/Fiji/fiji-linux-x64
+Terminal=false
+StartupNotify=true
+Icon=/opt/Fiji/images/icon.png

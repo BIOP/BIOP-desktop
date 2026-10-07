@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=3.6.8
+Name=jupyter
+GenericName=jupyter
+X-GNOME-FullName=jupyter
+Comment=Scientific Image Analysis
+Type=Application
+Categories=Education;Science;ImageProcessing;
+Exec=/usr/local/bin/start_jupyter.sh
+TryExec=/usr/local/bin/start_jupyter.sh
+Terminal=true
+StartupNotify=false
+Icon=/opt/icons/jupyter.png
+StartupWMClass=jupyter

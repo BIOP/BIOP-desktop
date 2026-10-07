@@ -1,5 +1,5 @@
-ARG BASE_IMAGE=0.2.2
-ARG QUPATH_VERSION=v0.6.0-only
+ARG BASE_IMAGE=0.3.0
+ARG QUPATH_VERSION=v0.7.0-only
 ARG ALIAS=biop/
 
 FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} AS qupath-image
@@ -11,15 +11,13 @@ USER root
 # Install QuPath 
 # 
 COPY --from=qupath-image /opt/QuPath /opt/QuPath
-COPY --from=qupath-image /home/biop/Desktop/QuPath.desktop  /home/biop/Desktop/QuPath.desktop
-COPY QuPath/prefs/* /home/biop/tmp/
 
 # install samapi
-COPY samapi/env_samapi.yml /tmp/env_samapi.yml
-RUN conda env update -n samapi -f /tmp/env_samapi.yml \
-    && conda clean --all -f -y \
-    && conda env export -n "biop" \ 
-    && rm /tmp/env_samapi.yml 
+RUN mamba create -n samapi -y python=3.12\
+    && mamba run -n samapi pip install "torch==2.7.0" torchvision --index-url https://download.pytorch.org/whl/cu126 
+    
+RUN mamba run -n samapi pip install https://github.com/ksugar/samapi/archive/refs/tags/v0.7.1.tar.gz \
+    && mamba clean -a -y
 
 # add lib for wsl 
 ENV LD_LIBRARY_PATH=/usr/lib/wsl/lib:$LD_LIBRARY_PATH
@@ -37,22 +35,31 @@ RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera
 RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_tiny.pt" -P /home/biop/.samapi/sam2_t/
 RUN wget -q "https://dl.fbaipublicfiles.com/segment_anything_2/072824/sam2_hiera_large.pt" -P /home/biop/.samapi/sam2_l/
 
-# All icons and *.sh file for the desktop will now be in /opt/icons (created in base.0.2.0)
-COPY icons/* /opt/icons/
-# create shortcuts
-RUN printf 'source activate samapi\npython -m uvicorn samapi.main:app --workers 2\n\$ read -rsp \$"Press enter to continue...' > /opt/icons/start_samapi.sh \
-    && printf '[Desktop Entry]\nVersion=0.6.1\nName=samapi\nGenericName=samapi\nX-GNOME-FullName=samapi\nComment=Scientific Image Analysis\nType=Application\nCategories=Education;Science;ImageProcessing;\nExec=/opt/icons/start_samapi.sh\nTryExec=/opt/icons/start_samapi.sh\nTerminal=true\nStartupNotify=true\nIcon=/opt/icons/samapi.ico\nStartupWMClass=samapi\n' > /home/biop/Desktop/samapi.desktop \
-    && chown biop:biop /home/biop/Desktop/samapi.desktop \
-    && chmod a+rxx /opt/icons/start_samapi.sh 
+#################################################################
+#TODO add sam3 models for samapi!!
+#################################################################
+
+# COPY pref files to set QuPath paths and extensions
+COPY QuPath/prefs/* /home/biop/tmp/ 
+
+# COPY icons folder because of updates since base image was created
+COPY icons/ /opt/icons/
+RUN mv /opt/icons/desktop-files/specific/qupath.desktop /home/biop/Desktop/ \
+    && mv /opt/icons/desktop-files/specific/samapi.desktop /home/biop/Desktop/ \
+    && chmod 755 /home/biop/Desktop/qupath.desktop /home/biop/Desktop/samapi.desktop  \
+    && chown biop:biop /home/biop/Desktop/qupath.desktop /home/biop/Desktop/samapi.desktop \
+    && mv /opt/icons/scripts/* /usr/local/bin/ \
+    && chmod 755 /usr/local/bin/*
 
 RUN chown -R biop:biop /home/biop/ \
-    && chmod -R a+rwx /home/biop/   
-#################################################################
-# Container start
+    && chmod -R a+rwx /home/biop/
+
+# #################################################################
+# # Container start
 USER biop
-# here we import prefs in QuPath so that we can use the extensions at the first start ! 
+# # here we import prefs in QuPath so that we can use the extensions at the first start ! 
 RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' \
     && rm -rf /home/biop/tmp
 WORKDIR /home/biop
-ENTRYPOINT ["/usr/local/bin/jupyter"]
+ENTRYPOINT ["jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]

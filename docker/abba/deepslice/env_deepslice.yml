@@ -11,7 +11,7 @@ dependencies:
   - brunsli=0.1=h9c3ff4c_0
   - bzip2=1.0.8=hd590300_5
   - c-ares=1.26.0=hd590300_0
-  - c-blosc2=2.13.2=hb4ffafa_0
+  - c-blosc2=2.13.*
   - ca-certificates=2024.2.2=hbcca054_0
   - certifi=2024.2.2=pyhd8ed1ab_0
   - cfitsio=4.0.0=h9a35b8e_0

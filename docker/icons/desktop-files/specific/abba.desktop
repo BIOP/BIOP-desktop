@@ -1,0 +1,16 @@
+[Desktop Entry]
+Version=0.11.0
+Name=ABBA
+GenericName=ABBA
+X-GNOME-FullName=ABBA
+Comment=Scientific Image Analysis
+Type=Application
+Categories=Education;Science;ImageProcessing;
+Exec=/usr/local/bin/start_abba.sh
+TryExec=/usr/local/bin/start_abba.sh
+Terminal=true
+StartupNotify=true
+MimeType=image/*;
+Icon=/opt/icons/abba.png
+StartupWMClass=ABBA
+

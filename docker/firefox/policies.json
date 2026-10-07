@@ -1,0 +1,19 @@
+{
+  "policies": {
+    "Homepage": {
+      "URL": "https://biop.epfl.ch",
+      "Locked": false,
+      "StartPage": "homepage"
+    },
+    "OverrideFirstRunPage": "https://biop.epfl.ch",
+    "OverridePostUpdatePage": "",
+    "DisableProfileImport": true,
+    "DontCheckDefaultBrowser": true,
+    "DisableAppUpdate": true,
+    "AppAutoUpdate": false,
+    "BackgroundAppUpdate": false,
+    "DisableSystemAddonUpdate": true,
+    "ExtensionUpdate": false,
+    "DisableTelemetry": true
+  }
+}

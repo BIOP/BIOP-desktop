@@ -1,30 +1,27 @@
 ARG ALIAS=biop/
-ARG BASE_IMAGE=0.2.2
+ARG BASE_IMAGE=0.3.0
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 USER root
 
-# install cellpose and download models ( https://cellpose.readthedocs.io/en/latest/models.html )
-COPY cellpose/env_cellpose.yml /tmp/env_cellpose.yml
-RUN conda env update -n cellpose -f /tmp/env_cellpose.yml \
-    && conda clean --all -f -y \
-    && conda env export -n "biop" \ 
-    && rm /tmp/env_cellpose.yml 
+RUN conda create -n cellpose python=3.10 -y \
+        && conda run -n cellpose pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu126 \
+        && conda run -n cellpose pip install cellpose==4.2.1.1 scikit-image wget ipykernel \
+        && conda clean -a -y
 
 # download models
-USER biop
 COPY cellpose/download_all_models.py /home/biop/download_all_models.py
-RUN source activate cellpose \
-    && python /home/biop/download_all_models.py \
+RUN chown -R biop:biop /home/biop/ /home/biop/.cache \
+    && chmod -R u+rwX,g+rX,o-rwx /home/biop
+USER biop
+RUN conda run -n cellpose python /home/biop/download_all_models.py \
     && rm /home/biop/download_all_models.py
-
-USER root
-RUN chmod -R a+rwX /home/biop/ \
-    && chown -R biop:biop /home/biop/
 
 #################################################################
 # Container start
 USER biop
 WORKDIR /home/biop
-ENTRYPOINT ["/usr/local/bin/jupyter"]
+RUN /opt/conda/envs/cellpose/bin/python -m ipykernel install --user --name=cellpose --display-name "Python (cellpose)"
+
+ENTRYPOINT ["jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]

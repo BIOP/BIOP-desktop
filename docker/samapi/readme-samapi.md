@@ -3,23 +3,23 @@
 ## build
 
 ```
-docker build -f samapi/Dockerfile-samapi  -t biop-samapi:0.6.1-02 . --no-cache
+docker build -f samapi/Dockerfile-samapi  -t biop-samapi:0.9.1 . --no-cache
 ```
 
 ## start to test (see below)
 
 ```
-docker run -it --rm -p 8888:8888 --gpus device=0  --mount src=D:/,target=/home/biop/local,type=bind  biop-samapi:0.6.1-02
+docker run -it --rm -p 8888:8888 --gpus device=0  --mount src=D:/,target=/home/biop/local,type=bind  biop-samapi:0.9.1
 ```
 
 ## after testing pass, tag 
 ```
-docker tag  biop-samapi:0.6.1-02 biop/biop-samapi:0.6.1-02
+docker tag  biop-samapi:0.9.1 biop/biop-samapi:0.9.1
 ```
 
 ## push on dockerhub
 ```
-docker push biop/biop-samapi:0.6.1-02
+docker push biop/biop-samapi:0.9.1
 ```
 
 # Test(s)
