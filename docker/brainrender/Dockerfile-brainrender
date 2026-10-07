@@ -6,7 +6,7 @@ USER root
 
 ##############################################################################
 # install leonardo-napari
-RUN  conda create --name brainrender python=3.11\
+RUN conda create --name brainrender python=3.11 -y \
     && conda run -n brainrender pip install brainrender\
     && conda run -n brainrender pip3 install napari[all] brainrender-napari bg-atlasapi \
     && conda clean -a -y
