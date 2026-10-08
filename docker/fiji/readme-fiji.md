@@ -3,7 +3,7 @@
 ## build
 
 ```
-docker build -f fiji/Dockerfile-fiji  -t biop-fiji:20260826 . --no-cache
+docker build -f fiji/Dockerfile-fiji  -t biop-fiji:20261007 . --no-cache
 
 docker build -f fiji/Dockerfile-fiji-mini  -t biop-fiji-mini:20260826 .
 ```
@@ -11,19 +11,18 @@ docker build -f fiji/Dockerfile-fiji-mini  -t biop-fiji-mini:20260826 .
 ## start to test (see below)
 
 ```
-docker run -it --rm -p 8888:8888 --gpus device=0  --mount src=D:/,target=/home/biop/local,type=bind  biop-fiji:20260826
-
+docker run -it --rm -p 8888:8888 --gpus device=0  biop-fiji:20261007
 ```
 
 ## after testing pass, tag 
 ```
-docker tag  biop-fiji:20260826  biop/biop-fiji:20260826
+docker tag  biop-fiji:20261007  biop/biop-fiji:20261007
 ```
 
 ## push on dockerhub
 
 ```
-docker push biop/biop-fiji:20260826
+docker push biop/biop-fiji:20261007
 ```
 
 # Test(s)
@@ -40,12 +39,13 @@ docker push biop/biop-fiji:20260826
 
 ## Trackastra
 
-Work in TrackMate after defining conda path in Fiji preferences
+Works in TrackMate after defining conda path in Fiji preferences
 
+## openCL tools
 
-## Deconvolution GPU
+### ON a Windows+WSL2 machine
 
-to test one needs to push on RCP cluster (openCL not supported on WSL2 (yet) )
+To test one needs to push on RCP cluster (openCL not supported on WSL2 (yet) )
 
 ```
 docker tag  biop-fiji:20260826  registry.rcp.epfl.ch/ptbiop/biop-fiji:20260826
@@ -53,9 +53,12 @@ docker tag  biop-fiji:20260826  registry.rcp.epfl.ch/ptbiop/biop-fiji:20260826
 docker push registry.rcp.epfl.ch/ptbiop/biop-fiji:20260826
 ```
 
-## GPU deconvolution test on RCP cluster
-- Create a RUNAI env
-- Start a RUNAI workload
+next follow Linux machine section below
+
+### Linux machine ( or cluster)
+
+## GPU deconvolution 
+- Open Fiji
 - Look for "clij deconv" in the search bar and RUN
 
 ## 3D script
