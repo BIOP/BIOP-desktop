@@ -47,6 +47,9 @@ RUN ${fiji} ${updateCommand} \
                                 "MiC mask comparator" "https://sites.imagej.net/MiC-mask-comparator/" \
                                 "Fiji-Deconv" "https://sites.imagej.net/clijx-deconvolution/" \
                                 "3Dscript" "https://romulus.oice.uni-erlangen.de/updatesite/" \
+                                "BIG_EPFL" "https://sites.imagej.net/BIG-EPFL/"\
+                                "MultiStackReg" "https://sites.imagej.net/MultiStackReg/"\
+                                "DistanceAnalysis"  "https://sites.imagej.net/DistanceAnalysis/"\ 
     && ${fiji} ${updateCommand} \
     && chmod -R a+rwX /opt/Fiji/
 
@@ -72,7 +75,7 @@ RUN wget -q https://repo1.maven.org/maven2/colt/colt/1.2.0/colt-1.2.0.jar -O /op
     && wget -q  https://github.com/ArneS70/ij2-LocalizeJ/raw/main/target/LocalizeJ-0.1.0-SNAPSHOT.jar -O /opt/Fiji/jars/LocalizeJ-0.1.0-SNAPSHOT.jar 
 
 # DiAna plugin
-RUN wget -q https://drive.google.com/file/d/1hkmM6kHMnPvwya26ogQsNaLI2AMVq_zN -O /opt/Fiji/plugins/DiAna_1.54.jar 
+# RUN wget -q https://drive.google.com/file/d/1hkmM6kHMnPvwya26ogQsNaLI2AMVq_zN -O /opt/Fiji/plugins/DiAna_1.54.jar 
 
 # MicrobeJ plugin (site down for maintenance)
 # RUN wget -q http://www.microbej.com/version/13/p/1/MicrobeJ_.jar -O /opt/Fiji/plugins/MicrobeJ_.jar
