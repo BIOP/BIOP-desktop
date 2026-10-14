@@ -38,8 +38,6 @@ RUN ${fiji} ${updateCommand} \
                                 "ilastik" "https://sites.imagej.net/Ilastik/" \
                                 #"ImageScience" "https://sites.imagej.net/ImageScience/" \ 
                                 "CSBDeep" "https://sites.imagej.net/CSBDeep/" \
-                                "StarDist" "https://sites.imagej.net/StarDist/" \
-                                "TrackMate-StarDist" "https://sites.imagej.net/TrackMate-StarDist/" \    
                                 "TrackMate-TrackAstra" "https://sites.imagej.net/TrackMate-Trackastra/" \ 
                                 "TrackMate-Cellpose" "https://sites.imagej.net/TrackMate-Cellpose/" \
                                 "TensorFlow" "https://sites.imagej.net/TensorFlow/" \
@@ -50,17 +48,13 @@ RUN ${fiji} ${updateCommand} \
                                 "BIG_EPFL" "https://sites.imagej.net/BIG-EPFL/"\
                                 "MultiStackReg" "https://sites.imagej.net/MultiStackReg/"\
                                 "DistanceAnalysis"  "https://sites.imagej.net/DistanceAnalysis/"\ 
+                                "IJ-Plugins" "https://sites.imagej.net/IJ-Plugins/" \
     && ${fiji} ${updateCommand} \
     && chmod -R a+rwX /opt/Fiji/
 
 RUN mv /opt/icons/desktop-files/specific/fiji.desktop /home/biop/Desktop/ \
     && chmod 755 /home/biop/Desktop/fiji.desktop \
     && chown biop:biop /home/biop/Desktop/fiji.desktop
-
-# # TF1.15 GPU (current default download of TF 1.12 CPU)
-# RUN wget -q https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow_jni-gpu-linux-x86_64-1.15.0.tar.gz    \
-#     && tar -C /opt/Fiji/lib/linux64/ -xzf libtensorflow_jni-gpu-linux-x86_64-1.15.0.tar.gz \
-#     && rm libtensorflow_jni-gpu-linux-x86_64-1.15.0.tar.gz 
 
 # Install omeroij
 RUN wget -q https://github.com/ome/omero-insight/releases/download/v${OMEROIJ_VERSION}/omero_ij-${OMEROIJ_VERSION}-all.jar -O /opt/Fiji/plugins/omero_ij-${OMEROIJ_VERSION}-all.jar \
@@ -74,11 +68,8 @@ RUN wget -q https://repo1.maven.org/maven2/colt/colt/1.2.0/colt-1.2.0.jar -O /op
     && wget -q https://maven.imagej.net/content/repositories/releases/sc/fiji/imagescience/3.0.0/imagescience-3.0.0.jar -O /opt/Fiji/jars/imagescience-3.0.0.jar \
     && wget -q  https://github.com/ArneS70/ij2-LocalizeJ/raw/main/target/LocalizeJ-0.1.0-SNAPSHOT.jar -O /opt/Fiji/jars/LocalizeJ-0.1.0-SNAPSHOT.jar 
 
-# DiAna plugin
-# RUN wget -q https://drive.google.com/file/d/1hkmM6kHMnPvwya26ogQsNaLI2AMVq_zN -O /opt/Fiji/plugins/DiAna_1.54.jar 
-
 # MicrobeJ plugin (site down for maintenance)
-# RUN wget -q http://www.microbej.com/version/13/p/1/MicrobeJ_.jar -O /opt/Fiji/plugins/MicrobeJ_.jar
+RUN wget -q http://www.microbej.com/version/13/p/1/MicrobeJ_.jar -O /opt/Fiji/plugins/MicrobeJ_.jar
 
 #################################################################
 # Install python envs
@@ -97,18 +88,13 @@ COPY --from=trackastra-image  /opt/conda/envs/trackastra /opt/conda/envs/trackas
 # Install stardist 
 COPY --from=stardist-image  /opt/conda/envs/stardist /opt/conda/envs/stardist
 
-# to set prefs
-COPY fiji/Fiji_setWrappersPaths.groovy /home/biop/tmp/Fiji_setWrappersPaths.groovy
-
 RUN chown -R biop:biop /home/biop/ \
     && chmod -R a+rwx /home/biop/  
 
 #################################################################
 # Container start
+# TODO : find a way to run("Configure TrackMate Conda path...");
 USER biop
 WORKDIR /home/biop
-#RUN /opt/Fiji.app/ImageJ-linux64 --headless --run /home/biop/tmp/Fiji_setWrappersPaths.groovy \
-#   && rm -rf /home/biop/tmp
-
 ENTRYPOINT ["jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop"]
