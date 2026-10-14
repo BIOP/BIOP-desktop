@@ -3,26 +3,27 @@
 ## build
 
 ```
-docker build -f fiji/Dockerfile-fiji  -t biop-fiji:20261007 . --no-cache
+docker build -f fiji/Dockerfile-fiji  -t biop-fiji:20261013 . --no-cache
 
 docker build -f fiji/Dockerfile-fiji-mini  -t biop-fiji-mini:20260826 .
 ```
 
 ## start to test (see below)
 
+
 ```
-docker run -it --rm -p 8888:8888 --gpus device=0  biop-fiji:20261007
+docker run -it --rm -p 8888:8888 --gpus device=0  --mount src=/home/guiet/,target=/home/biop/local,type=bind biop-fiji:20261013
 ```
 
 ## after testing pass, tag 
 ```
-docker tag  biop-fiji:20261007  biop/biop-fiji:20261007
+docker tag  biop-fiji:20261013  biop/biop-fiji:20261013
 ```
 
 ## push on dockerhub
 
 ```
-docker push biop/biop-fiji:20261007
+docker push biop/biop-fiji:20261013
 ```
 
 # Test(s)
@@ -65,4 +66,7 @@ next follow Linux machine section below
 - Open Fiji
 - Open sample "T1 Head"
 - Start plugins > 3D script > Interactive Animation
+
+
+
 
