@@ -1,143 +1,51 @@
 ARG BASE_IMAGE=0.3.1
-
-ARG QUPATH_VERSION=v0.7.0-full
-ARG FIJI_VERSION=20260826
-ARG DEEPSLICE_VERSION=1.1.5-01
-ARG BRAINRENDER_VERSION=2.2.1
 ARG ALIAS=biop/
-
-FROM ${ALIAS}biop-qupath:${QUPATH_VERSION} AS qupath-image
-FROM ${ALIAS}biop-fiji:${FIJI_VERSION} AS fiji-image
-FROM ${ALIAS}biop-deepslice:${DEEPSLICE_VERSION} AS deepslice-image
-FROM ${ALIAS}biop-brainrender:${BRAINRENDER_VERSION} AS brainrender-image
 
 FROM ${ALIAS}biop-vnc-base:${BASE_IMAGE}
 
 USER root
 
-################################################################# 
-#  install elastix  
-# version 5.1.0 is not working with the current ABBA version, so we use 5.0.1 , is a zip on github
-# version 5.0.1 is tar.bz2 on github
-RUN wget https://github.com/SuperElastix/elastix/releases/download/5.0.1/elastix-5.0.1-linux.tar.bz2 
-RUN tar -xf elastix-5.0.1-linux.tar.bz2 \
-    && mv elastix-5.0.1-linux /opt/elastix \
-    && chmod -R a+rwx /opt/elastix \
-    && rm elastix-5.0.1-linux.tar.bz2
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3-tk python3-venv python3-dev xvfb procps \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN chown -R biop:biop /opt/elastix \
-    && chmod  a+rwx /opt/elastix/bin/elastix \
-    && chmod  a+rwx /opt/elastix/bin/transformix  
+RUN wget -q https://github.com/BIOP/ijp-imagetoatlas/releases/download/0.25.0/ABBA-0.25.0.zip \
+    && unzip -q ABBA-0.25.0.zip -d /opt/ && rm ABBA-0.25.0.zip \
+    && chown -R biop:biop /opt/ABBA-0.25.0
 
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/elastix/lib
+# Pin a specific uv version instead of curl|sh
+COPY --from=ghcr.io/astral-sh/uv:0.5.5 /uv /uvx /home/biop/.local/bin/
 
-################################################################# 
-# Install QuPath 
-# 
-COPY --from=qupath-image /opt/QuPath /opt/QuPath
-# Prepare to set QP_prefs , see below `QuPath_setPaths.groovy`
-COPY QuPath/prefs/* /home/biop/tmp/
+# As the user who runs ABBA: everything goes to biop's home, where ABBA looks for it.
+USER biop
+ENV HOME=/home/biop
+ENV UV_PYTHON_PREFERENCE=only-system
+ENV UV_INSTALL_DIR=/home/biop/.local/bin
+ENV PATH="/home/biop/.local/bin:${PATH}"
 
-#################################################################
-# Install Fiji
-COPY --from=fiji-image /opt/Fiji /opt/Fiji
-COPY abba/ABBA_Atlas_folder.txt /opt/Fiji/plugins/BIOP/ABBA_Atlas_folder.txt
-# set FIJI text to set the path to atlases
-COPY fiji/Fiji_setWrappersPaths.groovy /home/biop/tmp/Fiji_setWrappersPaths.groovy
+WORKDIR /opt/ABBA-0.25.0
+# What "Install everything" does, without the window: Java, ABBA, Fiji, DeepSlice, Elastix, BrainGlobe
+RUN uv run --frozen --no-dev abba prepare --all
 
-#################################################################
-# install deepslice 
-COPY --from=deepslice-image /opt/conda/envs/deepslice /opt/conda/envs/deepslice
 
-#################################################################
-# install abba_python
-# dependencies from https://github.com/BIOP/abba-installer/blob/main/construct.yaml 
-# and abba_python from https://pypi.org/project/abba-python/
-RUN mamba create -c conda-forge -n abba_python python=3.10 openjdk=11 pip maven pyimagej \
-    && mamba run -n abba_python pip install abba_python \
-    && mamba clean --all -f -y \
-    && mamba env export -n "biop"
+USER root
 
-# add a script to use deepslice from command line
-RUN wget https://raw.githubusercontent.com/BIOP/ijl-utilities-wrappers/master/src/main/resources/deepslice_cli_v1.1.5.1.py -O /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.1.py 
-# set permissions
-RUN chown biop:biop /opt/conda/envs/deepslice/ \
-    && chmod a+rwx /opt/conda/envs/deepslice/deepslice_cli_v1.1.5.1.py 
-
-# When removing RUN chown biop:biop /opt/conda/envs/deepslice/ && chmod -R a+rwx /opt/conda/envs/deepslice/ 
-# tries to download but fails, so we download the weights manually
-RUN wget https://data-proxy.ebrains.eu/api/v1/buckets/deepslice/weights/xception_weights_tf_dim_ordering_tf_kernels.h5 -O /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/xception_weights_tf_dim_ordering_tf_kernels.h5 \
-    && wget https://data-proxy.ebrains.eu/api/v1/buckets/deepslice/weights/Allen_Mixed_Best.h5 -O /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/Allen_Mixed_Best.h5 \ 
-    && wget https://data-proxy.ebrains.eu/api/v1/buckets/deepslice/weights/Synthetic_data_final.hdf5 -O /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/Synthetic_data_final.hdf5
-# set permissions
-RUN chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/xception_weights_tf_dim_ordering_tf_kernels.h5 \
-    && chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/Allen_Mixed_Best.h5 \
-    && chmod a+rwx /opt/conda/envs/deepslice/lib/python3.7/site-packages/DeepSlice/metadata/weights/Synthetic_data_final.hdf5
-
-# Copy atlases from zenodo repo
-# IDK why I need to first use the -P and mv, rather than directly use -O (got an error :  No such file or directory )
-RUN wget https://zenodo.org/records/4173229/files/ccf2017-mod65000-border-centered-mm-bc.h5?download=1 -P /opt/abba/cached_atlas/  \
-    && mv /opt/abba/cached_atlas/ccf2017-mod65000-border-centered-mm-bc.h5?download=1 /opt/abba/cached_atlas/ccf2017-mod65000-border-centered-mm-bc.h5 \    
-    && wget https://zenodo.org/records/4173229/files/ccf2017-mod65000-border-centered-mm-bc.xml?download=1 -P  /opt/abba/cached_atlas/ \
-    && mv /opt/abba/cached_atlas/ccf2017-mod65000-border-centered-mm-bc.xml?download=1 /opt/abba/cached_atlas/ccf2017-mod65000-border-centered-mm-bc.xml \
-    && wget https://zenodo.org/records/4173229/files/1.json?download=1 -P /opt/abba/cached_atlas/\
-    && mv /opt/abba/cached_atlas/1.json?download=1 /opt/abba/cached_atlas/1.json
-# set permissions
-RUN chown -R biop:biop /opt/abba/cached_atlas/ \
-    && chmod -R a+rwX /opt/abba/cached_atlas/
-
-# Make a desktop icon for ABBA
-# modified from : https://github.com/BIOP/abba-installer/blob/main/abba/start-abba.py
-COPY abba/abba_run.py /opt/abba/abba_run.py 
-# set permissions
-RUN chown biop:biop /opt/abba/abba_run.py \
-    && chmod a+rwx /opt/abba/abba_run.py
-
-# make Fiji not read only
-RUN  chown -R biop:biop /opt/Fiji/ \
-    && chmod -R a+rwX /opt/Fiji/
-
-# install brainrender
-COPY --from=brainrender-image /opt/conda/envs/brainrender /opt/conda/envs/brainrender
- 
-#set back root 
-USER root 
-
-# Make icons 
+# Make icons on desktop
 COPY icons/ /opt/icons/
-#################################################################
-# Create shortcuts
 # to start ABBA
 RUN mv /opt/icons/desktop-files/specific/abba.desktop /home/biop/Desktop/ \
     && chmod 755 /home/biop/Desktop/abba.desktop \
     && chown biop:biop /home/biop/Desktop/abba.desktop \
-# to start fiji
-    && mv /opt/icons/desktop-files/specific/fiji.desktop /home/biop/Desktop/ \
-    && chmod 755 /home/biop/Desktop/fiji.desktop \
-    && chown biop:biop /home/biop/Desktop/fiji.desktop \
-# to start napari with brainrender
-    && mv /opt/icons/desktop-files/specific/brainrender.desktop /home/biop/Desktop/ \
-    && chmod 755 /home/biop/Desktop/brainrender.desktop \
-    && chown biop:biop /home/biop/Desktop/brainrender.desktop \
-# move scripts to /usr/local/bin/ and make sure they are executable
+    # move scripts to /usr/local/bin/ and make sure they are executable
     && mv /opt/icons/scripts/* /usr/local/bin/ \
     # make sure the scripts are executable and have the correct line endings (remove Windows carriage returns)
     && sed -i 's/\r$//' /usr/local/bin/*.sh \ 
     && chmod 755 /usr/local/bin/*
 
-RUN chown -R biop:biop /home/biop/ /opt/icons/  \
-    && chmod -R a+rwx /home/biop/  /opt/icons/ 
 
 #################################################################
 # Container start
 USER biop
-RUN /opt/QuPath/bin/QuPath script '/home/biop/tmp/QuPath_setPaths.groovy' \
-    && /opt/Fiji/fiji-linux-x64  --headless --run /home/biop/tmp/Fiji_setWrappersPaths.groovy \
-    && rm -rf /home/biop/tmp
-
-# add kernel for brainrender
-RUN /opt/conda/envs/brainrender/bin/python -m ipykernel install --user --name=brainrender --display-name "Python (brainrender)"
-
 WORKDIR /home/biop
 ENTRYPOINT ["jupyter"]
 CMD ["lab", "--allow-root", "--ip=*", "--port=8888", "--no-browser", "--NotebookApp.token=''", "--NotebookApp.allow_origin='*'", "--notebook-dir=/home/biop/"]
